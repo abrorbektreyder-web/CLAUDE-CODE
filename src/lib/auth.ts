@@ -1,26 +1,19 @@
 import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from '@/db/lib/db';
-import * as schema from '@/db/schema';
+import { supabaseAdapter } from './auth-adapter';
 
 // ════════════════════════════════════════════════════════════════════════════
 // BETTER AUTH CONFIG
 // ════════════════════════════════════════════════════════════════════════════
-//
-// Note: This skeleton uses Better Auth's STANDARD tables alongside your
-// custom users table. To use the custom users table directly, you'll need
-// to run `npx @better-auth/cli generate` and merge the schemas.
-//
-// For now: Better Auth manages auth-specific concerns (sessions, accounts,
-// verifications). Application-specific user data lives in the custom
-// `users` table from your Drizzle schema.
+// Uses a custom Supabase HTTP adapter instead of direct PostgreSQL connection.
+// This bypasses ISP firewall blocks on port 5432/6543 in development.
+// In production (Vercel), both approaches work — HTTPS is always available.
 // ════════════════════════════════════════════════════════════════════════════
 
 export const auth = betterAuth({
-  // Use Drizzle ORM adapter
-  database: drizzleAdapter(db, {
-    provider: 'pg',
-    schema, // Pass your Drizzle schema
+  // Custom Supabase HTTP adapter (works over port 443, never blocked)
+  database: () => ({
+    id: 'supabase',
+    ...supabaseAdapter,
   }),
 
   // Secret for signing tokens
@@ -32,11 +25,10 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
     maxPasswordLength: 128,
-    requireEmailVerification: false, // Disable for MVP; enable in production
+    requireEmailVerification: false,
 
-    // Custom password validation
+    // Custom password hashing (Argon2id — same algorithm used in existing users table)
     password: {
-      // Argon2id is the default in Better Auth — production-grade
       hash: async (password: string) => {
         const argon2 = await import('argon2');
         return argon2.hash(password, {
@@ -48,7 +40,11 @@ export const auth = betterAuth({
       },
       verify: async ({ hash, password }) => {
         const argon2 = await import('argon2');
-        return argon2.verify(hash, password);
+        try {
+          return await argon2.verify(hash, password);
+        } catch {
+          return false;
+        }
       },
     },
   },
@@ -56,38 +52,34 @@ export const auth = betterAuth({
   // Session config
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // Update session every 24h if active
+    updateAge: 60 * 60 * 24,      // refresh every 24h
     cookieCache: {
       enabled: true,
-      maxAge: 60 * 5, // Cache for 5 minutes
+      maxAge: 60 * 5,
     },
   },
 
   // Rate limiting
   rateLimit: {
     enabled: true,
-    window: 60, // 60 seconds
-    max: 100, // 100 requests per window
+    window: 60,
+    max: 100,
   },
 
-  // Trusted origins for CORS
+  // Trusted origins
   trustedOrigins: [
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    // Allow all subdomains in production
     ...(process.env.NODE_ENV === 'production'
       ? [`https://*.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`]
-      : ['http://*.localhost:3000']),
+      : ['http://localhost:3000']),
   ],
 
   // Advanced security
   advanced: {
-    // Use database for session storage (more secure than JWT)
     useSecureCookies: process.env.NODE_ENV === 'production',
     cookiePrefix: 'pos',
-
-    // CSRF protection
     crossSubDomainCookies: {
-      enabled: true,
+      enabled: process.env.NODE_ENV === 'production',
       domain:
         process.env.NODE_ENV === 'production'
           ? `.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`
