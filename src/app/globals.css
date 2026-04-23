@@ -1,0 +1,231 @@
+@import 'tailwindcss';
+
+/* ════════════════════════════════════════════════════════════════════════
+   FONTS
+   ────────────────────────────────────────────────────────────────────────
+   Fontlar `next/font/google` orqali src/app/layout.tsx ichida yuklanadi.
+   U yerda quyidagi CSS variable'lar avtomatik o'rnatiladi:
+     --font-instrument-serif
+     --font-manrope
+     --font-jetbrains-mono
+   @theme bloki ulardan foydalanib font-display/sans/mono utility'larni
+   yasaydi: font-display, font-sans, font-mono.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════════════
+   THEME — Premium Dark (matches mockups)
+   ════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Backgrounds */
+  --color-background: #08090a;
+  --color-bg-elevated: #111213;
+  --color-bg-card: #18191b;
+  --color-bg-card-2: #1c1d1f;
+  --color-bg-hover: #1e1f22;
+  --color-bg-active: #25272a;
+
+  /* Text */
+  --color-foreground: #fafafa;
+  --color-text-secondary: #a1a1a6;
+  --color-text-tertiary: #6e6e73;
+  --color-text-quaternary: #48484a;
+
+  /* Borders */
+  --color-border: #2a2b2e;
+  --color-border-strong: #3a3b3f;
+  --color-border-subtle: #1e1f22;
+
+  /* Brand accent (orange) */
+  --color-accent: #ff6b35;
+  --color-accent-hover: #ff7f4f;
+  --color-accent-soft: rgba(255, 107, 53, 0.1);
+
+  /* Status colors */
+  --color-success: #30d158;
+  --color-warning: #ffd60a;
+  --color-danger: #ff453a;
+  --color-info: #64d2ff;
+  --color-purple: #bf5af2;
+
+  /* Typography — bog'lanadi next/font tomonidan o'rnatilgan variable'larga */
+  --font-display: var(--font-instrument-serif), Georgia, serif;
+  --font-sans: var(--font-manrope), -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), 'SF Mono', Menlo, ui-monospace, monospace;
+
+  /* Animation */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   BASE STYLES
+   ════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'ss01', 'ss02', 'cv11';
+  }
+
+  /* Scrollbar — subtle dark */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-background);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border-strong);
+  }
+
+  /* Selection */
+  ::selection {
+    background-color: var(--color-accent);
+    color: white;
+  }
+
+  /* Focus ring */
+  *:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Number inputs — remove arrows */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   UTILITIES — Premium Dark special effects
+   ════════════════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+  /* Display font (italic serif) — italic stilida ishlatish uchun */
+  .font-display {
+    font-family: var(--font-display);
+    font-style: italic;
+    letter-spacing: -0.02em;
+  }
+
+  /* Mono numerals (tabular figures) */
+  .font-mono-tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Glass card effect */
+  .glass-card {
+    background: rgba(24, 25, 27, 0.7);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Accent glow */
+  .glow-accent {
+    box-shadow: 0 0 24px rgba(255, 107, 53, 0.25);
+  }
+
+  /* Subtle noise texture overlay */
+  .texture-noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Spring animation */
+  .ease-spring {
+    transition-timing-function: var(--ease-spring);
+  }
+
+  /* Card with subtle inset highlight */
+  .premium-card {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.04) inset,
+      0 0 0 1px rgba(255, 255, 255, 0.02);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 280ms var(--ease-spring) backwards;
+}
+
+.animate-pulse-dot {
+  animation: pulseDot 2s infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.04),
+    transparent
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}

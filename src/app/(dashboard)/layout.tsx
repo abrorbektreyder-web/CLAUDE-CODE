@@ -1,0 +1,41 @@
+import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth';
+import { Sidebar } from '@/components/dashboard/sidebar';
+import { Topbar } from '@/components/dashboard/topbar';
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session?.user) {
+    redirect('/login?callback=/dashboard');
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-[var(--color-background)]">
+      {/* Ambient glow */}
+      <div
+        className="pointer-events-none fixed -right-48 -top-48 h-[600px] w-[600px] rounded-full opacity-20 blur-3xl"
+        style={{
+          background:
+            'radial-gradient(circle, rgba(255, 107, 53, 0.4) 0%, transparent 60%)',
+        }}
+      />
+
+      {/* Sidebar */}
+      <Sidebar user={session.user} />
+
+      {/* Main content */}
+      <main className="flex flex-1 flex-col overflow-hidden">
+        <Topbar />
+        <div className="flex-1 overflow-y-auto p-6">{children}</div>
+      </main>
+    </div>
+  );
+}
