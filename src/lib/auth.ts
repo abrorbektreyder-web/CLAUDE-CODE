@@ -81,10 +81,10 @@ export const auth = betterAuth({
 
   // Trusted origins
   trustedOrigins: [
+    'http://localhost:3000',
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    ...(process.env.NODE_ENV === 'production'
-      ? [`https://*.${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`]
-      : ['http://localhost:3000']),
+    'https://claude-code-six-chi.vercel.app',
+    ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
   ],
 
   // Advanced security
