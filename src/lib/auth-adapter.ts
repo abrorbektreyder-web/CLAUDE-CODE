@@ -99,7 +99,6 @@ const SNAKE_TO_CAMEL: Record<string, Record<string, string>> = {
     deleted_at: 'deletedAt',
     avatar_url: 'avatarUrl',
     image: 'image',
-    email_verified: 'emailVerified',
   },
   sessions: {
     token_hash: 'token',
