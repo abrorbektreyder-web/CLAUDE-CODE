@@ -1,0 +1,986 @@
+
+LOYIHA USTAVI
+Mobile Retail POS Platform
+Telefon va aksessuarlar do'koni uchun professional savdo tizimi
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Versiya 1.0
+23 Aprel, 2026
+Tayyorladi: AI Architect
+Buyurtmachi: Abdurohman
+
+
+Mundarija
+
+
+
+
+
+1. Executive Summary
+Mazkur hujjat — telefon va aksessuarlar sotadigan do'kon uchun zamonaviy, premium darajadagi POS (Point of Sale) tizimini ishlab chiqish uchun to'liq texnik topshiriq va loyiha ustavidir.
+1.1. Loyiha haqida qisqacha
+Loyiha nomi: Mobile Retail POS Platform
+Loyiha turi: B2B SaaS (Software as a Service)
+Maqsadli auditoriya: Telefon va mobil aksessuar do'konlari (O'zbekiston bozori birinchi navbatda)
+Birinchi mijoz: Loyiha egasining shaxsiy do'koni (1 filial, 1-2 kassir)
+Strategik vizyon: MVP'ni o'z biznesida sinab, keyin boshqa do'konlarga sotish (SaaS)
+Ishlab chiqish vaqti: MVP — 6 hafta, To'liq versiya — 3 oy
+Boshlang'ich byudjet: Hosting $0 (free tier), oyiga $0-25 boshlanishida
+1.2. Asosiy g'oya
+Bozordagi mavjud POS tizimlar (Loyverse, Poster, R-Keeper) telefon biznesining maxsus ehtiyojlarini qondirmaydi:
+•IMEI bo'yicha har bir telefonni alohida birlik sifatida boshqarish yo'q
+•Kafolat boshqaruvi to'liq emas
+•Nasiya/qarzdorlik tizimi mahalliy biznesga moslashmagan
+•Telegram orqali real-time monitoring yo'q
+•O'zbek tili va mahalliy to'lov tizimlari qo'llab-quvvatlanmaydi
+
+Bizning yechim — mobil retail biznesining barcha bu maxsus ehtiyojlarini qondiradigan, premium dizaynli, ultra-tezkor POS platforma.
+1.3. Asosiy raqamlar
+Ko'rsatkich	Maqsad
+Kassir bir savdoni amalga oshirish vaqti	≤ 30 soniya (aksessuar) / ≤ 2 daqiqa (telefon nasiya)
+Tizim javob vaqti (P95)	< 200ms
+Uptime (SLA)	99.9% (oyiga max 43 daqiqa to'xtash)
+Ma'lumotlar zaxiralash	Har 12 soatda avtomatik, 30 kun saqlash
+Bir vaqtda foydalanuvchilar	10 (MVP) → 1000+ (SaaS)
+Multi-tenant izolatsiya	Database-level (RLS)
+
+
+2. Biznes Tahlili
+2.1. Maqsadli mijoz portreti
+Asosiy mijoz: Telefon va aksessuar do'koni egasi
+Hajmi: 1-5 filial, 1-15 kassir
+Hudud: O'zbekiston (boshlang'ich), keyin Markaziy Osiyo
+Texnik tayyorlik: O'rtacha (aksariyati Excel ishlatadi)
+Asosiy og'riqli muammolar: 
+•Telefonlarni IMEI bo'yicha kuzatish — qog'ozda yoki Excelda
+•Nasiya berilgan mijozlarning qarzini eslab qolish qiyin
+•Kassir qancha sotgan, qancha pul kelgan — aniq hisob yo'q
+•Kafolat muddati o'tib ketib, mijozlar bilan janjal
+•Egasi do'konda bo'lmaganda nima sotilganini bilmaydi
+2.2. Bozor tahlili (qisqacha)
+O'zbekistondagi telefon do'konlari soni: Taxminan 3,500-5,000
+Hozirgi raqamli yechimlardan foydalanuvchilar: 10-15% (asosan Loyverse, 1C)
+Bo'sh joy: 85%+ do'konlar Excel/qog'ozda ishlaydi
+Konkurentlar: 
+Konkurent	Kuchli tomon	Bizning ustunligimiz
+Loyverse	Bepul, oddiy	IMEI tracking, nasiya, Telegram bot
+Poster POS	Restoran fokus	Telefon biznes uchun maxsus
+1C: Savdo	To'liq accounting	Zamonaviy UX, cloud, mobile
+Excel	Bepul, oddiy	Avtomatlashtirish, xatolar yo'q
+2.3. Biznes modeli (SaaS)
+Loyiha SaaS sifatida quyidagi narx modelida ishlaydi (tavsiya):
+Tarif	Narxi (oyiga)	Imkoniyatlar
+Free	0 so'm	1 kassir, 100 mahsulot, asosiy funksiyalar
+Starter	299,000 so'm	3 kassir, cheksiz mahsulot, Telegram bot
+Professional	599,000 so'm	10 kassir, 3 filial, SMS, advanced reports
+Enterprise	Sotuvchi bilan	Cheksiz, custom features, dedicated support
+
+
+3. Loyiha Scope (Ko'lami)
+3.1. MVP — 6 hafta ichida
+MVP (Minimum Viable Product) bosqichida quyidagi 15 ta asosiy funksional modul ishlab chiqiladi:
+№	Modul	Tavsifi	Prioritet
+1	Auth & RBAC	Login, rollar, 2FA, sessiya boshqaruvi	P0
+2	Multi-tenant	Tenant izolatsiya, workspace, subdomain	P0
+3	Mahsulot bazasi	Telefon va aksessuar CRUD, kategoriyalar	P0
+4	IMEI tracking	Har telefon alohida birlik sifatida	P0
+5	Kassir POS	Tezkor sotuv interfeysi, barcode scanner	P0
+6	Aksessuar sotuv	Variant-based, qoldiq nazorat	P0
+7	Mijozlar bazasi	CRUD, sotib olish tarixi, qarz tarixi	P0
+8	Nasiya/qarz	Foiz hisoblash, oylik to'lov grafigi	P0
+9	Kafolat	Avtomatik hisoblanadi, alert sistemasi	P0
+10	Telegram bot	Real-time savdo xabari, qarz eslatma	P0
+11	Smena boshqaruv	Smena ochish/yopish, kassa pul tekshiruvi	P0
+12	Chek chop etish	ESC/POS thermal printer support	P0
+13	Asosiy hisobotlar	Kunlik, oylik savdo, top mahsulotlar	P0
+14	Audit log	Immutable jurnal, har bir muhim amal	P0
+15	Backup	Avtomatik kunlik backup	P0
+3.2. MVP'dan keyin (Phase 2 — 2 oy)
+•Trade-in moduli (eski telefonni qabul qilish)
+•Ta'mirga qabul moduli (servis tickets)
+•SMS gateway integratsiya (Eskiz.uz/Playmobile)
+•Mobile app (kassir uchun React Native)
+•Yetkazib beruvchilar moduli
+•Multi-currency (USD/UZS)
+•Bonus dastur va loyalty cards
+•Cross-sell tavsiyalari (AI-powered)
+•Multi-branch (filial qo'shish)
+•Excel import/export
+3.3. Uzoq muddatli vizyon (Phase 3 — 6 oy+)
+•Online do'kon ulanishi (Telegram Web App)
+•Marketplace integratsiya (Uzum, OLX)
+•AI bashorat (qaysi mahsulot qancha kerak bo'ladi)
+•WhatsApp Business integratsiya
+•Franchise rejimi (sub-tenants)
+•Public API (3rd party)
+3.4. Scope'dan TASHQARI (qilmaydi)
+Quyidagi funksiyalar bu loyiha doirasida ishlab chiqilmaydi:
+•To'liq accounting tizimi (1C kabi) — ammo eksport bor
+•HR/oylik moshi tizimi
+•Ombor avtomatlashtirish (RFID, kuzatuv kameralari)
+•Kuryer/yetkazib berish ilovasi
+•Bank ulanishi (Click/Payme — keyingi versiyada)
+
+
+4. Texnologik Stack
+4.1. Stack tanlovi
+Quyidagi stack — sizning profilingiz (1 dasturchi, arzon byudjet, SaaS) uchun eng to'g'ri tanlov:
+Frontend
+Texnologiya	Maqsad
+Next.js 15 (App Router)	Full-stack React framework
+TypeScript 5	Type safety, kamroq bug
+Tailwind CSS v4	Utility-first styling
+shadcn/ui	Accessible, customizable components
+Framer Motion	Premium animations
+Zustand	Client state management
+TanStack Query v5	Server state, caching
+react-hotkeys-hook	Klaviatura shortcut'lar
+Sonner	Toast notifications
+Lucide Icons	Clean icon set
+Backend
+Texnologiya	Maqsad
+Next.js API Routes	REST API endpoints
+Server Actions	Type-safe mutations
+Drizzle ORM	Type-safe DB access
+Zod	Runtime validation
+Better Auth	Authentication + 2FA
+grammY	Telegram bot framework
+node-thermal-printer	ESC/POS printer support
+pino	Structured logging
+Database & Infrastructure
+Texnologiya	Maqsad
+Supabase	PostgreSQL + Auth + Realtime + Storage
+Upstash Redis	Cache + queue (rate limiting, sessions)
+Vercel	Hosting (frontend + backend)
+Cloudflare	CDN + DDoS protection
+Sentry	Error tracking + monitoring
+GitHub Actions	CI/CD
+Posthog	Product analytics (free tier)
+4.2. Narx tahlili
+Xizmat	Boshlang'ich (oyiga)	1 yildan keyin	Izoh
+Vercel	$0	$0	Free tier 100GB bandwidth
+Supabase	$0	$25	500MB free, keyin Pro plan
+Upstash Redis	$0	$0	10K command/day free
+Cloudflare	$0	$0	Free tier yetadi
+Sentry	$0	$0	5K error/oy free
+Domain (.uz)	$5/yil	$5/yil	1 marta to'lov
+Telegram Bot	$0	$0	Bepul
+JAMI (oyiga)	~$0	~$25	Birinchi 100 mijozgacha yetadi
+4.3. Stack qarorlarining asoslanishi
+Nega Next.js, Laravel/Django emas?
+•Bitta repo — frontend va backend bir joyda, deployment oson
+•Vercel'ga `git push` orqali avtomatik deploy
+•Server-side rendering — Google'da chiqadi (SaaS landing page uchun)
+•Edge functions — global tezlik (50ms)
+•TypeScript end-to-end — bug'lar kamroq
+Nega Supabase, oddiy PostgreSQL emas?
+•Row Level Security (RLS) — multi-tenant izolatsiya boshidan
+•Realtime subscriptions — WebSocket'siz real-time
+•Built-in Auth — alohida sozlash kerak emas
+•Storage S3-compatible — fayllar uchun
+•Free tier 500MB — boshlanishida yetadi
+•Self-host imkoniyati — kerak bo'lsa o'tkazish mumkin
+Nega Drizzle, Prisma emas?
+•Tezroq (no engine binary)
+•SQL'ga yaqin — debug oson
+•Type-safe — Prisma kabi
+•Edge runtime'da ishlaydi
+•Lighter bundle — kichik deploy
+
+
+5. Tizim Arxitekturasi
+5.1. Yuqori darajadagi arxitektura
+Tizim quyidagi qatlamlardan iborat:
+┌─────────────────────────────────────────────────────────────┐
+│                   CLIENT LAYER                              │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐  │
+│  │ Kassir   │ │ Admin    │ │ Mobile   │ │ Print Service│  │
+│  │ Web UI   │ │ Web UI   │ │ App (PWA)│ │ (Local)      │  │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └──────┬───────┘  │
+└───────┼────────────┼────────────┼──────────────┼──────────┘
+        │            │            │              │
+        └────────────┴────────────┴──────────────┘
+                          │ HTTPS
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              EDGE LAYER (Vercel + Cloudflare)               │
+│  • Rate limiting  • DDoS protection  • CDN  • SSL          │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              APPLICATION LAYER (Next.js)                    │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  Middleware: Auth, Tenant resolution, Audit log       │ │
+│  └────────────────────────────────────────────────────────┘ │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐  │
+│  │ Sales    │ │ Inventory│ │ Customer │ │ Reports      │  │
+│  │ Service  │ │ Service  │ │ Service  │ │ Service      │  │
+│  └──────────┘ └──────────┘ └──────────┘ └──────────────┘  │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              DATA LAYER                                     │
+│  ┌──────────────┐ ┌──────────────┐ ┌──────────────────┐   │
+│  │ PostgreSQL   │ │ Redis        │ │ Object Storage   │   │
+│  │ (Supabase)   │ │ (Upstash)    │ │ (Supabase)       │   │
+│  │ + RLS        │ │ Cache, Queue │ │ Images, Files    │   │
+│  └──────────────┘ └──────────────┘ └──────────────────┘   │
+└─────────────────────────┬───────────────────────────────────┘
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│              EXTERNAL SERVICES                              │
+│  • Telegram Bot API  • SMS Gateway  • Sentry  • Analytics  │
+└─────────────────────────────────────────────────────────────┘
+5.2. Multi-Tenant Arxitektura
+SaaS sifatida ishlash uchun har bir mijoz (do'kon) — alohida tenant. Tanlangan strategiya:
+Strategiya: Shared Database, Shared Schema with Row Level Security (RLS)
+
+Har bir jadvalda `tenant_id` ustuni bor. PostgreSQL RLS qoidalari avtomatik ravishda har bir so'rovga `WHERE tenant_id = current_tenant()` qo'shadi. Bu — eng arzon va xavfsiz yondashuv.
+Nega bu strategiya?
+Strategiya	Plus	Minus	Bizga mos?
+Database per tenant	To'liq izolatsiya	Qimmat, scale qiyin	❌
+Schema per tenant	Yaxshi izolatsiya	Migration qiyin	❌
+Shared DB + RLS	Arzon, scale oson	RLS bug — ma'lumot leak	✅
+Tenant resolution oqimi:
+1.Foydalanuvchi `mydostonim.poshub.uz` ga kiradi
+2.Vercel middleware subdomain'ni ushlaydi: `mydostonim`
+3.DB'dan `tenant` jadvalidan tenant ma'lumotlari olinadi
+4.JWT token'ga `tenant_id` qo'shiladi
+5.Har bir DB so'rovi avtomatik filtrlanadi (RLS)
+5.3. Database Schema (asosiy jadvallar)
+To'liq schema 25+ jadvaldan iborat. Mana asosiy jadvallar:
+-- TENANT (multi-tenancy uchun)
+tenants (
+  id UUID PRIMARY KEY,
+  subdomain VARCHAR UNIQUE,    -- mydostonim
+  business_name VARCHAR,
+  plan VARCHAR,                 -- free, starter, pro, enterprise
+  created_at, expires_at,
+  settings JSONB                -- bot_token, sms_config, etc.
+)
+
+-- USERS
+users (
+  id UUID PRIMARY KEY,
+  tenant_id UUID REFERENCES tenants(id),
+  email, phone, pin_hash,
+  role VARCHAR,                 -- admin, manager, cashier, warehouse
+  is_active BOOLEAN,
+  last_login_at, last_login_ip
+)
+
+-- PRODUCTS (umumiy)
+products (
+  id UUID PRIMARY KEY,
+  tenant_id UUID,
+  name, brand, model, sku, barcode,
+  cost_price, retail_price,    -- RLS: kassir cost_price ko'rmaydi
+  category_id, image_url,
+  is_active
+)
+
+-- PHONE_UNITS (har telefon alohida — IMEI based)
+phone_units (
+  id UUID PRIMARY KEY,
+  tenant_id UUID,
+  product_id UUID,
+  imei VARCHAR ENCRYPTED,       -- AES-256 encrypted
+  serial_number, color, storage,
+  condition VARCHAR,            -- new, opened, used, demo
+  warranty_months,
+  status VARCHAR,               -- in_stock, reserved, sold, returned, defective
+  cost_price, sold_at, sold_to_customer_id
+)
+
+-- ACCESSORY_VARIANTS (variant-based)
+accessory_variants (
+  id UUID PRIMARY KEY,
+  tenant_id UUID,
+  product_id UUID,
+  color, length, type, generation,
+  is_original BOOLEAN,
+  compatible_models JSONB
+)
+
+-- STOCK_LEVELS (qoldiq)
+stock_levels (
+  variant_id UUID,
+  branch_id UUID,
+  quantity INT,
+  reserved_qty INT,
+  updated_at
+)
+
+-- CUSTOMERS
+customers (
+  id UUID PRIMARY KEY,
+  tenant_id UUID,
+  full_name, phone ENCRYPTED, telegram_chat_id,
+  passport ENCRYPTED, address,
+  total_debt DECIMAL,
+  credit_score INT,             -- 0-100, avtomatik hisoblanadi
+  notes
+)
+
+-- SALES
+sales (
+  id UUID PRIMARY KEY,
+  tenant_id UUID,
+  receipt_number VARCHAR,       -- per-tenant unique
+  branch_id, cashier_id, customer_id,
+  total, discount, paid, debt,
+  payment_method,               -- cash, card, transfer, mixed, credit
+  status,                       -- completed, refunded
+  created_at,
+  shift_id UUID                 -- qaysi smenada
+)
+
+-- SALE_ITEMS
+sale_items (
+  id UUID,
+  sale_id UUID,
+  product_id, phone_unit_id, variant_id,
+  quantity, unit_price, discount, total,
+  warranty_until
+)
+
+-- DEBTS (nasiya)
+debts (
+  id UUID PRIMARY KEY,
+  tenant_id UUID,
+  customer_id, sale_id,
+  total_amount, paid_amount, remaining,
+  monthly_payment, total_months,
+  interest_rate DECIMAL,        -- foiz
+  due_date,
+  status                        -- active, overdue, paid, defaulted
+)
+
+-- SHIFTS (smena)
+shifts (
+  id UUID PRIMARY KEY,
+  tenant_id UUID,
+  cashier_id, branch_id,
+  opened_at, closed_at,
+  opening_cash, closing_cash, expected_cash,
+  difference,                   -- agar farq bor — alert
+  status                        -- open, closed
+)
+
+-- AUDIT_LOG (immutable)
+audit_logs (
+  id UUID PRIMARY KEY,
+  tenant_id UUID,
+  user_id, action, entity, entity_id,
+  changes JSONB,
+  ip_address, user_agent,
+  created_at
+)
+-- TRIGGER: BEFORE UPDATE/DELETE → RAISE EXCEPTION
+
+
+6. Xavfsizlik (Security Architecture)
+6.1. Tahdid modeli (Threat Model)
+Loyihaga oid asosiy tahdidlar va ulardan himoya:
+Tahdid	Ehtimollik	Zarar	Himoya
+Kassir tan narx ko'rib raqobatchilarga sotadi	Yuqori	O'rta	DB-level RLS, hech qachon API'da qaytarilmaydi
+Kassir refund qilib pul o'g'irlaydi	Yuqori	Yuqori	Kuniga 3 marta limit, summa limit, admin tasdiq
+Tenant ma'lumotlari boshqa tenantga leak	O'rta	Kritik	RLS + integratsion testlar
+IMEI bazasi o'g'irlanadi	Past	Yuqori	AES-256 encryption, audit log
+Brute-force PIN'ga	Yuqori	O'rta	Rate limit 5/15min, account lock
+Telegram bot token leak	O'rta	Yuqori	Vault'da saqlash, har 90 kun rotatsiya
+DDoS hujum	Past	O'rta	Cloudflare avtomatik
+SQL injection	Past	Kritik	Drizzle ORM (parameterized)
+XSS	Past	O'rta	React avtomatik escape + CSP
+CSRF	Past	O'rta	Better Auth same-site cookies
+Insecure deserialization	Past	O'rta	Zod validation har endpoint'da
+Xavfsizlik update'lari yo'q	Yuqori	Yuqori	Dependabot avtomatik
+6.2. Authentication (Kirim) Strategiyasi
+Admin kirimi:
+•Email + password (Argon2id hashing)
+•2FA majburiy — Telegram orqali kod
+•Brute-force himoya: 5 urinish → 15 daqiqa lock
+•Yangi qurilmadan kirim → email + Telegram'ga xabar
+•Sessiya 24 soat, refresh token 7 kun
+Kassir kirimi:
+•Telefon raqami + 6-raqamli PIN (bcrypt cost 12)
+•Faqat ro'yxatdan o'tgan qurilmadan kira oladi (device fingerprint)
+•PIN noto'g'ri 5 marta → admin'ga xabar, account lock
+•Smena ochilganidan keyin sessiya aktiv
+•Smena yopilganda sessiya yopiladi
+•8 soat ishlamasdan turish → avtomatik chiqib ketadi
+6.3. Authorization (Ruxsatlar) — RBAC + RLS
+Rollar:
+Rol	Tavsif
+super_admin	Anthropic ichki — barcha tenant'larga kirish (faqat support uchun)
+tenant_owner	Tenant egasi — to'liq ruxsat o'z tenant ichida
+admin	Tenant ichida operatsion boshqaruv
+manager	Tahlil va hisobot, ba'zi operatsiyalar
+accountant	Moliyaviy boshqaruv, qarzlar
+warehouse	Ombor operatsiyalari
+cashier	Faqat sotuv va asosiy operatsiyalar
+RLS (Row Level Security) misol:
+-- Faqat o'z tenant'idagi ma'lumotni ko'rsatadi
+CREATE POLICY tenant_isolation ON sales
+  FOR ALL
+  USING (tenant_id = current_setting('app.tenant_id')::uuid);
+
+-- Kassir tan narxni KO'RA OLMAYDI (column-level)
+CREATE POLICY no_cost_price_for_cashier ON products
+  FOR SELECT
+  USING (
+    CASE WHEN current_setting('app.user_role') = 'cashier'
+    THEN cost_price IS NULL  -- API'da bu ustun NULL bo'lib qaytadi
+    ELSE TRUE
+    END
+  );
+
+-- Audit log'ni hech kim o'zgartira/o'chira olmaydi
+CREATE POLICY immutable_audit ON audit_logs
+  FOR UPDATE USING (FALSE);
+CREATE POLICY immutable_audit_delete ON audit_logs
+  FOR DELETE USING (FALSE);
+6.4. Ma'lumotlarni shifrlash
+At-rest (saqlanganda):
+•PostgreSQL — Supabase tomonidan AES-256 encryption
+•Sensitive ustunlar (IMEI, passport, telefon) — application-level AES-256
+•Kalit Supabase Vault'da saqlanadi
+In-transit (uzatilganda):
+•HTTPS (TLS 1.3) majburiy — HTTP redirect
+•HSTS header (max-age 1 yil)
+•Internal API'lar uchun ham TLS
+6.5. Audit Log — barcha kritik amallar
+Quyidagi amallar avtomatik ravishda audit_logs jadvaliga yoziladi:
+•Login/logout (muvaffaqiyatli va muvaffaqiyatsiz)
+•Sotuv yaratish, refund, bekor qilish
+•Mahsulot narxini o'zgartirish
+•Foydalanuvchi qo'shish/o'chirish/rolini o'zgartirish
+•Qarzni o'chirish yoki o'zgartirish
+•Smena ochish/yopish
+•Settings o'zgartirish
+•Telegram/SMS sozlamalari o'zgartirish
+Audit log immutable qilib qo'yiladi:
+-- PostgreSQL trigger
+CREATE OR REPLACE FUNCTION prevent_audit_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  RAISE EXCEPTION 'Audit log o''zgartirib bo''lmaydi';
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER audit_immutable
+BEFORE UPDATE OR DELETE ON audit_logs
+FOR EACH ROW EXECUTE FUNCTION prevent_audit_changes();
+6.6. Refund firibgarligidan himoya
+Klassik POS firibgarligi: kassir mavjud bo'lmagan refund yaratib, kassadan pul oladi. Himoya:
+6.Kassir kuniga max 3 marta refund qila oladi
+7.Bir refund max 200,000 so'm
+8.Bundan ko'p — admin Telegram'ga so'rov boradi, qabul kerak
+9.Har refund — audit log + Telegram xabari
+10.Refund'da original sotuv ID majburiy (mavjud bo'lmagan refund mumkin emas)
+11.Bir sotuv max 1 marta refund qilinadi (qisman bo'lsa, ko'p marta)
+12.Anomaly detection: kassir kuniga >5 refund — admin'ga alert
+6.7. Compliance
+•O'zbekiston Personal Data Law'iga muvofiqlik (passport, telefon)
+•Mijoz ma'lumotlarini o'chirish huquqi (GDPR-style)
+•Ma'lumotlarni 5 yil saqlash (soliq talabi)
+•Backup'larda ham shifrlash
+
+
+7. UX/UI Dizayn Tizimi
+7.1. Dizayn falsafasi
+Loyiha dizayni quyidagi 4 ta prinsipga asoslanadi:
+13.Apple darajasidagi soddalik — har ekranda 1 ta asosiy harakat
+14.Tesla darajasidagi raqamlilik — pul, qoldiq, IMEI'lar dominant
+15.Linear darajasidagi tezlik — 150-250ms animatsiya, hech qachon kutmaslik
+16.Stripe darajasidagi ishonch — har element premium hissini beradi
+7.2. Color Palette
+Light Mode (asosiy)
+Element	HEX
+Background	#FAFAFA
+Surface (cards)	#FFFFFF
+Primary text	#1C1C1E
+Secondary text	#6E6E73
+Border	#D2D2D7
+Accent (primary action)	#0A84FF
+Success	#34C759
+Warning	#FF9500
+Danger	#FF3B30
+Dark Mode
+Element	HEX
+Background	#000000
+Surface	#1C1C1E
+Primary text	#FFFFFF
+Secondary text	#8E8E93
+Border	#38383A
+Accent	#0A84FF
+7.3. Tipografiya
+Type	Font + Size + Weight
+Display (kassa raqamlari)	JetBrains Mono, 56px, 700
+H1 (sahifa nomi)	Inter, 32px, 700
+H2 (section)	Inter, 24px, 600
+H3 (subsection)	Inter, 18px, 600
+Body	Inter, 15px, 400
+Body bold	Inter, 15px, 600
+Caption	Inter, 13px, 500
+Mono (IMEI, barcode)	JetBrains Mono, 14px, 500
+7.4. Spacing System (8pt grid)
+•xs: 4px
+•sm: 8px
+•md: 16px
+•lg: 24px
+•xl: 32px
+•2xl: 48px
+•3xl: 64px
+7.5. Component States
+Har bir interaktiv element 5 ta holatga ega:
+•Default (oddiy)
+•Hover (sichqoncha ustida)
+•Active (bosilganda)
+•Focus (keyboard navigation)
+•Disabled (faollashmagan)
+7.6. Klaviatura shortcut'lari (kassir uchun)
+Shortcut	Amal
+F1	Mahsulot qidiruv
+F2	Mijoz tanlash/qo'shish
+F3	Aksessuar quick add
+F4	Chegirma
+F5	Sahifani yangilash
+F8	Sotuvni saqlab qo'yish (suspended sale)
+F9	Saqlangan sotuvlar
+F10	Smena hisoboti
+F12	To'lov modali
+Ctrl + Enter	Sotuvni tasdiqlash
+Esc	Modal yopish / bekor qilish
+Ctrl + P	Oxirgi chekni qayta chop etish
+Ctrl + Z	Oxirgi qo'shilgan mahsulotni o'chirish
+Tab	Keyingi maydonga o'tish
+7.7. Animatsiya prinsiplari
+•Micro (hover, tap): 150ms
+•Transitions (sahifa o'zgartirish): 250ms
+•Modals: 400ms (open) / 300ms (close)
+•Easing: cubic-bezier(0.32, 0.72, 0, 1) — Apple-style spring
+•Skeleton loading — spinner emas (UX yaxshiroq)
+•Optimistic UI — javob kutmasdan ko'rsatish
+7.8. Erishish (Accessibility)
+•WCAG 2.1 AA darajasiga muvofiq
+•Screen reader uchun semantic HTML
+•Klaviatura bilan to'liq navigatsiya
+•Focus indicator har element uchun
+•Color contrast minimum 4.5:1
+•Hech qachon faqat rang orqali ma'lumot uzatish (icon + text)
+
+
+8. Navigatsiya Strukturasi
+8.1. Kassir navigatsiyasi (minimal)
+Kassir uchun maksimal sodda — 4 ta asosiy ekran:
+/pos                  → Asosiy sotuv oynasi (default)
+/pos/customer         → Mijoz tanlash/qo'shish
+/pos/history          → Bugungi cheklar
+/pos/shift            → Smena boshqaruvi
+8.2. Admin navigatsiyasi
+/dashboard            → Real-time ko'rinish (default)
+
+/sales
+  /sales/list         → Barcha sotuvlar
+  /sales/refunds      → Qaytarishlar
+  /sales/suspended    → To'xtatilgan sotuvlar
+
+/inventory
+  /inventory/phones   → Telefonlar (IMEI bo'yicha)
+  /inventory/accessories
+  /inventory/incoming → Kirim
+  /inventory/transfers → Filiallar orasi ko'chirish
+  /inventory/stocktake → Inventarizatsiya
+  /inventory/alerts   → Low stock + kafolat alert
+
+/customers
+  /customers/list
+  /customers/[id]     → Mijoz kartasi
+
+/credit
+  /credit/active      → Aktiv nasiyalar
+  /credit/overdue     → Kechikkanlar 🔴
+  /credit/payments    → To'lovlar tarixi
+
+/reports
+  /reports/sales
+  /reports/inventory
+  /reports/cashiers   → Kassir reytingi
+  /reports/profit     → Foyda/zarar
+  /reports/warranty   → Kafolat tugayotganlar
+
+/users                → Xodimlar
+/settings
+  /settings/business  → Do'kon ma'lumotlari
+  /settings/branches  → Filiallar
+  /settings/categories
+  /settings/printer
+  /settings/telegram
+  /settings/billing   → Tarif (SaaS)
+  /settings/audit     → Audit log
+
+/profile              → Shaxsiy sozlamalar
+
+
+9. Rollar va Huquqlar Jadvali
+Quyidagi jadvalda har bir rol uchun ruxsatlar batafsil ko'rsatilgan.
+
+Belgilar: ✅ to'liq ruxsat, ❌ ruxsat yo'q, ⚠️ cheklangan ruxsat
+
+Amal	Owner	Admin	Manager	Accountant	Warehouse	Cashier
+Sotuv yaratish	✅	✅	❌	❌	❌	✅
+Sotuvni o'chirish	✅	✅	❌	❌	❌	❌
+Refund (kichik)	✅	✅	❌	❌	❌	⚠️
+Refund (katta)	✅	⚠️ 2FA	❌	❌	❌	❌
+Chegirma berish	✅	✅	❌	❌	❌	⚠️ max 5%
+Mahsulot ko'rish	✅	✅	✅	✅	✅	✅
+Mahsulot qo'shish	✅	✅	❌	❌	✅	❌
+Narxni o'zgartirish	✅	✅	❌	❌	❌	❌
+Tan narxni ko'rish	✅	✅	✅	✅	❌	❌
+Ombor kirimi	✅	✅	❌	❌	✅	❌
+Inventarizatsiya	✅	✅	❌	❌	✅	❌
+Filial ko'chirish	✅	✅	❌	❌	✅	❌
+Mijoz qo'shish	✅	✅	❌	✅	❌	✅
+Mijoz o'chirish	✅	✅	❌	❌	❌	❌
+Nasiya rasmiylash.	✅	✅	❌	✅	❌	⚠️ limit
+Qarz to'lovi qabul	✅	✅	❌	✅	❌	✅
+Qarzni o'chirish	✅	✅	❌	❌	❌	❌
+Asosiy hisobotlar	✅	✅	✅	✅	⚠️	⚠️
+Foyda ko'rish	✅	✅	✅	✅	❌	❌
+User qo'shish	✅	⚠️	❌	❌	❌	❌
+Telegram sozlash	✅	❌	❌	❌	❌	❌
+Audit log ko'rish	✅	✅	❌	❌	❌	❌
+Backup yaratish	✅	❌	❌	❌	❌	❌
+Tarif o'zgartirish	✅	❌	❌	❌	❌	❌
+
+
+10. Telegram va SMS Integratsiya
+10.1. Telegram Bot — Admin xabarnomalar
+Har savdo uchun:
+🛒 YANGI SAVDO #00247
+━━━━━━━━━━━━━━━━━
+📍 Filial: Chilonzor
+👤 Kassir: Aziz Karimov
+🕐 23.04.2026, 14:32
+
+📦 Mahsulotlar:
+1. iPhone 15 Pro 256GB Natural
+   IMEI: 356789102345678
+   ✅ Kafolat: 12 oy
+   💰 12,500,000 so'm
+
+2. Original kabel USB-C → Lightning 1m
+   💰 350,000 so'm × 1 = 350,000
+
+━━━━━━━━━━━━━━━━━
+💵 JAMI:        12,850,000 so'm
+💳 To'lov:      Karta + Nasiya
+   ├ Karta:     5,000,000
+   └ Nasiya:    7,850,000 (3 oy)
+
+👤 Mijoz: Sardor Yusupov
+📞 +998 90 123 45 67
+Kunlik avtomatik hisobot (23:00):
+📊 KUNLIK HISOBOT — 23.04.2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 Umumiy savdo:    47,250,000 so'm
+🧾 Cheklar soni:    23 ta
+📈 O'rtacha chek:   2,054,348 so'm
+💎 Sof foyda:       8,470,000 so'm
+
+📱 TOP TELEFONLAR:
+1. iPhone 15 Pro 256GB — 3 ta
+2. Samsung S24 Ultra — 2 ta
+3. Redmi Note 13 — 4 ta
+
+🎧 TOP AKSESSUARLAR:
+1. AirPods Pro 2 — 5 ta
+2. UGREEN kabel — 12 ta
+3. Himoya oynasi iPhone — 18 ta
+
+👥 KASSIRLAR:
+🥇 Aziz K. — 18,500,000 (9 chek)
+🥈 Bobur S. — 15,200,000 (8 chek)
+
+⚠️ DIQQAT:
+• 7 ta mahsulot minimal qoldiqdan past
+• 3 ta qarz bugun muddati o'tgan
+• 2 ta telefon kafolat tugashiga 7 kun
+10.2. Telegram Bot — Mijoz uchun
+Mijoz Telegram bot'ga ulanadi va quyidagilarni oladi:
+•Sotib olingan mahsulotlar elektron chek
+•Kafolat ma'lumotlari
+•Aktiv qarzlar
+•To'lov muddati eslatma
+•Yangi aksiyalar (xohlasa)
+10.3. Qarzdor uchun avtomatik eslatmalar
+Vaqt	Telegram	SMS
+3 kun oldin	✅ Yumshoq eslatma	❌ (bepul-bepul)
+1 kun oldin	✅ Eslatma	✅ SMS
+Kuni	✅ Bugun to'lov	✅ SMS
+1 kun keyin	✅ Kechikdi	✅ SMS
+3 kun keyin	✅ Jiddiy	✅ SMS + admin'ga
+7 kun keyin	✅ Final ogohlantirish	✅ SMS + qora ro'yxat
+14 kun keyin	❌	❌ (admin qo'lda)
+10.4. SMS Gateway — Eskiz.uz
+Tavsiya etilgan provider — Eskiz.uz, sababi:
+•O'zbekiston operatorlari bilan to'g'ridan-to'g'ri ishlaydi
+•Bir SMS ~50-80 so'm
+•API hujjatlari yaxshi
+•Sender ID brand nomi bilan ko'rinadi
+SMS shablonlari:
+Eslatma:
+"Hurmatli {ism}, {sana}da {summa} so'm to'lov muddati."
+
+Kechikdi:
+"DIQQAT: Sizning {summa} so'm qarzingiz {kun} kun kechikdi."
+
+Tasdiq:
+"Tolovingiz qabul qilindi. Qoldi: {summa} sum. {dokon}"
+
+
+11. Telefon va Aksessuar Inventory Logikasi
+11.1. Telefon — Serial-based logika
+Telefon biznesining xususiyati: har bir telefon noyob (IMEI), ko'plab xususiyatlarga ega (rang, xotira, holat). Shuning uchun har bir telefon — alohida birlik.
+Misol:
+Product: iPhone 15 Pro 256GB
+  ├─ Unit #1: IMEI 356...001, Natural,  status: in_stock
+  ├─ Unit #2: IMEI 356...002, Natural,  status: in_stock
+  ├─ Unit #3: IMEI 356...003, Blue,     status: sold (mijoz: Sardor)
+  ├─ Unit #4: IMEI 356...004, Natural,  status: demo
+  └─ Unit #5: IMEI 356...005, White,    status: returned
+Telefon statuslari:
+Status	Tavsifi
+in_stock	Sotuvga tayyor
+reserved	Mijoz uchun band qilingan
+sold	Sotilgan
+returned	Qaytarilgan, tekshiruvga
+defective	Buzilgan, ta'mirga
+demo	Demo, ko'rgazmaga
+transferred	Boshqa filialga ko'chirilgan
+Sotuv jarayoni:
+17.Kassir IMEI ni skanerlaydi yoki qidiradi
+18.Tizim aniq shu telefonni topadi
+19.Kafolat avtomatik hisoblanadi (sotuv sanasi + N oy)
+20.Mijozga biriktiriladi (mavjud bo'lmasa, yangisi yaratiladi)
+21.Status 'sold' ga o'zgaradi
+22.Telegram'ga to'liq IMEI bilan xabar boradi
+23.Audit log yoziladi
+11.2. Aksessuar — Variant-based logika
+Aksessuar — bir xil variant ko'p sonda bo'ladi. Shuning uchun variant + qoldiq tizimi.
+Misol:
+Product: UGREEN USB-C kabel
+  ├─ Variant: 1m, Qora     → 47 dona [Chilonzor], 23 dona [Yunusobod]
+  ├─ Variant: 1m, Oq       → 12 dona [Chilonzor]
+  ├─ Variant: 2m, Qora     → 8 dona  [Chilonzor]
+  └─ Variant: 0.5m, Qora   → 0 dona  ⚠️ tugadi
+11.3. Komplekt sotish (bundle)
+Telefon olganda — komplekt taklif qilish:
+iPhone 15 Pro Bundle:
+  + Himoya oynasi               120,000
+  + G'ilof premium              250,000
+  + Original kabel              350,000
+  ─────────────────────────────────────
+  Jami komplekt narxi:          720,000
+  Bundle chegirma:              -100,000
+  ─────────────────────────────────────
+  Komplekt: 620,000 so'm (1 klik bilan)
+11.4. Cross-sell tavsiyalar
+Mijoz iPhone 15 oladi → tizim avtomatik tavsiya qiladi:
+•Himoya oynasi (compatible_models'da iPhone 15 bor)
+•G'ilof iPhone 15 ga
+•USB-C → Lightning kabel (chunki iPhone 15 USB-C)
+•MagSafe charger
+•AirPods Pro 2
+11.5. Qoldiq nazorat
+Minimal qoldiq alert:
+•Har mahsulot uchun min_stock belgilanadi
+•Qoldiq min_stock'dan past tushsa — admin'ga Telegram
+•Dashboard'da 🟡 belgi
+Tugagan mahsulotlar:
+•Qoldiq 0 — qizil belgi
+•Sotuvga qo'shib bo'lmaydi (savatga tushmaydi)
+•Avtomatik supplier'ga buyurtma tavsiyasi (Phase 2)
+
+
+12. Asosiy User Flow'lar
+12.1. Tez aksessuar sotuv (10 soniya)
+#	Amal	Vaqt	Klik soni
+1	Kassir barcode skanerlaydi	1 sek	0
+2	Mahsulot avtomatik savatga tushadi	0 sek	0
+3	F12 (To'lov modali ochiladi)	1 sek	1
+4	Cash tugmasini bosadi	1 sek	1
+5	Enter — chek chiqadi + Telegram	5 sek	1
+JAMI	5 daqiqada 30 ta sotuv	~10 sek	3
+12.2. Telefon nasiya sotuv (3 daqiqa)
+24.F2 → Mijoz qidirish (telefon raqami orqali) → 5 sek
+25.Mijoz topilmasa: '+ Yangi mijoz' → passport + ism + telefon → 60 sek
+26.F1 → IMEI skanerlash → 3 sek
+27.Tavsiya etilgan aksessuar (himoya) qo'shish → 5 sek
+28.F12 → 'Aralash to'lov' → modal ochiladi
+29.Karta: 5,000,000 / Nasiya: 7,850,000 / Muddat: 3 oy → 30 sek
+30.Foiz avtomatik: 3% × 3 oy = 8,086,500 jami
+31.Oylik to'lov hisoblanadi: 2,695,500 so'm
+32.Tasdiq → Mijozga Telegram bot orqali shartnoma → avtomatik
+33.Chek + shartnoma chop etiladi → 10 sek
+34.Admin Telegram'ga to'liq ma'lumot → real-time
+12.3. Qarz to'lash (1 daqiqa)
+35.Mijoz keladi → kassir telefon raqamini yozadi
+36.Aktiv qarzlar ro'yxati ochiladi
+37.To'lanadigan summa kiritiladi
+38.To'lov turi tanlanadi
+39.Tasdiq → Mijozga SMS: 'Tolov qabul qilindi, qoldi: 5,233,333'
+40.Audit log + admin Telegram
+12.4. Smena yopish (5 daqiqa)
+41.Kassir 'Smenani yopish' tugmasini bosadi
+42.Tizim ko'rsatadi: kutilayotgan kassa: 12,450,000 so'm
+43.Kassir kassadagi pulni sanaydi va kiritadi
+44.Agar farq bor (masalan, -5,000): sabab yozish kerak
+45.Admin'ga avtomatik Telegram (agar farq > 50,000)
+46.Smena hisoboti chop etiladi
+47.Sessiya yopiladi
+12.5. Kafolat tugashi (avtomatik)
+48.Har kun 09:00'da cron job ishlaydi
+49.Kafolat tugashiga 30, 7, 1 kun qolgan telefonlar topiladi
+50.Mijozlarga Telegram orqali eslatma yuboriladi
+51.Admin dashboard'da ko'rinadi
+52.Mijoz texnik ko'rikga chaqiriladi (cross-sell imkoniyat)
+
+
+13. Vaqt Jadvali (6-haftalik MVP)
+13.1. Sprint 0: Setup (1 hafta)
+Kun	Vazifa
+Day 1	GitHub repo, Vercel, Supabase project setup
+Day 2	Database schema (Drizzle), migration tizimi
+Day 3	Better Auth setup, login/logout
+Day 4	Multi-tenant middleware, RLS qoidalari
+Day 5	Design system (Tailwind config, shadcn/ui)
+Day 6	Layout components (sidebar, header)
+Day 7	Deployment pipeline, monitoring (Sentry)
+13.2. Sprint 1: Mahsulot va Ombor (1 hafta)
+Kun	Vazifa
+Day 8-9	Kategoriyalar, mahsulot CRUD
+Day 10-11	Telefon — IMEI tracking, kirim
+Day 12	Aksessuar variant tizimi
+Day 13	Qoldiq nazorat, low stock alert
+Day 14	Excel import (mahsulotlar bazasi)
+13.3. Sprint 2: Kassir POS (1 hafta)
+Kun	Vazifa
+Day 15-16	POS UI (sotuv oynasi, savat)
+Day 17	Barcode scanner integratsiya, IMEI qidiruv
+Day 18	Klaviatura shortcut'lar
+Day 19	To'lov modali (cash, karta, aralash)
+Day 20-21	Chek chop etish (ESC/POS thermal printer)
+13.4. Sprint 3: Mijoz va Nasiya (1 hafta)
+Kun	Vazifa
+Day 22-23	Mijozlar bazasi (CRUD, qidiruv)
+Day 24-25	Nasiya tizimi (foiz, oylik to'lov grafigi)
+Day 26	Qarz to'lash, qisman to'lov
+Day 27	Kafolat boshqaruv, avtomatik hisoblash
+Day 28	Smena boshqaruv (ochish/yopish)
+13.5. Sprint 4: Telegram va Hisobot (1 hafta)
+Kun	Vazifa
+Day 29-30	Telegram bot setup (grammY)
+Day 31	Sotuv xabarnomalari, shabloni
+Day 32	Qarzdor eslatmalar (cron job)
+Day 33	Admin dashboard
+Day 34-35	Hisobotlar (kunlik, oylik, kassir)
+13.6. Sprint 5: Polish va Production (1 hafta)
+Kun	Vazifa
+Day 36-37	Audit log, refund himoya, anomaly detection
+Day 38	Backup tizimi, restore test
+Day 39	Performance optimizatsiya, caching
+Day 40	End-to-end test, bug fix
+Day 41	Onboarding oqimi (yangi tenant)
+Day 42	Production deploy, dokumentatsiya
+13.7. Phase 2 (8-13 hafta) — qisqacha
+•Mobile app (React Native)
+•SMS gateway integratsiya
+•Trade-in moduli
+•Ta'mirga qabul
+•Yetkazib beruvchilar
+•Multi-branch
+•Subscription billing (Stripe)
+
+
+14. Risklar va Mitigation
+Risk	Ehtimollik	Zarar	Mitigation
+Loyiha cho'zilishi	Yuqori	Yuqori	Sprint discipline, scope cut
+Bitta dasturchi tugab qoladi	O'rta	Kritik	Hujjat yozish majburiy, code review
+Supabase narx oshishi	Past	O'rta	Self-host'ga ko'chish rejasi
+Kassirlar yangi tizimni qabul qilmaydi	O'rta	Yuqori	O'qitish, oddiy UI, testing real userlarda
+Texnik bug — pul yo'qoladi	Past	Kritik	Audit log, transaction-level safety, test
+Telegram API o'zgarishi	Past	O'rta	grammY library yangilanib turadi
+O'zbekiston internet uzilishi	Yuqori	O'rta	Offline mode (Phase 2)
+Konkurent paydo bo'lishi	Yuqori	O'rta	Tez iteratsiya, mahalliy fokus
+15. Muvaffaqiyat Mezonlari (KPI)
+15.1. Texnik KPI
+•Uptime: 99.9% (oyiga max 43 daqiqa to'xtash)
+•Page load (P95): < 2 soniya
+•API response (P95): < 200ms
+•Bug rate: < 5 ta kritik bug/oy
+•Test coverage: > 70%
+•Security audit: 0 ta kritik vulnerability
+15.2. Biznes KPI (1 yil)
+•Foydalanuvchilar: 100+ do'kon
+•Daromad: $5,000+/oy
+•Churn rate: < 5%/oy
+•NPS: > 50
+•Onboarding: < 30 daqiqa
+15.3. UX KPI
+•Aksessuar sotuv vaqti: < 15 soniya
+•Telefon sotuv vaqti: < 90 soniya
+•Kassir o'rganish vaqti: < 1 soat
+•Admin dashboard tushunish: < 5 daqiqa
+
+
+16. Keyingi Qadamlar
+16.1. Sizdan kerak bo'ladigan ma'lumotlar
+Loyihani boshlash uchun keyingi 3-7 kun ichida quyidagi ma'lumotlar kerak:
+Brending va kontent:
+•Do'kon nomi (chek va Telegram'da chiqadi)
+•Logotip (PNG/SVG, transparent fon)
+•Brand ranglari (agar bor bo'lsa)
+•Manzil va telefon raqami
+•Telegram'da bo'ladigan @username (subdomain uchun)
+Biznes qoidalari:
+•Telefon kafolati nechta oy? (12, 24)
+•Aksessuar kafolati nechta oy?
+•Nasiya foizi (oyiga necha %?)
+•Maksimal nasiya muddati (3, 6, 12 oy?)
+•Birinchi to'lov foizi (30%, 50%?)
+•Refund qoidasi (necha kun, qaysi shartlarda)
+Texnik:
+•Chek printer modeli (Xprinter XP-58, Rongta RP58, boshqa?)
+•Barcode scanner modeli (USB HID rejimida)
+•Mavjud mahsulotlar ro'yxati (Excel formatida bo'lsa)
+•Mavjud mijozlar bazasi (agar bor bo'lsa)
+Telegram:
+•Sizning Telegram username (admin uchun)
+•Bot @BotFather orqali yaratiladi (men yordam beraman)
+16.2. Birinchi 7 kun rejasi
+53.BUGUN: Bu hujjatni o'qib, fikr-mulohaza bering
+54.Ertaga: Yuqoridagi ma'lumotlarni yig'ing
+55.Day 3: Domain va Telegram bot setup
+56.Day 4-5: Birinchi UI mockup ko'rib chiqish (Figma yoki HTML)
+57.Day 6: Database schema final approval
+58.Day 7: Sprint 0 boshlash
+16.3. Men sizga keyingi navbatda nima taqdim qilaman
+Sizning tasdig'ingizdan keyin, men quyidagilarni tayyorlayman:
+59.UI Mockup (HTML) — Kassir POS ekranining to'liq dizayni, real ma'lumotlar bilan
+60.UI Mockup (HTML) — Admin Dashboard ekranining to'liq dizayni
+61.Database Schema (SQL) — barcha jadvallar, RLS qoidalari, indekslar
+62.Loyiha skeleton (boilerplate) — Next.js + Drizzle + Better Auth tayyor
+63.Telegram bot kod (boilerplate) — birinchi xabar yuborish
+64.Sprint 0 detail TODO list — har kun aniq vazifalar
+16.4. Yakuniy so'z
+Bu loyiha — texnik jihatdan murakkab, lekin to'g'ri rejalashtirish bilan 6 hafta ichida MVP'ga erishish mumkin. Asosiy maslahat:
+•Scope'ga sodiq qoling — 'shu ham qo'shaylik' deyish — eng katta dushman
+•Har hafta o'zingizning do'koningizda test qiling — real foydalanuvchi feedback
+•Birinchi mijoz — siz o'zingiz. Keyin 1-2 ta tanish do'konga bepul bering
+•Yaxshi yozilgan kod — 1 yildan keyingi sizning o'zingizga sovg'a
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Hujjat oxiri
+Versiya 1.0  •  23 Aprel, 2026

@@ -1,6 +1,6 @@
 import { relations } from 'drizzle-orm';
 import { tenants, branches } from './tenants';
-import { users, sessions } from './users';
+import { user, session } from './users';
 import {
   categories,
   suppliers,
@@ -26,7 +26,7 @@ import {
 
 export const tenantsRelations = relations(tenants, ({ many }) => ({
   branches: many(branches),
-  users: many(users),
+  users: many(user),
   customers: many(customers),
   products: many(products),
   sales: many(sales),
@@ -41,7 +41,7 @@ export const branchesRelations = relations(branches, ({ one, many }) => ({
     fields: [branches.tenantId],
     references: [tenants.id],
   }),
-  users: many(users),
+  users: many(user),
   phoneUnits: many(phoneUnits),
   shifts: many(shifts),
   sales: many(sales),
@@ -51,27 +51,27 @@ export const branchesRelations = relations(branches, ({ one, many }) => ({
 // USERS
 // ════════════════════════════════════════════════════════════════════════════
 
-export const usersRelations = relations(users, ({ one, many }) => ({
+export const usersRelations = relations(user, ({ one, many }) => ({
   tenant: one(tenants, {
-    fields: [users.tenantId],
+    fields: [user.tenantId],
     references: [tenants.id],
   }),
   branch: one(branches, {
-    fields: [users.branchId],
+    fields: [user.branchId],
     references: [branches.id],
   }),
-  sessions: many(sessions),
+  sessions: many(session),
   shifts: many(shifts),
   sales: many(sales),
 }));
 
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, {
-    fields: [sessions.userId],
-    references: [users.id],
+export const sessionsRelations = relations(session, ({ one }) => ({
+  user: one(user, {
+    fields: [session.userId],
+    references: [user.id],
   }),
   tenant: one(tenants, {
-    fields: [sessions.tenantId],
+    fields: [session.tenantId],
     references: [tenants.id],
   }),
 }));
@@ -196,9 +196,9 @@ export const shiftsRelations = relations(shifts, ({ one, many }) => ({
     fields: [shifts.tenantId],
     references: [tenants.id],
   }),
-  cashier: one(users, {
+  cashier: one(user, {
     fields: [shifts.cashierId],
-    references: [users.id],
+    references: [user.id],
   }),
   branch: one(branches, {
     fields: [shifts.branchId],
@@ -216,9 +216,9 @@ export const salesRelations = relations(sales, ({ one, many }) => ({
     fields: [sales.branchId],
     references: [branches.id],
   }),
-  cashier: one(users, {
+  cashier: one(user, {
     fields: [sales.cashierId],
-    references: [users.id],
+    references: [user.id],
   }),
   shift: one(shifts, {
     fields: [sales.shiftId],
@@ -228,9 +228,9 @@ export const salesRelations = relations(sales, ({ one, many }) => ({
     fields: [sales.customerId],
     references: [customers.id],
   }),
-  refundedByUser: one(users, {
+  refundedByUser: one(user, {
     fields: [sales.refundedBy],
-    references: [users.id],
+    references: [user.id],
     relationName: 'refunded_by',
   }),
   items: many(saleItems),
@@ -269,9 +269,9 @@ export const suspendedSalesRelations = relations(suspendedSales, ({ one }) => ({
     fields: [suspendedSales.tenantId],
     references: [tenants.id],
   }),
-  cashier: one(users, {
+  cashier: one(user, {
     fields: [suspendedSales.cashierId],
-    references: [users.id],
+    references: [user.id],
   }),
   branch: one(branches, {
     fields: [suspendedSales.branchId],
@@ -300,9 +300,9 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
     fields: [payments.debtId],
     references: [debts.id],
   }),
-  receivedByUser: one(users, {
+  receivedByUser: one(user, {
     fields: [payments.receivedBy],
-    references: [users.id],
+    references: [user.id],
   }),
   shift: one(shifts, {
     fields: [payments.shiftId],
@@ -369,9 +369,9 @@ export const stockMovementsRelations = relations(stockMovements, ({ one }) => ({
     references: [branches.id],
     relationName: 'to_branch',
   }),
-  performedByUser: one(users, {
+  performedByUser: one(user, {
     fields: [stockMovements.performedBy],
-    references: [users.id],
+    references: [user.id],
   }),
 }));
 
@@ -388,9 +388,9 @@ export const purchaseOrdersRelations = relations(purchaseOrders, ({ one }) => ({
     fields: [purchaseOrders.branchId],
     references: [branches.id],
   }),
-  createdByUser: one(users, {
+  createdByUser: one(user, {
     fields: [purchaseOrders.createdBy],
-    references: [users.id],
+    references: [user.id],
   }),
 }));
 
@@ -399,9 +399,9 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
     fields: [notifications.tenantId],
     references: [tenants.id],
   }),
-  recipientUser: one(users, {
+  recipientUser: one(user, {
     fields: [notifications.recipientUserId],
-    references: [users.id],
+    references: [user.id],
   }),
   recipientCustomer: one(customers, {
     fields: [notifications.recipientCustomerId],
@@ -427,3 +427,4 @@ export const warrantyClaimsRelations = relations(warrantyClaims, ({ one }) => ({
     references: [customers.id],
   }),
 }));
+

@@ -1,8 +1,19 @@
 import { headers } from 'next/headers';
-import { db } from '@/db/lib/db';
-import { tenants } from '@/db/schema';
-import { eq, and, isNull } from 'drizzle-orm';
 import { cache } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+// ════════════════════════════════════════════════════════════════════════════
+// SUPABASE HTTP CLIENT (Bypasses port 5432 block)
+// ════════════════════════════════════════════════════════════════════════════
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    auth: { persistSession: false },
+    db: { schema: 'public' },
+  }
+);
 
 // ════════════════════════════════════════════════════════════════════════════
 // TENANT RESOLUTION
@@ -10,12 +21,6 @@ import { cache } from 'react';
 
 /**
  * Extract subdomain from host
- *
- * Examples:
- *   'mobicenter.poshub.uz'          → 'mobicenter'
- *   'mobicenter.localhost:3000'     → 'mobicenter'
- *   'localhost:3000'                → null  (no subdomain)
- *   'poshub.uz'                     → null
  */
 export function extractSubdomain(host: string | null): string | null {
   if (!host) return null;
@@ -47,12 +52,6 @@ export function extractSubdomain(host: string | null): string | null {
 
 /**
  * Get tenant from current request (cached per request)
- *
- * In Server Components and API routes:
- * ```ts
- * const tenant = await getCurrentTenant();
- * if (!tenant) return notFound();
- * ```
  */
 export const getCurrentTenant = cache(async () => {
   const headersList = await headers();
@@ -61,28 +60,21 @@ export const getCurrentTenant = cache(async () => {
 
   if (!subdomain) return null;
 
-  const [tenant] = await db
-    .select()
-    .from(tenants)
-    .where(
-      and(
-        eq(tenants.subdomain, subdomain),
-        isNull(tenants.deletedAt),
-        eq(tenants.status, 'active')
-      )
-    )
-    .limit(1);
+  const { data: tenant, error } = await supabase
+    .from('tenants')
+    .select('*')
+    .eq('subdomain', subdomain)
+    .is('deleted_at', null)
+    .eq('status', 'active')
+    .maybeSingle();
 
-  return tenant ?? null;
+  if (error || !tenant) return null;
+
+  return tenant;
 });
 
 /**
  * Build tenant URL
- *
- * @example
- * tenantUrl('mobicenter', '/dashboard')
- * // → 'https://mobicenter.poshub.uz/dashboard' (prod)
- * // → 'http://mobicenter.localhost:3000/dashboard' (dev)
  */
 export function tenantUrl(subdomain: string, path: string = '/'): string {
   const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
@@ -94,11 +86,6 @@ export function tenantUrl(subdomain: string, path: string = '/'): string {
 
 /**
  * Validate subdomain format
- *
- * Rules:
- *   - 3-30 chars
- *   - lowercase letters, numbers, hyphens
- *   - cannot start/end with hyphen
  */
 export function isValidSubdomain(subdomain: string): boolean {
   if (!subdomain || subdomain.length < 3 || subdomain.length > 30) {

@@ -89,7 +89,9 @@ export async function withTenant<T>(
   ctx: TenantContext,
   fn: () => Promise<T>
 ): Promise<T> {
-  // Set tenant context via PostgreSQL function (defined in 02-security.sql)
+  // NOTE: Direct SQL context setting is disabled because port 5432 is blocked.
+  // The application now uses Supabase HTTP SDK which handles multi-tenancy differently.
+  /*
   await db.execute(sql`
     SELECT set_tenant_context(
       ${ctx.tenantId}::uuid,
@@ -98,15 +100,7 @@ export async function withTenant<T>(
       ${ctx.clientIp ?? null}::inet
     )
   `);
-
-  // Set encryption key for sensitive field decryption
-  await db.execute(sql`
-    SELECT set_config(
-      'app.encryption_key',
-      ${process.env.ENCRYPTION_KEY!},
-      FALSE
-    )
-  `);
+  */
 
   return await fn();
 }

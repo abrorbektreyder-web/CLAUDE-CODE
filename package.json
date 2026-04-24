@@ -15,51 +15,41 @@
     "auth:generate": "npx @better-auth/cli generate"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
+    "@supabase/supabase-js": "^2.104.0",
+    "@tanstack/react-query": "^5.59.20",
+    "argon2": "^0.41.1",
+    "bcrypt": "^5.1.1",
+    "better-auth": "^1.0.13",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "drizzle-orm": "^0.36.0",
+    "framer-motion": "^11.11.17",
+    "lucide-react": "^0.460.0",
+    "nanoid": "^5.0.8",
     "next": "15.0.3",
+    "postgres": "^3.4.5",
     "react": "19.0.0",
     "react-dom": "19.0.0",
-
-    "drizzle-orm": "^0.36.0",
-    "postgres": "^3.4.5",
-
-    "better-auth": "^1.0.13",
-
-    "zod": "^3.23.8",
     "react-hook-form": "^7.53.2",
-    "@hookform/resolvers": "^3.9.1",
-
-    "@tanstack/react-query": "^5.59.20",
-    "zustand": "^5.0.1",
-
     "tailwind-merge": "^2.5.4",
-    "clsx": "^2.1.1",
-    "class-variance-authority": "^0.7.0",
-    "lucide-react": "^0.460.0",
-
-    "framer-motion": "^11.11.17",
-
-    "date-fns": "^4.1.0",
-    "nanoid": "^5.0.8",
-
-    "argon2": "^0.41.1",
-    "bcrypt": "^5.1.1"
+    "zod": "^3.23.8",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0-beta.3",
+    "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.9.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/bcrypt": "^5.0.2",
-
-    "typescript": "^5.6.3",
-    "tailwindcss": "^4.0.0-beta.3",
-    "@tailwindcss/postcss": "^4.0.0-beta.3",
-    "postcss": "^8.4.49",
     "autoprefixer": "^10.4.20",
-
     "drizzle-kit": "^0.28.0",
-
     "eslint": "^9.14.0",
-    "eslint-config-next": "15.0.3"
+    "eslint-config-next": "15.0.3",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^4.0.0-beta.3",
+    "typescript": "^5.6.3"
   },
   "engines": {
     "node": ">=18.18.0"

@@ -22,7 +22,7 @@ import { tenants, branches } from './tenants';
 // USERS — All system users (owner, admin, cashier, warehouse)
 // ════════════════════════════════════════════════════════════════════════════
 
-export const users = pgTable(
+export const user = pgTable(
   'users',
   {
     id: idColumn,
@@ -34,7 +34,9 @@ export const users = pgTable(
     email: citext('email'),
     phone: varchar('phone', { length: 20 }).notNull(),
     fullName: varchar('full_name', { length: 150 }).notNull(),
-    avatarUrl: text('avatar_url'),
+    image: text('image'), // Better Auth compatibility
+    avatarUrl: text('avatar_url'), // Custom field
+    emailVerified: boolean('email_verified').notNull().default(false), // Better Auth compatibility
 
     // Authentication
     passwordHash: text('password_hash'), // Argon2id
@@ -107,13 +109,13 @@ export const users = pgTable(
 // SESSIONS — Active user sessions
 // ════════════════════════════════════════════════════════════════════════════
 
-export const sessions = pgTable(
+export const session = pgTable(
   'sessions',
   {
     id: idColumn,
     userId: uuid('user_id')
       .notNull()
-      .references(() => users.id, { onDelete: 'cascade' }),
+      .references(() => user.id, { onDelete: 'cascade' }),
     tenantId: uuid('tenant_id')
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
@@ -156,10 +158,12 @@ export const sessions = pgTable(
 // TYPE EXPORTS
 // ════════════════════════════════════════════════════════════════════════════
 
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-export type Session = typeof sessions.$inferSelect;
-export type NewSession = typeof sessions.$inferInsert;
+export { user as users, session as sessions };
+
+export type User = typeof user.$inferSelect;
+export type NewUser = typeof user.$inferInsert;
+export type Session = typeof session.$inferSelect;
+export type NewSession = typeof session.$inferInsert;
 
 // Public user (no sensitive fields) — for client responses
 export type PublicUser = Omit<

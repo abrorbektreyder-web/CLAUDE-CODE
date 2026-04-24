@@ -13,6 +13,7 @@ export * from './customers';
 export * from './sales';
 export * from './finance';
 export * from './operations';
+export * from './auth';
 
 // Re-export relations
 export * from './_relations';
