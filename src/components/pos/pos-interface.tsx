@@ -3,23 +3,33 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   ScanBarcode, 
-  Search, 
   ShoppingCart, 
-  User, 
   Plus, 
   Minus, 
   Trash2, 
   CreditCard, 
   Banknote, 
   Clock, 
-  ChevronRight,
-  Monitor,
-  Keyboard,
-  Settings,
-  LogOut,
-  X
+  Monitor, 
+  Keyboard, 
+  Settings, 
+  LogOut, 
+  X, 
+  Smartphone, 
+  Headphones, 
+  HandCoins, 
+  Loader2, 
+  CheckCircle2,
+  Printer,
+  User as UserIcon,
+  Calendar,
+  Phone as PhoneIcon,
+  ChevronDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSession } from '@/lib/auth-client';
+import { createSale, searchProducts } from '@/db/queries';
+import { useRouter } from 'next/navigation';
 
 interface CartItem {
   id: string;
@@ -28,13 +38,46 @@ interface CartItem {
   quantity: number;
   type: 'phone' | 'accessory';
   imei?: string;
+  brand: string;
 }
 
 export function PosInterface() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  
   const [search, setSearch] = useState('');
+  const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit'>('cash');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [lastSale, setLastSale] = useState<any>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+
+  // Debt Customer Form
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [debtMonths, setDebtMonths] = useState(3);
+  
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Search products when query changes
+  useEffect(() => {
+    if (!session?.user) return;
+    
+    const timer = setTimeout(async () => {
+      try {
+        const results = await searchProducts(search, session.user.tenantId);
+        setProducts(results);
+      } catch (err) {
+        console.error('Search failed:', err);
+      }
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [search, session?.user]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -45,16 +88,17 @@ export function PosInterface() {
       }
       if (e.key === 'F2') {
         e.preventDefault();
-        setIsPaymentModalOpen(true);
+        if (cart.length > 0) setIsPaymentModalOpen(true);
       }
       if (e.key === 'Escape') {
         setIsPaymentModalOpen(false);
+        setShowReceipt(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [cart.length]);
 
   const addToCart = (product: any) => {
     setCart(prev => {
@@ -64,9 +108,19 @@ export function PosInterface() {
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { 
+        id: product.id,
+        name: pName(product),
+        price: Number(product.retailPrice),
+        quantity: 1,
+        type: product.productType === 'phone' ? 'phone' : 'accessory',
+        brand: product.brand,
+        imei: product.barcode || 'N/A'
+      }];
     });
   };
+
+  const pName = (p: any) => p.name || `${p.brand} ${p.model}`;
 
   const removeFromCart = (id: string) => {
     setCart(prev => prev.filter(item => item.id !== id));
@@ -84,20 +138,83 @@ export function PosInterface() {
 
   const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
+  const handleFinishSale = async () => {
+    if (!session?.user || cart.length === 0) return;
+    if (paymentMethod === 'credit' && (!customerName || !customerPhone)) {
+      alert("Nasiya uchun mijoz ma'lumotlarini to'ldiring");
+      return;
+    }
+    
+    setIsProcessing(true);
+    try {
+      const saleResult = await createSale({
+        tenantId: session.user.tenantId,
+        branchId: '00000000-0000-0000-0000-000000000000', // Mock branch for now
+        cashierId: session.user.id,
+        subtotal: total,
+        total: total,
+        paymentMethod: paymentMethod,
+        paidAmount: paymentMethod === 'credit' ? 0 : total,
+        debtAmount: paymentMethod === 'credit' ? total : 0,
+        debtMonths: paymentMethod === 'credit' ? debtMonths : undefined,
+        customerData: paymentMethod === 'credit' ? {
+          fullName: customerName,
+          phone: customerPhone
+        } : undefined,
+        items: cart.map(item => ({
+          productId: item.id,
+          productName: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          costPrice: item.price * 0.8, // Mock cost
+          total: item.price * item.quantity
+        }))
+      });
+      
+      setLastSale({
+        ...saleResult,
+        cart: [...cart],
+        time: new Date().toLocaleString('uz-UZ'),
+        cashier: session.user.name
+      });
+      
+      setIsSuccess(true);
+      setTimeout(() => {
+        setIsSuccess(false);
+        setIsProcessing(false);
+        setIsPaymentModalOpen(false);
+        setShowReceipt(true);
+        setCart([]);
+        setCustomerName('');
+        setCustomerPhone('');
+      }, 1000);
+    } catch (err) {
+      console.error('Sale creation failed:', err);
+      setIsProcessing(false);
+      alert("Xatolik yuz berdi: " + (err as any).message);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  if (!session) return <div className="flex h-screen items-center justify-center bg-[var(--color-bg-base)] text-[var(--color-text-tertiary)]"><Loader2 className="animate-spin" /></div>;
+
   return (
-    <div className="flex h-screen w-full bg-[var(--color-bg-base)] text-[var(--color-foreground)] overflow-hidden">
+    <div className="flex h-screen w-full bg-[var(--color-bg-base)] text-[var(--color-foreground)] overflow-hidden font-sans">
       {/* Left Sidebar - Quick Actions */}
       <div className="flex w-16 flex-col items-center border-r border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-6 gap-6">
         <div className="h-10 w-10 rounded-xl bg-[var(--color-accent)] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[var(--color-accent)]/20">
           M
         </div>
-        <button className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors">
+        <button className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors" onClick={() => router.push('/dashboard')}>
           <Monitor size={24} />
         </button>
         <button className="p-3 rounded-xl bg-[var(--color-accent)]/10 text-[var(--color-accent)] transition-colors">
           <ShoppingCart size={24} />
         </button>
-        <button className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors">
+        <button className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors" onClick={() => router.push('/sales')}>
           <Clock size={24} />
         </button>
         <div className="mt-auto flex flex-col gap-4">
@@ -123,7 +240,7 @@ export function PosInterface() {
           </div>
           <div className="flex items-center gap-6">
             <div className="text-right">
-              <div className="text-sm font-bold">Alisher Qodirov</div>
+              <div className="text-sm font-bold">{session.user.name}</div>
               <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)]">Kassir / Filial #1</div>
             </div>
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[var(--color-accent)] to-orange-400" />
@@ -156,22 +273,22 @@ export function PosInterface() {
               </div>
             </div>
 
-            {/* Catalog Grid (Mock) */}
+            {/* Catalog Grid */}
             <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 content-start custom-scrollbar">
-              {mockProducts.map((p) => (
+              {(products.length > 0 ? products : mockProducts).map((p) => (
                 <button 
                   key={p.id}
                   onClick={() => addToCart(p)}
                   className="premium-card group rounded-2xl p-4 text-left hover:border-[var(--color-accent)] transition-all active:scale-95"
                 >
                   <div className="mb-3 aspect-square rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center group-hover:bg-[var(--color-accent)]/5 transition-colors overflow-hidden">
-                    {p.type === 'phone' ? <Smartphone size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" /> : <Headphones size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" />}
+                    {p.productType === 'phone' ? <Smartphone size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" /> : <Headphones size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" />}
                   </div>
-                  <div className="font-bold text-sm line-clamp-2 h-10 mb-1">{p.name}</div>
+                  <div className="font-bold text-sm line-clamp-2 h-10 mb-1">{pName(p)}</div>
                   <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-3">{p.brand}</div>
                   <div className="flex items-end justify-between">
                     <div className="font-display text-lg font-bold text-[var(--color-accent)]">
-                      {new Intl.NumberFormat('uz-UZ').format(p.price)}
+                      {new Intl.NumberFormat('uz-UZ').format(p.retailPrice)}
                     </div>
                     <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] mb-1">SO'M</div>
                   </div>
@@ -267,9 +384,6 @@ export function PosInterface() {
                 <Banknote size={24} />
                 To'lov (F2)
               </button>
-              <div className="text-center">
-                <span className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest">Klaviatura orqali boshqarish</span>
-              </div>
             </div>
           </div>
         </div>
@@ -277,60 +391,116 @@ export function PosInterface() {
 
       {/* Payment Modal */}
       {isPaymentModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-2xl bg-[var(--color-bg-elevated)] rounded-[32px] border border-[var(--color-border)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-8 flex flex-col gap-8">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-md bg-[var(--color-bg-elevated)] rounded-[40px] border border-[var(--color-border)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-8 flex flex-col gap-6 max-h-[90vh] overflow-y-auto custom-scrollbar">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-3xl font-display font-bold">To'lov</h2>
-                  <p className="text-sm text-[var(--color-text-secondary)]">To'lov turini tanlang va chekni chop eting</p>
+                  <h2 className="text-2xl font-display font-bold">To'lov</h2>
+                  <p className="text-xs text-[var(--color-text-secondary)]">To'lov turini tanlang</p>
                 </div>
                 <button 
                   onClick={() => setIsPaymentModalOpen(false)}
-                  className="h-12 w-12 rounded-full border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+                  className="h-10 w-10 rounded-full border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] transition-colors"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
 
-              <div className="flex flex-col items-center justify-center p-10 rounded-[24px] bg-[var(--color-bg-base)] border border-[var(--color-border)]">
-                <div className="text-[12px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-[0.2em] mb-2">Umumiy summa</div>
-                <div className="text-6xl font-display font-bold text-[var(--color-foreground)]">
+              <div className="flex flex-col items-center justify-center py-6 px-6 rounded-[32px] bg-[var(--color-bg-base)] border border-[var(--color-border)]">
+                <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-[0.2em] mb-1">Jami summa</div>
+                <div className="text-4xl font-display font-bold text-[var(--color-foreground)]">
                   {new Intl.NumberFormat('uz-UZ').format(total)}
                 </div>
-                <div className="text-xs font-bold text-[var(--color-text-tertiary)] mt-2 uppercase">O'zbekiston so'mi</div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <button className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-[var(--color-border)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 transition-all group">
-                  <div className="h-14 w-14 rounded-full bg-[var(--color-success)]/10 flex items-center justify-center text-[var(--color-success)] group-hover:scale-110 transition-transform">
-                    <Banknote size={28} />
-                  </div>
-                  <div className="font-bold">Naqd</div>
-                </button>
-                <button className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-[var(--color-border)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 transition-all group">
-                  <div className="h-14 w-14 rounded-full bg-[var(--color-info)]/10 flex items-center justify-center text-[var(--color-info)] group-hover:scale-110 transition-transform">
-                    <CreditCard size={28} />
-                  </div>
-                  <div className="font-bold">Karta</div>
-                </button>
-                <button className="flex flex-col items-center gap-4 p-6 rounded-2xl border-2 border-[var(--color-border)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 transition-all group">
-                  <div className="h-14 w-14 rounded-full bg-[var(--color-purple)]/10 flex items-center justify-center text-[var(--color-purple)] group-hover:scale-110 transition-transform">
-                    <HandCoins size={28} />
-                  </div>
-                  <div className="font-bold">Nasiya</div>
-                </button>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { id: 'cash', icon: Banknote, label: 'Naqd', color: 'var(--color-success)' },
+                  { id: 'card', icon: CreditCard, label: 'Karta', color: 'var(--color-info)' },
+                  { id: 'credit', icon: HandCoins, label: 'Nasiya', color: 'var(--color-purple)' },
+                ].map((m) => (
+                  <button 
+                    key={m.id}
+                    onClick={() => setPaymentMethod(m.id as any)}
+                    className={cn(
+                      "flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all",
+                      paymentMethod === m.id 
+                        ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10" 
+                        : "border-[var(--color-border)] hover:border-[var(--color-accent)]/50 bg-[var(--color-bg-base)]"
+                    )}
+                  >
+                    <div className={cn(
+                      "h-12 w-12 rounded-full flex items-center justify-center",
+                      paymentMethod === m.id ? "bg-[var(--color-accent)] text-white" : "bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)]"
+                    )}>
+                      <m.icon size={24} />
+                    </div>
+                    <div className="font-bold text-xs">{m.label}</div>
+                  </button>
+                ))}
               </div>
 
-              <div className="flex gap-4">
+              {/* Debt Form */}
+              {paymentMethod === 'credit' && (
+                <div className="flex flex-col gap-4 p-5 rounded-3xl bg-[var(--color-bg-base)] border border-[var(--color-border)] animate-in slide-in-from-top-4 duration-300">
+                  <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-accent)] uppercase tracking-wider mb-1">
+                    <UserIcon size={14} />
+                    Mijoz ma'lumotlari
+                  </div>
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        placeholder="F.I.SH (Ism Familiya)"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-10 text-sm font-medium outline-none focus:border-[var(--color-accent)] transition-all"
+                      />
+                      <UserIcon size={18} className="absolute left-3 top-3.5 text-[var(--color-text-tertiary)]" />
+                    </div>
+                    <div className="relative">
+                      <input 
+                        type="tel" 
+                        placeholder="Telefon raqami (+998)"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-10 text-sm font-medium outline-none focus:border-[var(--color-accent)] transition-all"
+                      />
+                      <PhoneIcon size={18} className="absolute left-3 top-3.5 text-[var(--color-text-tertiary)]" />
+                    </div>
+                    <div className="relative">
+                      <select 
+                        value={debtMonths}
+                        onChange={(e) => setDebtMonths(Number(e.target.value))}
+                        className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-10 text-sm font-medium outline-none focus:border-[var(--color-accent)] transition-all appearance-none"
+                      >
+                        <option value={1}>1 oy (Muddati: {new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString()})</option>
+                        <option value={3}>3 oy</option>
+                        <option value={6}>6 oy</option>
+                        <option value={12}>12 oy</option>
+                      </select>
+                      <Calendar size={18} className="absolute left-3 top-3.5 text-[var(--color-text-tertiary)]" />
+                      <ChevronDown size={18} className="absolute right-3 top-3.5 text-[var(--color-text-tertiary)] pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3">
                 <button 
                   onClick={() => setIsPaymentModalOpen(false)}
-                  className="flex-1 h-16 rounded-2xl border border-[var(--color-border)] font-bold text-lg hover:bg-[var(--color-bg-hover)] transition-all"
+                  disabled={isProcessing}
+                  className="flex-1 h-14 rounded-2xl border border-[var(--color-border)] font-bold text-sm hover:bg-[var(--color-bg-hover)] transition-all"
                 >
                   Bekor qilish
                 </button>
-                <button className="flex-[2] h-16 rounded-2xl bg-[var(--color-accent)] text-white font-bold text-xl shadow-xl shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] transition-all">
-                  To'lovni yakunlash & Chek
+                <button 
+                  onClick={handleFinishSale}
+                  disabled={isProcessing || cart.length === 0}
+                  className="flex-[2] h-14 rounded-2xl bg-[var(--color-accent)] text-white font-bold text-lg shadow-xl shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] transition-all active:scale-95 flex items-center justify-center gap-2"
+                >
+                  {isProcessing ? <Loader2 className="animate-spin" size={24} /> : isSuccess ? <CheckCircle2 size={24} /> : "To'lovni tasdiqlash"}
                 </button>
               </div>
             </div>
@@ -338,34 +508,136 @@ export function PosInterface() {
         </div>
       )}
 
+      {/* Receipt View (Thermal Style) */}
+      {showReceipt && lastSale && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300">
+          <div className="w-full max-w-sm flex flex-col gap-6 animate-in zoom-in-95 duration-300">
+            <div 
+              ref={receiptRef}
+              className="bg-white text-black p-8 shadow-2xl rounded-sm font-mono text-[11px] leading-tight print:p-0 print:shadow-none"
+            >
+              <div className="text-center mb-6">
+                <div className="text-base font-bold uppercase mb-1">M-TELECOM</div>
+                <div>Filial #1 (Markaziy)</div>
+                <div>Tel: +998 71 200 00 00</div>
+              </div>
+              
+              <div className="border-t border-dashed border-black/20 my-4" />
+              
+              <div className="space-y-1 mb-4">
+                <div className="flex justify-between">
+                  <span>CHEK №:</span>
+                  <span className="font-bold">{lastSale.receipt_number || lastSale.id.slice(0,8).toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>SANA:</span>
+                  <span>{lastSale.time}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>KASSIR:</span>
+                  <span className="uppercase">{lastSale.cashier}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>MIJOZ:</span>
+                  <span className="font-bold uppercase">{lastSale.customerName}</span>
+                </div>
+              </div>
+              
+              <div className="border-t border-dashed border-black/20 my-4" />
+              
+              <div className="mb-4">
+                <div className="flex font-bold mb-2">
+                  <span className="flex-1">MAHSULOT</span>
+                  <span className="w-8 text-right">SONI</span>
+                  <span className="w-20 text-right">SUMMA</span>
+                </div>
+                <div className="space-y-3">
+                  {lastSale.cart.map((item: any, idx: number) => (
+                    <div key={idx} className="flex flex-col">
+                      <div className="flex">
+                        <span className="flex-1 font-bold">{item.name}</span>
+                        <span className="w-8 text-right">{item.quantity}</span>
+                        <span className="w-20 text-right">{(item.price * item.quantity).toLocaleString()}</span>
+                      </div>
+                      <div className="text-[9px] opacity-70">IMEI: {item.imei}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="border-t border-dashed border-black/20 my-4" />
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-xs">
+                  <span>JAMI:</span>
+                  <span className="font-bold">{Number(lastSale.total).toLocaleString()} SO'M</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>TO'LOV TURI:</span>
+                  <span className="font-bold uppercase">
+                    {lastSale.payment_method === 'cash' ? 'NAQD' : lastSale.payment_method === 'card' ? 'KARTA' : 'NASIYA'}
+                  </span>
+                </div>
+                {lastSale.payment_method === 'credit' && (
+                  <div className="p-2 bg-black/5 rounded mt-2">
+                    <div className="font-bold mb-1">NASIYA MA'LUMOTLARI:</div>
+                    <div>Muddati: {lastSale.debtMonths} oy</div>
+                    <div>Oylik to'lov: {Math.ceil(lastSale.total / lastSale.debtMonths).toLocaleString()} SO'M</div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="border-t border-dashed border-black/20 my-4" />
+              
+              <div className="text-center space-y-1">
+                <div className="font-bold">XARIDINGIZ UCHUN RAXMAT!</div>
+                <div className="text-[9px]">Sotilgan tovarlar 24 soat ichida almashtiriladi.</div>
+                <div className="pt-2">www.m-telecom.uz</div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 no-print">
+              <button 
+                onClick={handlePrint}
+                className="flex-1 h-12 rounded-xl bg-white text-black font-bold flex items-center justify-center gap-2 hover:bg-white/90 transition-all"
+              >
+                <Printer size={18} />
+                Chop etish
+              </button>
+              <button 
+                onClick={() => setShowReceipt(false)}
+                className="flex-1 h-12 rounded-xl bg-[var(--color-accent)] text-white font-bold hover:bg-[var(--color-accent-hover)] transition-all"
+              >
+                Yopish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+        @media print {
+          .no-print { display: none !important; }
+          body * { visibility: hidden; }
+          #receipt-content, #receipt-content * { visibility: visible; }
+          #receipt-content { position: absolute; left: 0; top: 0; width: 100%; }
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: var(--color-border);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: var(--color-text-tertiary);
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
       `}</style>
     </div>
   );
 }
 
 const mockProducts = [
-  { id: '1', name: 'iPhone 15 Pro Max, 256GB, Blue Titanium', brand: 'Apple', price: 16450000, type: 'phone', imei: '358291039284712' },
-  { id: '2', name: 'Samsung Galaxy S24 Ultra, 512GB, Gray', brand: 'Samsung', price: 14200000, type: 'phone', imei: '357712039200192' },
-  { id: '3', name: 'AirPods Pro (2nd Gen) with MagSafe', brand: 'Apple', price: 2850000, type: 'accessory' },
-  { id: '4', name: 'Xiaomi Redmi Note 13 Pro+, 12/512GB', brand: 'Xiaomi', price: 4600000, type: 'phone', imei: '359910029384755' },
-  { id: '5', name: 'Apple Watch Series 9, 45mm, GPS', brand: 'Apple', price: 5200000, type: 'accessory' },
-  { id: '6', name: 'Sony WH-1000XM5 Noise Cancelling', brand: 'Sony', price: 4800000, type: 'accessory' },
-  { id: '7', name: 'Samsung Galaxy Buds 2 Pro', brand: 'Samsung', price: 1950000, type: 'accessory' },
-  { id: '8', name: 'iPhone 13, 128GB, Midnight', brand: 'Apple', price: 8900000, type: 'phone', imei: '352210049583722' },
+  { id: '1', name: 'iPhone 15 Pro Max, 256GB, Blue Titanium', brand: 'Apple', retailPrice: 16450000, productType: 'phone', barcode: '358291039284712' },
+  { id: '2', name: 'Samsung Galaxy S24 Ultra, 512GB, Gray', brand: 'Samsung', retailPrice: 14200000, productType: 'phone', barcode: '357712039200192' },
+  { id: '3', name: 'AirPods Pro (2nd Gen) with MagSafe', brand: 'Apple', retailPrice: 2850000, productType: 'accessory' },
+  { id: '4', name: 'Xiaomi Redmi Note 13 Pro+, 12/512GB', brand: 'Xiaomi', retailPrice: 4600000, productType: 'phone', barcode: '359910029384755' },
+  { id: '5', name: 'Apple Watch Series 9, 45mm, GPS', brand: 'Apple', retailPrice: 5200000, productType: 'accessory' },
+  { id: '6', name: 'Sony WH-1000XM5 Noise Cancelling', brand: 'Sony', retailPrice: 4800000, productType: 'accessory' },
+  { id: '7', name: 'Samsung Galaxy Buds 2 Pro', brand: 'Samsung', retailPrice: 1950000, productType: 'accessory' },
+  { id: '8', name: 'iPhone 13, 128GB, Midnight', brand: 'Apple', retailPrice: 8900000, productType: 'phone', barcode: '352210049583722' },
 ];
-
-import { Smartphone, Headphones, HandCoins } from 'lucide-react';

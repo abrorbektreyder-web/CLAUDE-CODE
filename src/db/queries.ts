@@ -1,3 +1,5 @@
+'use server';
+
 import { createClient } from '@supabase/supabase-js';
 import { 
   hashSensitive, 
@@ -14,18 +16,26 @@ import {
 // Supabase JS client uses port 443 (HTTPS) which is always open.
 // ════════════════════════════════════════════════════════════════════════════
 
-if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  throw new Error('Supabase environment variables are missing');
-}
+// Supabase client instance (lazy initialized)
+let supabaseInstance: any = null;
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY,
-  {
+function getSupabase() {
+  if (supabaseInstance) return supabaseInstance;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!url || !key) {
+    throw new Error('Supabase environment variables are missing (URL or Service Role Key)');
+  }
+
+  supabaseInstance = createClient(url, key, {
     auth: { persistSession: false },
     db: { schema: 'public' },
-  }
-);
+  });
+
+  return supabaseInstance;
+}
 
 // ════════════════════════════════════════════════════════════════════════════
 // 1. FIND PHONE BY IMEI
@@ -38,7 +48,7 @@ export async function findPhoneByImei(imei: string, tenantId: string) {
 
   const imeiHash = hashSensitive(imei)!;
 
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('phone_units')
     .select(`
       id,
@@ -98,7 +108,7 @@ export async function findPhoneByImei(imei: string, tenantId: string) {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function searchProducts(query: string, tenantId: string, limit = 20) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('products')
     .select('*')
     .eq('tenant_id', tenantId)
@@ -127,7 +137,7 @@ export async function searchProducts(query: string, tenantId: string, limit = 20
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function getInventory(tenantId: string, branchId?: string) {
-  let query = supabase
+  let query = getSupabase()
     .from('products')
     .select(`
       id,
@@ -174,7 +184,7 @@ export async function getInventory(tenantId: string, branchId?: string) {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function getCustomers(tenantId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('customers')
     .select('*')
     .eq('tenant_id', tenantId)
@@ -200,7 +210,7 @@ export async function getCustomers(tenantId: string) {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function getDebts(tenantId: string) {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('debts')
     .select(`
       *,
@@ -237,7 +247,7 @@ export async function getDashboardKpis(tenantId?: string) {
   today.setHours(0, 0, 0, 0);
 
   // Today's sales
-  let salesQuery = supabase
+  let salesQuery = getSupabase()
     .from('sales')
     .select('total, status')
     .gte('created_at', today.toISOString())
@@ -246,7 +256,7 @@ export async function getDashboardKpis(tenantId?: string) {
   if (tenantId) salesQuery = salesQuery.eq('tenant_id', tenantId);
 
   // Active debts
-  let debtQuery = supabase
+  let debtQuery = getSupabase()
     .from('debts')
     .select('remaining_amount, is_overdue')
     .eq('status', 'active');
@@ -277,6 +287,243 @@ export async function getDashboardKpis(tenantId?: string) {
       totalAmount: totalDebts,
       overdueCount: overdueCount,
     },
+  };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 13. GET SALES (History)
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function getSales(tenantId: string, limit = 50) {
+  const { data, error } = await getSupabase()
+    .from('sales')
+    .select(`
+      *,
+      customers (full_name, phone_last_four)
+    `)
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+
+  return (data || []).map(s => {
+    const customer = Array.isArray(s.customers) ? s.customers[0] : s.customers;
+    return {
+      id: s.id,
+      receiptNumber: s.receipt_number,
+      customerName: customer?.full_name || 'Mijoz ko\'rsatilmagan',
+      customerPhone: customer?.phone_last_four ? `+998 ** *** ** ${customer.phone_last_four}` : '-',
+      total: s.total,
+      paymentMethod: s.payment_method,
+      status: s.status,
+      createdAt: s.created_at,
+    };
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 14. CREATE SALE
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function createSale(data: {
+  tenantId: string;
+  branchId: string;
+  cashierId: string;
+  customerId?: string;
+  customerData?: {
+    fullName: string;
+    phone: string;
+  };
+  subtotal: number;
+  total: number;
+  paymentMethod: string;
+  paidAmount: number;
+  debtAmount: number;
+  debtMonths?: number;
+  items: Array<{
+    productId?: string;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    costPrice: number;
+    total: number;
+  }>;
+}) {
+  const supabase = getSupabase();
+
+  // 1. Handle Customer (Create if doesn't exist)
+  let customerId = data.customerId;
+  if (!customerId && data.customerData) {
+    const normalizedPhone = normalizePhone(data.customerData.phone);
+    if (!normalizedPhone) {
+      throw new Error('Noto\'g\'ri telefon raqami');
+    }
+
+    const phoneHash = hashSensitive(normalizedPhone)!;
+
+    // Check if customer exists first
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('tenant_id', data.tenantId)
+      .eq('phone_hash', phoneHash)
+      .maybeSingle();
+
+    if (existingCustomer) {
+      customerId = existingCustomer.id;
+    } else {
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          tenant_id: data.tenantId,
+          full_name: data.customerData.fullName,
+          phone_hash: phoneHash,
+          phone_last_four: normalizedPhone.slice(-4),
+          total_purchases: 0,
+          total_debt: 0,
+        })
+        .select()
+        .single();
+      
+      if (customerError) throw customerError;
+      customerId = newCustomer.id;
+    }
+  }
+
+  // 2. Create the sale record
+  let branchId = data.branchId;
+  if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
+    const { data: userData } = await supabase
+      .from('users')
+      .select('branch_id')
+      .eq('id', data.cashierId)
+      .single();
+    
+    if (userData?.branch_id) {
+      branchId = userData.branch_id;
+    } else {
+      const { data: branchData } = await supabase
+        .from('branches')
+        .select('id')
+        .eq('tenant_id', data.tenantId)
+        .limit(1)
+        .single();
+      
+      if (branchData) {
+        branchId = branchData.id;
+      }
+    }
+  }
+
+  const { data: sale, error: saleError } = await supabase
+    .from('sales')
+    .insert({
+      tenant_id: data.tenantId,
+      branch_id: branchId,
+      cashier_id: data.cashierId,
+      customer_id: customerId,
+      subtotal: data.subtotal,
+      total: data.total,
+      payment_method: data.paymentMethod,
+      paid_amount: data.paidAmount,
+      debt_amount: data.debtAmount,
+      status: 'completed',
+    })
+    .select()
+    .single();
+
+  if (saleError) throw saleError;
+
+  // 3. Create sale items
+  const itemsToInsert = data.items.map(item => ({
+    tenant_id: data.tenantId,
+    sale_id: sale.id,
+    product_id: item.productId,
+    product_name: item.productName,
+    quantity: item.quantity,
+    unit_price: item.unitPrice,
+    cost_price: item.costPrice,
+    total: item.total,
+  }));
+
+  const { error: itemsError } = await supabase
+    .from('sale_items')
+    .insert(itemsToInsert);
+
+  if (itemsError) throw itemsError;
+
+  // 4. Handle Debt (Nasiya)
+  if (data.paymentMethod === 'credit' && customerId) {
+    const months = data.debtMonths || 1;
+    const monthlyPayment = Math.ceil(data.debtAmount / months);
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + months);
+
+    const { data: debt, error: debtError } = await supabase
+      .from('debts')
+      .insert({
+        tenant_id: data.tenantId,
+        customer_id: customerId,
+        sale_id: sale.id,
+        principal_amount: data.debtAmount,
+        total_amount: data.debtAmount,
+        total_months: months,
+        monthly_payment: monthlyPayment,
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        remaining_amount: data.debtAmount,
+        status: 'active',
+      })
+      .select()
+      .single();
+
+    if (debtError) throw debtError;
+
+    // Create debt schedule
+    const schedules = Array.from({ length: months }, (_, i) => {
+      const dueDate = new Date();
+      dueDate.setMonth(dueDate.getMonth() + i + 1);
+      return {
+        tenant_id: data.tenantId,
+        debt_id: debt.id,
+        installment_number: i + 1,
+        due_date: dueDate.toISOString().split('T')[0],
+        expected_amount: i === months - 1 
+          ? Number(data.debtAmount) - (monthlyPayment * (months - 1))
+          : monthlyPayment,
+      };
+    });
+
+    const { error: scheduleError } = await supabase
+      .from('debt_schedules')
+      .insert(schedules);
+
+    if (scheduleError) throw scheduleError;
+
+    // Update customer debt total
+    const { data: customer } = await supabase
+      .from('customers')
+      .select('total_debt, total_purchases')
+      .eq('id', customerId)
+      .single();
+
+    if (customer) {
+      await supabase
+        .from('customers')
+        .update({ 
+          total_debt: Number(customer.total_debt || 0) + Number(data.debtAmount),
+          total_purchases: Number(customer.total_purchases || 0) + Number(data.total)
+        })
+        .eq('id', customerId);
+    }
+  }
+
+  return {
+    ...sale,
+    items: data.items,
+    customerName: data.customerData?.fullName || 'Mijoz',
   };
 }
 

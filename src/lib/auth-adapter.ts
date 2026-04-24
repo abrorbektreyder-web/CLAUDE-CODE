@@ -41,6 +41,7 @@ const CAMEL_TO_SNAKE: Record<string, Record<string, string>> = {
   users: {
     name: 'full_name',         // Better Auth uses 'name', our DB has 'full_name'
     emailVerified: 'email_verified',
+    password: 'password_hash',
   },
   sessions: {
     userId: 'user_id',

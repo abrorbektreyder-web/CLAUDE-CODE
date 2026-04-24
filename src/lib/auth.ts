@@ -27,7 +27,7 @@ export const auth = betterAuth({
     maxPasswordLength: 128,
     requireEmailVerification: false,
 
-    // Custom password hashing (Argon2id — same algorithm used in existing users table)
+    // Custom password hashing (Argon2id — matches our DB schema)
     password: {
       hash: async (password: string) => {
         const argon2 = await import('argon2');
