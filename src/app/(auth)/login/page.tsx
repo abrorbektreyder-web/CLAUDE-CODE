@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { LoginForm } from '@/components/auth/login-form';
 import Link from 'next/link';
 
@@ -37,7 +38,9 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <LoginForm />
+        <Suspense fallback={<div className="h-40 flex items-center justify-center">Yuklanmoqda...</div>}>
+          <LoginForm />
+        </Suspense>
 
         <div className="mt-6 border-t border-[var(--color-border)] pt-6 text-center text-sm">
           <span className="text-[var(--color-text-tertiary)]">
