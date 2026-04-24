@@ -73,7 +73,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // ─── 5. Auth check (read session cookie) ───────────────────────────────
-  const sessionCookie = req.cookies.get('pos.session_token') || req.cookies.get('__Secure-pos.session_token');
+  const sessionCookie = req.cookies.get('better-auth.session_token') || req.cookies.get('__Secure-better-auth.session_token');
 
   if (!sessionCookie) {
     // No session → redirect to login
