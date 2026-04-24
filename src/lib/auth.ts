@@ -45,21 +45,16 @@ export const auth = betterAuth({
     maxPasswordLength: 128,
     requireEmailVerification: false,
 
-    // Custom password hashing (Argon2id — matches our DB schema)
+    // Custom password hashing (bcryptjs — pure JS, works on Vercel serverless)
     password: {
       hash: async (password: string) => {
-        const argon2 = await import('argon2');
-        return argon2.hash(password, {
-          type: argon2.argon2id,
-          memoryCost: 65536,
-          timeCost: 3,
-          parallelism: 4,
-        });
+        const bcrypt = await import('bcryptjs');
+        return bcrypt.hash(password, 12);
       },
-      verify: async ({ hash, password }) => {
-        const argon2 = await import('argon2');
+      verify: async ({ hash, password }: { hash: string; password: string }) => {
+        const bcrypt = await import('bcryptjs');
         try {
-          return await argon2.verify(hash, password);
+          return await bcrypt.compare(password, hash);
         } catch {
           return false;
         }
