@@ -20,6 +20,24 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
 
+  // Custom User Fields
+  user: {
+    additionalFields: {
+      tenantId: {
+        type: 'string',
+        returned: true,
+      },
+      role: {
+        type: 'string',
+        returned: true,
+      },
+      branchId: {
+        type: 'string',
+        returned: true,
+      }
+    }
+  },
+
   // Email + password auth (for admins)
   emailAndPassword: {
     enabled: true,
