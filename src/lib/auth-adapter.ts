@@ -202,13 +202,16 @@ export const supabaseAdapter = {
       if (snakeData.ip_address === '') {
         delete snakeData.ip_address;
       }
-      
-      // Remove fields not present in our database
-      delete snakeData.updated_at;
+    }
+
+    // Handle UUID vs String ID mismatch:
+    // Our database uses UUIDs for 'users' and 'sessions', but Better Auth generates base62 strings.
+    if (model === 'user' || model === 'session') {
+      delete snakeData.updated_at; // Also clean up updated_at which isn't in some tables
       delete snakeData.id; // Let database generate UUID
     } else {
-      // For accounts and verifications, if ID is not provided by Better Auth (which usually it is),
-      // we need to generate one, or rely on Drizzle's default. But Drizzle uses text, not UUID for these.
+      // For accounts and verifications (which use text fields), keep the ID.
+      // If it's missing for some reason, generate one.
       if (!snakeData.id) {
         snakeData.id = crypto.randomUUID();
       }
@@ -288,6 +291,14 @@ export const supabaseAdapter = {
     if (model === 'user' && !snakeData.password_hash) {
       snakeData.password_hash = '$argon2id$v=19$m=19456,t=2,p=1$managed_by_better_auth';
     }
+
+    // Our DB requires phone NOT NULL — provide fallback if not given
+    if (model === 'user' && !snakeData.phone) {
+      snakeData.phone = '+998000000000'; // placeholder; user can update later
+    }
+
+    // Debug log — helps trace exactly what's going into the DB
+    console.log(`[Adapter] create model=${model} table=${table} data=`, JSON.stringify(snakeData, null, 2));
 
     const { data: result, error } = await supabase
       .from(table)

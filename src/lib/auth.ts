@@ -18,7 +18,7 @@ export const auth = betterAuth({
 
   // Secret for signing tokens
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
+  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001',
 
   // Custom User Fields
   user: {
@@ -38,10 +38,13 @@ export const auth = betterAuth({
       phone: {
         type: 'string',
         returned: true,
+        input: true,        // ← REQUIRED: lets Better Auth pass this field to adapter
+        required: false,
       },
       storeName: {
         type: 'string',
         required: false,
+        input: true,        // ← REQUIRED: lets Better Auth pass this field to adapter
       }
     }
   },
@@ -90,9 +93,9 @@ export const auth = betterAuth({
   // Trusted origins
   trustedOrigins: [
     'http://localhost:3000',
+    'http://localhost:3001',
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     'https://claude-code-six-chi.vercel.app',
-    ...(process.env.NEXT_PUBLIC_APP_URL ? [process.env.NEXT_PUBLIC_APP_URL] : []),
   ],
 
   // Advanced security

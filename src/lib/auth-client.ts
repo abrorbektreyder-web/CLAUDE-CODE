@@ -13,7 +13,9 @@ import { createAuthClient } from 'better-auth/react';
 // ════════════════════════════════════════════════════════════════════════════
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+  baseURL: typeof window !== 'undefined' 
+    ? window.location.origin 
+    : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   user: {
     additionalFields: {
       tenantId: {
@@ -27,9 +29,13 @@ export const authClient = createAuthClient({
       },
       phone: {
         type: 'string',
+        input: true,
+        required: false,
       },
       storeName: {
         type: 'string',
+        input: true,
+        required: false,
       }
     }
   }

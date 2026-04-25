@@ -19,11 +19,6 @@ const registerSchema = z
       .min(8, 'Parol kamida 8 ta belgi')
       .regex(/[A-Z]/, "Kamida 1 ta katta harf bo'lsin")
       .regex(/[0-9]/, "Kamida 1 ta raqam bo'lsin"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Parollar mos kelmadi',
-    path: ['confirmPassword'],
   });
 
 type RegisterInput = z.infer<typeof registerSchema>;
@@ -225,42 +220,7 @@ export function RegisterForm() {
         )}
       </div>
 
-      {/* Confirm Password */}
-      <div>
-        <label
-          htmlFor="confirmPassword"
-          className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]"
-        >
-          Parolni tasdiqlang
-        </label>
-        <div className="relative">
-          <Lock
-            size={16}
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]"
-          />
-          <input
-            id="confirmPassword"
-            type={showConfirm ? 'text' : 'password'}
-            autoComplete="new-password"
-            placeholder="••••••••"
-            {...register('confirmPassword')}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-3 pl-10 pr-12 text-sm text-[var(--color-foreground)] placeholder-[var(--color-text-tertiary)] transition-all duration-180 ease-spring focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20"
-          />
-          <button
-            type="button"
-            onClick={() => setShowConfirm((prev) => !prev)}
-            aria-label={showConfirm ? 'Parolni yashirish' : "Parolni ko'rsatish"}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] transition-colors hover:text-[var(--color-text-secondary)] focus:outline-none"
-          >
-            {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        </div>
-        {errors.confirmPassword && (
-          <p className="mt-1.5 text-xs text-[var(--color-danger)]">
-            {errors.confirmPassword.message}
-          </p>
-        )}
-      </div>
+
 
       {/* Server error */}
       {serverError && (

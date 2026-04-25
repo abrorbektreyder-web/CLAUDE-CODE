@@ -58,7 +58,7 @@ const navigation = [
   },
 ];
 
-export function Sidebar({ user }: SidebarProps) {
+export function Sidebar({ user, tenant }: SidebarProps) {
   const pathname = usePathname();
 
   const initials = user.name
