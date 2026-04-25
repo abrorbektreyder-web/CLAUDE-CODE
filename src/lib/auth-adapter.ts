@@ -275,6 +275,14 @@ export const supabaseAdapter = {
       if (!snakeData.role) snakeData.role = 'admin';
     }
 
+    // Fix for database constraint:
+    // Better Auth stores the actual password in the 'accounts' table.
+    // Our 'users' table has a constraint requiring 'password_hash' to not be null for non-cashiers.
+    // So we provide a dummy hash to satisfy the DB.
+    if (model === 'user' && !snakeData.password_hash) {
+      snakeData.password_hash = '$argon2id$v=19$m=19456,t=2,p=1$managed_by_better_auth';
+    }
+
     const { data: result, error } = await supabase
       .from(table)
       .insert(snakeData)
