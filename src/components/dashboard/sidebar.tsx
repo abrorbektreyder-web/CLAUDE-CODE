@@ -15,8 +15,10 @@ import {
   Settings,
   ChevronDown,
   MoreVertical,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useSidebar } from '@/components/dashboard/sidebar-provider';
 
 interface SidebarProps {
   user: {
@@ -60,6 +62,7 @@ const navigation = [
 
 export function Sidebar({ user, tenant }: SidebarProps) {
   const pathname = usePathname();
+  const { isOpen, setIsOpen } = useSidebar();
 
   const initials = user.name
     .split(' ')
@@ -69,10 +72,24 @@ export function Sidebar({ user, tenant }: SidebarProps) {
     .toUpperCase();
 
   return (
-    <aside className="flex w-[248px] flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
-      {/* Header */}
-      <div className="border-b border-[var(--color-border)] p-5">
-        <Link href="/dashboard" className="flex items-center gap-3">
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex w-[248px] flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-elevated)] transition-transform duration-300 ease-in-out md:static md:translate-x-0',
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        {/* Header */}
+        <div className="border-b border-[var(--color-border)] p-5 relative">
+          <Link href="/dashboard" className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-[var(--color-accent)] to-orange-400 font-bold text-white shadow-[0_0_24px_rgba(255,107,53,0.25)]">
             {tenant?.businessName?.[0] || 'M'}
           </div>
@@ -85,6 +102,12 @@ export function Sidebar({ user, tenant }: SidebarProps) {
             </div>
           </div>
         </Link>
+        <button
+          onClick={() => setIsOpen(false)}
+          className="absolute right-4 top-4 rounded-md p-1 text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] md:hidden"
+        >
+          <X size={20} />
+        </button>
 
         {/* Tenant switcher / Info */}
         <div className="mt-4 flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3">
@@ -164,5 +187,6 @@ export function Sidebar({ user, tenant }: SidebarProps) {
         </button>
       </div>
     </aside>
+    </>
   );
 }

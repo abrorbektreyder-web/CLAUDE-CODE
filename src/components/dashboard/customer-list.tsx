@@ -53,13 +53,13 @@ export function CustomerList({ initialData }: CustomerListProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl">Mijozlar</h1>
+          <h1 className="font-display text-2xl md:text-3xl">Mijozlar</h1>
           <p className="text-sm text-[var(--color-text-secondary)]">Sodiq mijozlar va qarzdorliklar bazasi</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:bg-[var(--color-accent-hover)]">
+          <button className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:bg-[var(--color-accent-hover)]">
             <UserPlus size={18} />
             Yangi mijoz
           </button>

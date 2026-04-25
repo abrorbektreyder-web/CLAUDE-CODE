@@ -85,22 +85,22 @@ export function SalesList({ initialData }: SalesListProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl">Sotuvlar</h1>
+          <h1 className="font-display text-2xl md:text-3xl">Sotuvlar</h1>
           <p className="text-sm text-[var(--color-text-secondary)]">Barcha amalga oshirilgan savdolar tarixi va boshqaruvi</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button 
             onClick={handleExport}
-            className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-2.5 text-sm font-semibold transition-all hover:bg-[var(--color-bg-hover)] active:scale-95"
+            className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-2.5 text-sm font-semibold transition-all hover:bg-[var(--color-bg-hover)] active:scale-95"
           >
             <Download size={18} />
             Eksport
           </button>
           <Link 
             href="/pos"
-            className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:bg-[var(--color-accent-hover)] active:scale-95"
+            className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:bg-[var(--color-accent-hover)] active:scale-95"
           >
             <Plus size={18} />
             Yangi savdo

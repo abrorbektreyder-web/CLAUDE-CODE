@@ -1,7 +1,8 @@
 'use client';
 
-import { Bell, Download } from 'lucide-react';
+import { Bell, Download, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useSidebar } from '@/components/dashboard/sidebar-provider';
 
 const pageTitles: Record<string, { breadcrumb: string; title: string }> = {
   '/dashboard': { breadcrumb: 'Boshqaruv', title: 'Dashboard' },
@@ -22,23 +23,32 @@ export function Topbar() {
     breadcrumb: 'Sahifa',
     title: 'Dashboard',
   };
+  const { setIsOpen } = useSidebar();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-background)]/80 px-6 backdrop-blur-md">
+    <header className="flex h-16 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-background)]/80 px-4 md:px-6 backdrop-blur-md">
       {/* Title */}
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">
-          {meta.breadcrumb}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setIsOpen(true)}
+          className="md:hidden rounded-md p-2 -ml-2 text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]"
+        >
+          <Menu size={24} />
+        </button>
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">
+            {meta.breadcrumb}
+          </div>
+          <h1 className="font-display text-xl md:text-2xl leading-none">{meta.title}</h1>
         </div>
-        <h1 className="font-display text-2xl leading-none">{meta.title}</h1>
       </div>
 
       {/* Actions */}
       <div className="flex items-center gap-3">
         {/* Live indicator */}
-        <div className="flex items-center gap-2 rounded-full border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-3.5 py-1.5 text-xs font-semibold text-[var(--color-success)]">
+        <div className="flex items-center gap-2 rounded-full border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-2.5 sm:px-3.5 py-1.5 text-xs font-semibold text-[var(--color-success)]">
           <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-[var(--color-success)] shadow-[0_0_12px_var(--color-success)]" />
-          Real-time
+          <span className="hidden sm:inline">Real-time</span>
         </div>
 
         {/* Notification button */}

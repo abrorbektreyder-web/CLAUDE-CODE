@@ -84,15 +84,15 @@ MVP (Minimum Viable Product) bosqichida quyidagi 15 ta asosiy funksional modul i
 3	✅ Mahsulot bazasi	Telefon va aksessuar CRUD, kategoriyalar	P0
 4	✅ IMEI tracking	Har telefon alohida birlik sifatida	P0
 5	✅ Kassir POS	Tezkor sotuv interfeysi, barcode scanner	P0
-6	🟡 Aksessuar sotuv	Variant-based, qoldiq nazorat	P0
+6	✅ Aksessuar sotuv	Variant-based, qoldiq nazorat	P0
 7	✅ Mijozlar bazasi	CRUD, sotib olish tarixi, qarz tarixi	P0
 8	✅ Nasiya/qarz	Foiz hisoblash, oylik to'lov grafigi	P0
-9	🟡 Kafolat	Avtomatik hisoblanadi, alert sistemasi	P0
-10	❌ Telegram bot	Real-time savdo xabari, qarz eslatma	P0
+9	✅ Kafolat	Avtomatik hisoblanadi, alert sistemasi	P0
+10	🟡 Telegram bot	Real-time savdo xabari, qarz eslatma	P0
 11	❌ Smena boshqaruv	Smena ochish/yopish, kassa pul tekshiruvi	P0
 12	✅ Chek chop etish	ESC/POS thermal printer support	P0
-13	🟡 Asosiy hisobotlar	Kunlik, oylik savdo, top mahsulotlar	P0
-14	❌ Audit log	Immutable jurnal, har bir muhim amal	P0
+13	✅ Asosiy hisobotlar	Kunlik, oylik savdo, top mahsulotlar	P0
+14	✅ Audit log	Immutable jurnal, har bir muhim amal	P0
 15	❌ Backup	Avtomatik kunlik backup	P0
 3.2. MVP'dan keyin (Phase 2 — 2 oy)
 •Trade-in moduli (eski telefonni qabul qilish)
