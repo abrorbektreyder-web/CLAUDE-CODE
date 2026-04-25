@@ -1,24 +1,24 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { 
-  ScanBarcode, 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  CreditCard, 
-  Banknote, 
-  Clock, 
-  Monitor, 
-  Keyboard, 
-  Settings, 
-  LogOut, 
-  X, 
-  Smartphone, 
-  Headphones, 
-  HandCoins, 
-  Loader2, 
+import {
+  ScanBarcode,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  CreditCard,
+  Banknote,
+  Clock,
+  Monitor,
+  Keyboard,
+  Settings,
+  LogOut,
+  X,
+  Smartphone,
+  Headphones,
+  HandCoins,
+  Loader2,
   CheckCircle2,
   Printer,
   User as UserIcon,
@@ -44,7 +44,7 @@ interface CartItem {
 export function PosInterface() {
   const { data: session } = useSession();
   const router = useRouter();
-  
+
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -59,14 +59,16 @@ export function PosInterface() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [debtMonths, setDebtMonths] = useState(3);
-  
+  const [downPayment, setDownPayment] = useState('');
+  const [saleImei, setSaleImei] = useState('');
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
 
   // Search products when query changes
   useEffect(() => {
     if (!session?.user) return;
-    
+
     const timer = setTimeout(async () => {
       try {
         const results = await searchProducts(search, session.user.tenantId);
@@ -75,7 +77,7 @@ export function PosInterface() {
         console.error('Search failed:', err);
       }
     }, 300);
-    
+
     return () => clearTimeout(timer);
   }, [search, session?.user]);
 
@@ -104,11 +106,11 @@ export function PosInterface() {
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
-        return prev.map(item => 
+        return prev.map(item =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { 
+      return [...prev, {
         id: product.id,
         name: pName(product),
         price: Number(product.retailPrice),
@@ -144,7 +146,7 @@ export function PosInterface() {
       alert("Nasiya uchun mijoz ma'lumotlarini to'ldiring");
       return;
     }
-    
+
     setIsProcessing(true);
     try {
       const saleResult = await createSale({
@@ -154,12 +156,13 @@ export function PosInterface() {
         subtotal: total,
         total: total,
         paymentMethod: paymentMethod,
-        paidAmount: paymentMethod === 'credit' ? 0 : total,
-        debtAmount: paymentMethod === 'credit' ? total : 0,
+        paidAmount: paymentMethod === 'credit' ? (Number(downPayment) || 0) : total,
+        debtAmount: paymentMethod === 'credit' ? (total - (Number(downPayment) || 0)) : 0,
         debtMonths: paymentMethod === 'credit' ? debtMonths : undefined,
         customerData: paymentMethod === 'credit' ? {
           fullName: customerName,
-          phone: customerPhone
+          phone: customerPhone,
+          imei: saleImei
         } : undefined,
         items: cart.map(item => ({
           productId: item.id,
@@ -170,14 +173,14 @@ export function PosInterface() {
           total: item.price * item.quantity
         }))
       });
-      
+
       setLastSale({
         ...saleResult,
         cart: [...cart],
         time: new Date().toLocaleString('uz-UZ'),
         cashier: session.user.name
       });
-      
+
       setIsSuccess(true);
       setTimeout(() => {
         setIsSuccess(false);
@@ -187,6 +190,8 @@ export function PosInterface() {
         setCart([]);
         setCustomerName('');
         setCustomerPhone('');
+        setDownPayment('');
+        setSaleImei('');
       }, 1000);
     } catch (err) {
       console.error('Sale creation failed:', err);
@@ -256,10 +261,10 @@ export function PosInterface() {
               <div className="absolute inset-y-0 left-4 flex items-center text-[var(--color-text-tertiary)] group-focus-within:text-[var(--color-accent)] transition-colors">
                 <ScanBarcode size={24} />
               </div>
-              <input 
+              <input
                 ref={searchInputRef}
                 autoFocus
-                type="text" 
+                type="text"
                 placeholder="Barcode skaner qiling yoki tovar nomini yozing... (F1)"
                 className="w-full h-16 rounded-2xl bg-[var(--color-bg-elevated)] border-2 border-[var(--color-border)] px-14 text-lg font-medium outline-none focus:border-[var(--color-accent)] focus:ring-8 focus:ring-[var(--color-accent)]/5 transition-all shadow-sm"
                 value={search}
@@ -276,7 +281,7 @@ export function PosInterface() {
             {/* Catalog Grid */}
             <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 content-start custom-scrollbar">
               {(products.length > 0 ? products : mockProducts).map((p) => (
-                <button 
+                <button
                   key={p.id}
                   onClick={() => addToCart(p)}
                   className="premium-card group rounded-2xl p-4 text-left hover:border-[var(--color-accent)] transition-all active:scale-95"
@@ -310,7 +315,7 @@ export function PosInterface() {
                   <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)]">{cart.length} ta mahsulot</div>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setCart([])}
                 className="p-2 text-[var(--color-text-tertiary)] hover:text-red-500 transition-colors"
               >
@@ -327,7 +332,7 @@ export function PosInterface() {
                       <div className="font-bold text-sm truncate">{item.name}</div>
                       {item.imei && <div className="text-[10px] font-mono text-[var(--color-accent)]">IMEI: {item.imei}</div>}
                     </div>
-                    <button 
+                    <button
                       onClick={() => removeFromCart(item.id)}
                       className="text-[var(--color-text-tertiary)] hover:text-red-500 transition-colors"
                     >
@@ -336,14 +341,14 @@ export function PosInterface() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1">
-                      <button 
+                      <button
                         onClick={() => updateQuantity(item.id, -1)}
                         className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] transition-colors"
                       >
                         <Minus size={14} />
                       </button>
                       <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
-                      <button 
+                      <button
                         onClick={() => updateQuantity(item.id, 1)}
                         className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] transition-colors"
                       >
@@ -376,7 +381,7 @@ export function PosInterface() {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => setIsPaymentModalOpen(true)}
                 disabled={cart.length === 0}
                 className="w-full h-16 rounded-2xl bg-[var(--color-accent)] text-white font-bold text-xl flex items-center justify-center gap-3 shadow-xl shadow-[var(--color-accent)]/30 hover:bg-[var(--color-accent-hover)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:scale-100"
@@ -399,7 +404,7 @@ export function PosInterface() {
                   <h2 className="text-2xl font-display font-bold">To'lov</h2>
                   <p className="text-xs text-[var(--color-text-secondary)]">To'lov turini tanlang</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsPaymentModalOpen(false)}
                   className="h-10 w-10 rounded-full border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] transition-colors"
                 >
@@ -420,13 +425,13 @@ export function PosInterface() {
                   { id: 'card', icon: CreditCard, label: 'Karta', color: 'var(--color-info)' },
                   { id: 'credit', icon: HandCoins, label: 'Nasiya', color: 'var(--color-purple)' },
                 ].map((m) => (
-                  <button 
+                  <button
                     key={m.id}
                     onClick={() => setPaymentMethod(m.id as any)}
                     className={cn(
                       "flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all",
-                      paymentMethod === m.id 
-                        ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10" 
+                      paymentMethod === m.id
+                        ? "border-[var(--color-accent)] bg-[var(--color-accent)]/10"
                         : "border-[var(--color-border)] hover:border-[var(--color-accent)]/50 bg-[var(--color-bg-base)]"
                     )}
                   >
@@ -450,8 +455,8 @@ export function PosInterface() {
                   </div>
                   <div className="space-y-3">
                     <div className="relative">
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="F.I.SH (Ism Familiya)"
                         value={customerName}
                         onChange={(e) => setCustomerName(e.target.value)}
@@ -460,8 +465,8 @@ export function PosInterface() {
                       <UserIcon size={18} className="absolute left-3 top-3.5 text-[var(--color-text-tertiary)]" />
                     </div>
                     <div className="relative">
-                      <input 
-                        type="tel" 
+                      <input
+                        type="tel"
                         placeholder="Telefon raqami (+998)"
                         value={customerPhone}
                         onChange={(e) => setCustomerPhone(e.target.value)}
@@ -469,38 +474,79 @@ export function PosInterface() {
                       />
                       <PhoneIcon size={18} className="absolute left-3 top-3.5 text-[var(--color-text-tertiary)]" />
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="IMEI kodni yozing"
+                          value={saleImei}
+                          onChange={(e) => setSaleImei(e.target.value)}
+                          className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-10 text-sm font-medium outline-none focus:border-[var(--color-accent)] transition-all"
+                        />
+                        <Smartphone size={18} className="absolute left-3 top-3.5 text-[var(--color-text-tertiary)]" />
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          placeholder="Boshlang'ich to'lov"
+                          value={downPayment}
+                          onChange={(e) => setDownPayment(e.target.value)}
+                          className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-10 text-sm font-medium outline-none focus:border-[var(--color-accent)] transition-all"
+                        />
+                        <Banknote size={18} className="absolute left-3 top-3.5 text-[var(--color-text-tertiary)]" />
+                      </div>
+                    </div>
+
                     <div className="relative">
-                      <select 
+                      <select
                         value={debtMonths}
                         onChange={(e) => setDebtMonths(Number(e.target.value))}
                         className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-10 text-sm font-medium outline-none focus:border-[var(--color-accent)] transition-all appearance-none"
                       >
-                        <option value={1}>1 oy (Muddati: {new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString()})</option>
-                        <option value={3}>3 oy</option>
-                        <option value={6}>6 oy</option>
-                        <option value={12}>12 oy</option>
+                        <option value={1}>1 oy muddatga</option>
+                        <option value={3}>3 oy muddatga</option>
+                        <option value={6}>6 oy muddatga</option>
+                        <option value={12}>12 oy muddatga</option>
                       </select>
                       <Calendar size={18} className="absolute left-3 top-3.5 text-[var(--color-text-tertiary)]" />
                       <ChevronDown size={18} className="absolute right-3 top-3.5 text-[var(--color-text-tertiary)] pointer-events-none" />
+                    </div>
+
+                    {/* Quick Debt Calculation Info */}
+                    <div className="mt-2 p-3 rounded-2xl bg-[var(--color-accent)]/5 border border-[var(--color-accent)]/10 space-y-1">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                        <span>Qolgan qarz:</span>
+                        <span className="text-[var(--color-foreground)]">
+                          {new Intl.NumberFormat('uz-UZ').format(total - (Number(downPayment) || 0))} so'm
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                        <span>Oylik to'lov:</span>
+                        <span className="text-[var(--color-accent)]">
+                          {new Intl.NumberFormat('uz-UZ').format(Math.ceil((total - (Number(downPayment) || 0)) / debtMonths))} so'm
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
               <div className="flex gap-3">
-                <button 
+                <button
                   onClick={() => setIsPaymentModalOpen(false)}
                   disabled={isProcessing}
                   className="flex-1 h-14 rounded-2xl border border-[var(--color-border)] font-bold text-sm hover:bg-[var(--color-bg-hover)] transition-all"
                 >
                   Bekor qilish
                 </button>
-                <button 
+                <button
                   onClick={handleFinishSale}
                   disabled={isProcessing || cart.length === 0}
                   className="flex-[2] h-14 rounded-2xl bg-[var(--color-accent)] text-white font-bold text-lg shadow-xl shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
-                  {isProcessing ? <Loader2 className="animate-spin" size={24} /> : isSuccess ? <CheckCircle2 size={24} /> : "To'lovni tasdiqlash"}
+                  {isProcessing ? <Loader2 className="animate-spin" size={24} /> : isSuccess ? <CheckCircle2 size={24} /> : (
+                    paymentMethod === 'credit' ? "Nasiyani saqlash" : "To'lovni tasdiqlash"
+                  )}
                 </button>
               </div>
             </div>
@@ -512,7 +558,7 @@ export function PosInterface() {
       {showReceipt && lastSale && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl animate-in fade-in duration-300">
           <div className="w-full max-w-sm flex flex-col gap-6 animate-in zoom-in-95 duration-300">
-            <div 
+            <div
               ref={receiptRef}
               className="bg-white text-black p-8 shadow-2xl rounded-sm font-mono text-[11px] leading-tight print:p-0 print:shadow-none"
             >
@@ -521,13 +567,13 @@ export function PosInterface() {
                 <div>Filial #1 (Markaziy)</div>
                 <div>Tel: +998 71 200 00 00</div>
               </div>
-              
+
               <div className="border-t border-dashed border-black/20 my-4" />
-              
+
               <div className="space-y-1 mb-4">
                 <div className="flex justify-between">
                   <span>CHEK №:</span>
-                  <span className="font-bold">{lastSale.receipt_number || lastSale.id.slice(0,8).toUpperCase()}</span>
+                  <span className="font-bold">{lastSale.receipt_number || lastSale.id.slice(0, 8).toUpperCase()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>SANA:</span>
@@ -542,9 +588,9 @@ export function PosInterface() {
                   <span className="font-bold uppercase">{lastSale.customerName}</span>
                 </div>
               </div>
-              
+
               <div className="border-t border-dashed border-black/20 my-4" />
-              
+
               <div className="mb-4">
                 <div className="flex font-bold mb-2">
                   <span className="flex-1">MAHSULOT</span>
@@ -564,9 +610,9 @@ export function PosInterface() {
                   ))}
                 </div>
               </div>
-              
+
               <div className="border-t border-dashed border-black/20 my-4" />
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span>JAMI:</span>
@@ -586,9 +632,9 @@ export function PosInterface() {
                   </div>
                 )}
               </div>
-              
+
               <div className="border-t border-dashed border-black/20 my-4" />
-              
+
               <div className="text-center space-y-1">
                 <div className="font-bold">XARIDINGIZ UCHUN RAXMAT!</div>
                 <div className="text-[9px]">Sotilgan tovarlar 24 soat ichida almashtiriladi.</div>
@@ -597,14 +643,14 @@ export function PosInterface() {
             </div>
 
             <div className="flex gap-3 no-print">
-              <button 
+              <button
                 onClick={handlePrint}
                 className="flex-1 h-12 rounded-xl bg-white text-black font-bold flex items-center justify-center gap-2 hover:bg-white/90 transition-all"
               >
                 <Printer size={18} />
                 Chop etish
               </button>
-              <button 
+              <button
                 onClick={() => setShowReceipt(false)}
                 className="flex-1 h-12 rounded-xl bg-[var(--color-accent)] text-white font-bold hover:bg-[var(--color-accent-hover)] transition-all"
               >

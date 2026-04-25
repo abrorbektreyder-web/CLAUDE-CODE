@@ -129,3 +129,115 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Server xatosi' }, { status: 500 });
   }
 }
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, ...updateData } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID talab qilinadi' }, { status: 400 });
+    }
+
+    const data = createProductSchema.partial().parse(updateData);
+    const supabase = getSupabase();
+
+    // Check if product exists and belongs to tenant
+    const { data: existing } = await supabase
+      .from('products')
+      .select('id')
+      .eq('id', id)
+      .eq('tenant_id', session.user.tenantId)
+      .is('deleted_at', null)
+      .single();
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Tovar topilmadi' }, { status: 404 });
+    }
+
+    // Check SKU uniqueness if changed
+    if (data.sku) {
+      const { data: skuCheck } = await supabase
+        .from('products')
+        .select('id')
+        .eq('tenant_id', session.user.tenantId)
+        .eq('sku', data.sku)
+        .neq('id', id)
+        .is('deleted_at', null)
+        .maybeSingle();
+
+      if (skuCheck) {
+        return NextResponse.json({ error: `Bu SKU (${data.sku}) allaqachon mavjud` }, { status: 409 });
+      }
+    }
+
+    // Map fields to snake_case for DB
+    const dbData: any = {};
+    if (data.name) dbData.name = data.name;
+    if (data.brand !== undefined) dbData.brand = data.brand;
+    if (data.model !== undefined) dbData.model = data.model;
+    if (data.sku) dbData.sku = data.sku;
+    if (data.barcode !== undefined) dbData.barcode = data.barcode;
+    if (data.productType) dbData.product_type = data.productType;
+    if (data.costPrice !== undefined) dbData.cost_price = data.costPrice;
+    if (data.retailPrice !== undefined) dbData.retail_price = data.retailPrice;
+    if (data.wholesalePrice !== undefined) dbData.wholesale_price = data.wholesalePrice;
+    if (data.minStock !== undefined) dbData.min_stock = data.minStock;
+    if (data.warrantyMonths !== undefined) dbData.warranty_months = data.warrantyMonths;
+    if (data.description !== undefined) dbData.description = data.description;
+
+    const { data: updated, error } = await supabase
+      .from('products')
+      .update(dbData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, product: updated });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validatsiya xatosi', details: err.errors }, { status: 400 });
+    }
+    console.error('Update error:', err);
+    return NextResponse.json({ error: 'Server xatosi' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID talab qilinadi' }, { status: 400 });
+    }
+
+    const supabase = getSupabase();
+
+    // Soft delete
+    const { error } = await supabase
+      .from('products')
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('tenant_id', session.user.tenantId);
+
+    if (error) throw error;
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('Delete error:', err);
+    return NextResponse.json({ error: 'Server xatosi' }, { status: 500 });
+  }
+}

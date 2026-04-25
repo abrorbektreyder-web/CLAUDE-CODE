@@ -1,12 +1,12 @@
 'use server';
 
 import { createClient } from '@supabase/supabase-js';
-import { 
-  hashSensitive, 
-  prepareEncryptedField, 
-  normalizePhone, 
-  isValidImei, 
-  isValidUzPhone 
+import {
+  hashSensitive,
+  prepareEncryptedField,
+  normalizePhone,
+  isValidImei,
+  isValidUzPhone
 } from './lib/encryption';
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -119,7 +119,7 @@ export async function searchProducts(query: string, tenantId: string, limit = 20
     .limit(limit);
 
   if (error) throw error;
-  
+
   return (data || []).map(p => ({
     id: p.id,
     name: p.name,
@@ -147,14 +147,18 @@ export async function getInventory(tenantId: string, branchId?: string) {
       brand,
       model,
       product_type,
+      cost_price,
       retail_price,
+      wholesale_price,
       min_stock,
+      warranty_months,
+      description,
       image_url,
       created_at
     `)
     .eq('tenant_id', tenantId)
     .is('deleted_at', null);
-    
+
   if (branchId) {
     // Branch filtering logic would go here if needed
   }
@@ -171,11 +175,15 @@ export async function getInventory(tenantId: string, branchId?: string) {
     brand: p.brand,
     model: p.model,
     productType: p.product_type,
+    costPrice: p.cost_price,
     retailPrice: p.retail_price,
+    wholesalePrice: p.wholesale_price,
     minStock: p.min_stock,
+    warrantyMonths: p.warranty_months,
+    description: p.description,
     imageUrl: p.image_url,
-    totalQuantity: 0, 
-    phoneCount: 0,    
+    totalQuantity: 0,
+    phoneCount: 0,
   }));
 }
 
@@ -251,7 +259,7 @@ export async function getDashboardKpis(tenantId?: string) {
     .select('total, status')
     .gte('created_at', today.toISOString())
     .eq('status', 'completed');
-    
+
   if (tenantId) salesQuery = salesQuery.eq('tenant_id', tenantId);
 
   // Active debts
@@ -259,7 +267,7 @@ export async function getDashboardKpis(tenantId?: string) {
     .from('debts')
     .select('remaining_amount, is_overdue')
     .eq('status', 'active');
-    
+
   if (tenantId) debtQuery = debtQuery.eq('tenant_id', tenantId);
 
   const [salesRes, debtRes] = await Promise.all([salesQuery, debtQuery]);
@@ -276,11 +284,11 @@ export async function getDashboardKpis(tenantId?: string) {
     today: {
       revenue,
       count,
-      profit: revenue * 0.18, 
+      profit: revenue * 0.18,
       avgTicket: count > 0 ? revenue / count : 0,
     },
     yesterday: {
-      revenue: revenue * 0.95, 
+      revenue: revenue * 0.95,
     },
     debts: {
       totalAmount: totalDebts,
@@ -402,7 +410,7 @@ export async function createSale(data: {
         })
         .select()
         .single();
-      
+
       if (customerError) throw customerError;
       customerId = newCustomer.id;
     }
@@ -410,26 +418,38 @@ export async function createSale(data: {
 
   // 2. Create the sale record
   let branchId = data.branchId;
-  if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
+  let cashierId = data.cashierId;
+
+  // Validate UUID formats to prevent 22P02 error
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  if (!uuidRegex.test(cashierId)) {
+    // If cashierId is not a UUID (it's likely a Better Auth string ID), 
+    // we need to find the actual database user
     const { data: userData } = await supabase
       .from('users')
-      .select('branch_id')
-      .eq('id', data.cashierId)
-      .single();
-    
-    if (userData?.branch_id) {
-      branchId = userData.branch_id;
-    } else {
-      const { data: branchData } = await supabase
-        .from('branches')
-        .select('id')
-        .eq('tenant_id', data.tenantId)
-        .limit(1)
-        .single();
-      
-      if (branchData) {
-        branchId = branchData.id;
+      .select('id, branch_id')
+      .or(`id.eq.${cashierId},email.eq.${cashierId}`) // Try finding by ID or email
+      .maybeSingle();
+
+    if (userData) {
+      cashierId = userData.id;
+      if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
+        branchId = userData.branch_id;
       }
+    }
+  }
+
+  if (!branchId || branchId === '00000000-0000-0000-0000-000000000000') {
+    const { data: branchData } = await supabase
+      .from('branches')
+      .select('id')
+      .eq('tenant_id', data.tenantId)
+      .limit(1)
+      .single();
+
+    if (branchData) {
+      branchId = branchData.id;
     }
   }
 
@@ -438,13 +458,14 @@ export async function createSale(data: {
     .insert({
       tenant_id: data.tenantId,
       branch_id: branchId,
-      cashier_id: data.cashierId,
+      cashier_id: cashierId,
       customer_id: customerId,
       subtotal: data.subtotal,
       total: data.total,
       payment_method: data.paymentMethod,
       paid_amount: data.paidAmount,
       debt_amount: data.debtAmount,
+      notes: data.customerData?.imei ? `IMEI: ${data.customerData.imei}` : undefined,
       status: 'completed',
     })
     .select()
@@ -456,7 +477,7 @@ export async function createSale(data: {
   const itemsToInsert = data.items.map(item => ({
     tenant_id: data.tenantId,
     sale_id: sale.id,
-    product_id: item.productId,
+    product_id: (item.productId && uuidRegex.test(item.productId)) ? item.productId : null,
     product_name: item.productName,
     quantity: item.quantity,
     unit_price: item.unitPrice,
@@ -491,6 +512,8 @@ export async function createSale(data: {
         start_date: startDate.toISOString().split('T')[0],
         end_date: endDate.toISOString().split('T')[0],
         remaining_amount: data.debtAmount,
+        paid_amount: 0,
+        notes: data.customerData?.imei ? `IMEI: ${data.customerData.imei}` : undefined,
         status: 'active',
       })
       .select()
@@ -507,7 +530,7 @@ export async function createSale(data: {
         debt_id: debt.id,
         installment_number: i + 1,
         due_date: dueDate.toISOString().split('T')[0],
-        expected_amount: i === months - 1 
+        expected_amount: i === months - 1
           ? Number(data.debtAmount) - (monthlyPayment * (months - 1))
           : monthlyPayment,
       };
@@ -529,7 +552,7 @@ export async function createSale(data: {
     if (customer) {
       await supabase
         .from('customers')
-        .update({ 
+        .update({
           total_debt: Number(customer.total_debt || 0) + Number(data.debtAmount),
           total_purchases: Number(customer.total_purchases || 0) + Number(data.total)
         })

@@ -21,6 +21,8 @@ export default async function InventoryPage() {
   const serializedInventory = inventory.map(item => ({
     ...item,
     retailPrice: (item.retailPrice ?? 0).toString(),
+    costPrice: (item.costPrice ?? 0).toString(),
+    wholesalePrice: item.wholesalePrice ? item.wholesalePrice.toString() : null,
   }));
 
   return <InventoryList initialData={serializedInventory as any} />;

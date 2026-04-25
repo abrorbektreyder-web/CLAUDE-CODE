@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { Edit2, Trash2, X } from 'lucide-react';
 
 interface SaleItem {
   id: string;
@@ -34,6 +35,9 @@ interface SalesListProps {
 export function SalesList({ initialData }: SalesListProps) {
   const [search, setSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [selectedSale, setSelectedSale] = useState<SaleItem | null>(null);
+  const [modalType, setModalType] = useState<'edit' | 'delete' | null>(null);
 
   const filteredData = initialData.filter(sale => 
     sale.customerName.toLowerCase().includes(search.toLowerCase()) ||
@@ -218,9 +222,13 @@ export function SalesList({ initialData }: SalesListProps) {
                     <div className="font-bold">{formatPrice(sale.total)}</div>
                     <div className={cn(
                       "text-[10px] font-bold uppercase",
-                      sale.status === 'completed' ? "text-[var(--color-success)]" : "text-[var(--color-danger)]"
+                      sale.status === 'completed' 
+                        ? (sale.paymentMethod === 'credit' ? "text-[var(--color-purple)]" : "text-[var(--color-success)]")
+                        : "text-[var(--color-danger)]"
                     )}>
-                      {sale.status === 'completed' ? 'To\'landi' : 'Bekor qilingan'}
+                      {sale.status === 'completed' 
+                        ? (sale.paymentMethod === 'credit' ? 'Nasiya' : 'To\'landi') 
+                        : 'Bekor qilingan'}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -231,10 +239,46 @@ export function SalesList({ initialData }: SalesListProps) {
                   <td className="px-6 py-4 text-[var(--color-text-secondary)] whitespace-nowrap">
                     {formatDate(sale.createdAt)}
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="rounded-lg p-2 text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-foreground)] transition-colors">
+                  <td className="px-6 py-4 text-right relative">
+                    <button 
+                      onClick={() => setOpenMenuId(openMenuId === sale.id ? null : sale.id)}
+                      className="rounded-lg p-2 text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-foreground)] transition-colors"
+                    >
                       <MoreHorizontal size={18} />
                     </button>
+                    
+                    {openMenuId === sale.id && (
+                      <>
+                        <div 
+                          className="fixed inset-0 z-10" 
+                          onClick={() => setOpenMenuId(null)}
+                        />
+                        <div className="absolute right-8 top-10 z-20 w-40 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1 shadow-xl animate-in fade-in zoom-in-95">
+                          <button 
+                            onClick={() => {
+                              setSelectedSale(sale);
+                              setModalType('edit');
+                              setOpenMenuId(null);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[var(--color-bg-hover)] transition-colors"
+                          >
+                            <Edit2 size={14} />
+                            Tahrirlash
+                          </button>
+                          <button 
+                            onClick={() => {
+                              setSelectedSale(sale);
+                              setModalType('delete');
+                              setOpenMenuId(null);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+                          >
+                            <Trash2 size={14} />
+                            O'chirish
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </td>
                 </tr>
               )) : (
@@ -251,6 +295,93 @@ export function SalesList({ initialData }: SalesListProps) {
           </table>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {modalType === 'edit' && selectedSale && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[var(--color-bg-elevated)] rounded-3xl border border-[var(--color-border)] shadow-2xl p-6 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-display font-bold">Savdoni tahrirlash</h3>
+              <button 
+                onClick={() => setModalType(null)}
+                className="p-2 rounded-full hover:bg-[var(--color-bg-hover)] transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-[var(--color-bg-base)] border border-[var(--color-border)]">
+                <div className="text-xs text-[var(--color-text-tertiary)] mb-1">Chek №</div>
+                <div className="font-mono font-bold text-[var(--color-accent)]">#{selectedSale.receiptNumber}</div>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-[var(--color-text-tertiary)]">Mijoz ismi</label>
+                <input 
+                  type="text" 
+                  defaultValue={selectedSale.customerName}
+                  className="w-full h-12 rounded-xl bg-[var(--color-bg-base)] border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-accent)]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-[var(--color-text-tertiary)]">Telefon raqami</label>
+                <input 
+                  type="text" 
+                  defaultValue={selectedSale.customerPhone}
+                  className="w-full h-12 rounded-xl bg-[var(--color-bg-base)] border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-accent)]"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button 
+                onClick={() => setModalType(null)}
+                className="flex-1 h-12 rounded-xl border border-[var(--color-border)] font-bold hover:bg-[var(--color-bg-hover)] transition-colors"
+              >
+                Bekor qilish
+              </button>
+              <button 
+                onClick={() => setModalType(null)}
+                className="flex-1 h-12 rounded-xl bg-[var(--color-accent)] text-white font-bold hover:bg-[var(--color-accent-hover)] transition-colors"
+              >
+                Saqlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Modal */}
+      {modalType === 'delete' && selectedSale && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-[var(--color-bg-elevated)] rounded-3xl border border-[var(--color-border)] shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={32} />
+            </div>
+            <h3 className="text-xl font-display font-bold mb-2">Savdoni o'chirish</h3>
+            <p className="text-sm text-[var(--color-text-secondary)] mb-6">
+              Siz rostdan ham <b>#{selectedSale.receiptNumber}</b> raqamli savdoni o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.
+            </p>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setModalType(null)}
+                className="flex-1 h-12 rounded-xl border border-[var(--color-border)] font-bold hover:bg-[var(--color-bg-hover)] transition-colors"
+              >
+                Yo'q, qaytish
+              </button>
+              <button 
+                onClick={() => setModalType(null)}
+                className="flex-1 h-12 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition-colors"
+              >
+                Ha, o'chirish
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
