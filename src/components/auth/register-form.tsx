@@ -13,6 +13,7 @@ const registerSchema = z
     name: z.string().min(2, "Ism kamida 2 ta belgi bo'lishi kerak"),
     storeName: z.string().min(2, "Do'kon nomi kamida 2 ta belgi bo'lishi kerak"),
     email: z.string().email("Email manzili noto'g'ri"),
+    phone: z.string().min(9, "Telefon raqami noto'g'ri").max(20),
     password: z
       .string()
       .min(8, 'Parol kamida 8 ta belgi')
@@ -51,6 +52,8 @@ export function RegisterForm() {
       email: data.email,
       password: data.password,
       name: data.name,
+      phone: `+998${data.phone}`,
+      storeName: data.storeName,
       callbackURL: '/dashboard',
     });
 
@@ -153,6 +156,34 @@ export function RegisterForm() {
         {errors.email && (
           <p className="mt-1.5 text-xs text-[var(--color-danger)]">
             {errors.email.message}
+          </p>
+        )}
+      </div>
+
+      {/* Phone */}
+      <div>
+        <label
+          htmlFor="phone"
+          className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]"
+        >
+          Telefon
+        </label>
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] text-sm font-medium">
+            +998
+          </div>
+          <input
+            id="phone"
+            type="tel"
+            autoComplete="tel"
+            placeholder="901234567"
+            {...register('phone')}
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-3 pl-14 pr-4 text-sm text-[var(--color-foreground)] placeholder-[var(--color-text-tertiary)] transition-all duration-180 ease-spring focus:border-[var(--color-accent)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]/20"
+          />
+        </div>
+        {errors.phone && (
+          <p className="mt-1.5 text-xs text-[var(--color-danger)]">
+            {errors.phone.message}
           </p>
         )}
       </div>

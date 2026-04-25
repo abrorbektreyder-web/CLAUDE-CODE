@@ -34,6 +34,14 @@ export const auth = betterAuth({
       branchId: {
         type: 'string',
         returned: true,
+      },
+      phone: {
+        type: 'string',
+        returned: true,
+      },
+      storeName: {
+        type: 'string',
+        required: false,
       }
     }
   },

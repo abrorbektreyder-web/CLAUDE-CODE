@@ -35,6 +35,18 @@ function toCamel(str: string): string {
   return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
 }
 
+// Slugify helper for subdomains
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')     // Replace spaces with -
+    .replace(/[^\w-]+/g, '')  // Remove all non-word chars
+    .replace(/--+/g, '-')     // Replace multiple - with single -
+    .slice(0, 30);            // Limit length
+}
+
 // Convert object keys: camelCase → snake_case
 // Special mappings for fields that don't follow standard rules
 const CAMEL_TO_SNAKE: Record<string, Record<string, string>> = {
@@ -194,6 +206,73 @@ export const supabaseAdapter = {
       // Remove fields not present in our database
       delete snakeData.updated_at;
       delete snakeData.id; // Let database generate UUID
+    }
+
+    // Handle NEW USER Onboarding (Public Registration)
+    if (model === 'user' && !snakeData.tenant_id && snakeData.store_name) {
+      const storeName = snakeData.store_name as string;
+      const ownerEmail = snakeData.email as string;
+      const ownerPhone = snakeData.phone as string;
+      const fullName = snakeData.full_name as string;
+
+      // 1. Create Tenant
+      const subdomainBase = slugify(storeName);
+      let subdomain = subdomainBase;
+      
+      // Check if subdomain exists, if so append random string (simplified for now)
+      const { data: existingTenant } = await supabase.from('tenants').select('id').eq('subdomain', subdomain).maybeSingle();
+      if (existingTenant) {
+        subdomain = `${subdomainBase}-${Math.random().toString(36).substring(2, 6)}`;
+      }
+
+      const { data: tenant, error: tenantError } = await supabase
+        .from('tenants')
+        .insert({
+          subdomain,
+          business_name: storeName,
+          owner_email: ownerEmail,
+          owner_phone: ownerPhone,
+          status: 'trial',
+          plan: 'free',
+        })
+        .select()
+        .single();
+
+      if (tenantError) {
+        console.error('[Adapter] Tenant creation failed:', tenantError);
+        throw new Error(`Failed to create tenant: ${tenantError.message}`);
+      }
+
+      // 2. Create Main Branch
+      const { data: branch, error: branchError } = await supabase
+        .from('branches')
+        .insert({
+          tenant_id: tenant.id,
+          name: 'Asosiy do\'kon',
+          is_main: true,
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (branchError) {
+        console.error('[Adapter] Branch creation failed:', branchError);
+        // We could delete the tenant here but let's keep it simple
+      }
+
+      // 3. Update User Data
+      snakeData.tenant_id = tenant.id;
+      snakeData.branch_id = branch?.id;
+      snakeData.role = 'tenant_owner';
+      
+      // Remove temporary field
+      delete snakeData.store_name;
+    } else if (model === 'user') {
+      // If store_name is present but tenant_id is NOT (this shouldn't happen usually but just in case)
+      delete snakeData.store_name;
+      
+      // Default role if not provided
+      if (!snakeData.role) snakeData.role = 'admin';
     }
 
     const { data: result, error } = await supabase

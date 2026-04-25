@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { Topbar } from '@/components/dashboard/topbar';
+import { getTenant } from '@/db/queries';
 
 export default async function DashboardLayout({
   children,
@@ -17,6 +18,10 @@ export default async function DashboardLayout({
     redirect('/login?callback=/dashboard');
   }
 
+  const tenant = session.user.tenantId 
+    ? await getTenant(session.user.tenantId)
+    : null;
+
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--color-background)]">
       {/* Ambient glow */}
@@ -29,7 +34,7 @@ export default async function DashboardLayout({
       />
 
       {/* Sidebar */}
-      <Sidebar user={session.user} />
+      <Sidebar user={session.user} tenant={tenant} />
 
       {/* Main content */}
       <main className="flex flex-1 flex-col overflow-hidden">

@@ -289,6 +289,24 @@ export async function getDashboardKpis(tenantId?: string) {
   };
 }
 
+export async function getTenant(id: string) {
+  const { data, error } = await getSupabase()
+    .from('tenants')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) return null;
+
+  return {
+    id: data.id,
+    businessName: data.business_name,
+    subdomain: data.subdomain,
+    plan: data.plan,
+    status: data.status,
+  };
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // 13. GET SALES (History)
 // ════════════════════════════════════════════════════════════════════════════
