@@ -206,6 +206,12 @@ export const supabaseAdapter = {
       // Remove fields not present in our database
       delete snakeData.updated_at;
       delete snakeData.id; // Let database generate UUID
+    } else {
+      // For accounts and verifications, if ID is not provided by Better Auth (which usually it is),
+      // we need to generate one, or rely on Drizzle's default. But Drizzle uses text, not UUID for these.
+      if (!snakeData.id) {
+        snakeData.id = crypto.randomUUID();
+      }
     }
 
     // Handle NEW USER Onboarding (Public Registration)
