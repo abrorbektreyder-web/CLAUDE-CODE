@@ -49,13 +49,11 @@ export function CustomerList({ initialData }: CustomerListProps) {
     return new Intl.NumberFormat('uz-UZ').format(Number(price));
   };
 
-  const formatDate = (date: Date | null) => {
+  const formatDate = (date: Date | string | null) => {
     if (!date) return `Hali savdo yo'q`;
-    return new Intl.DateTimeFormat('uz-UZ', { 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric' 
-    }).format(new Date(date));
+    const d = new Date(date);
+    const months = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
+    return `${d.getDate()}-${months[d.getMonth()]}, ${d.getFullYear()}`;
   };
 
   const handleAddCustomer = async (e: React.FormEvent) => {

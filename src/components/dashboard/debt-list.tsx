@@ -79,20 +79,18 @@ export function DebtList({ initialData }: DebtListProps) {
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '-';
-    return new Intl.DateTimeFormat('uz-UZ', { 
-      day: 'numeric', 
-      month: 'short',
-    }).format(new Date(dateStr));
+    const d = new Date(dateStr);
+    const months = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
+    return `${d.getDate()}-${months[d.getMonth()]}`;
   };
 
   const formatDateTime = (dateStr: string | null) => {
     if (!dateStr) return '-';
-    return new Intl.DateTimeFormat('uz-UZ', { 
-      day: 'numeric', 
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(dateStr));
+    const d = new Date(dateStr);
+    const months = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${d.getDate()}-${months[d.getMonth()]}, ${hours}:${minutes}`;
   };
 
   const handlePayment = async (e: React.FormEvent) => {

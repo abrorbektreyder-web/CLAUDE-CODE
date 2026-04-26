@@ -56,12 +56,13 @@ export function SalesList({ initialData }: SalesListProps) {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Intl.DateTimeFormat('uz-UZ', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      day: 'numeric',
-      month: 'short'
-    }).format(new Date(dateStr));
+    const d = new Date(dateStr);
+    const months = ['yan', 'fev', 'mar', 'apr', 'may', 'iyn', 'iyl', 'avg', 'sen', 'okt', 'noy', 'dek'];
+    const day = d.getDate();
+    const month = months[d.getMonth()];
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day}-${month}, ${hours}:${minutes}`;
   };
 
   const handleExport = () => {
