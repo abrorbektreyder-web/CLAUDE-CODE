@@ -10,7 +10,9 @@ import {
   ArrowUpRight, 
   ArrowDownLeft,
   ShoppingCart,
-  FileText,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
   Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,6 +28,11 @@ interface SaleItem {
   paymentMethod: string;
   status: string;
   createdAt: string;
+  // Debt enrichment (null for non-credit sales)
+  debtStatus?: string | null;        // 'active' | 'paid' | 'overdue'
+  debtRemaining?: string | null;
+  debtTotal?: string | null;
+  debtPaid?: string | null;
 }
 
 interface SalesListProps {
@@ -220,21 +227,67 @@ export function SalesList({ initialData }: SalesListProps) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-bold">{formatPrice(sale.total)}</div>
-                    <div className={cn(
-                      "text-[10px] font-bold uppercase",
-                      sale.status === 'completed' 
-                        ? (sale.paymentMethod === 'credit' ? "text-[var(--color-purple)]" : "text-[var(--color-success)]")
-                        : "text-[var(--color-danger)]"
-                    )}>
-                      {sale.status === 'completed' 
-                        ? (sale.paymentMethod === 'credit' ? 'Nasiya' : 'To\'landi') 
-                        : 'Bekor qilingan'}
-                    </div>
+                    {/* Smart status — uses real debt.status from DB join */}
+                    {sale.status === 'completed' ? (
+                      sale.paymentMethod === 'credit' ? (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          {sale.debtStatus === 'paid' ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[var(--color-success)] uppercase">
+                              <CheckCircle2 size={10} />
+                              Nasiya · To'landi
+                            </span>
+                          ) : sale.debtStatus === 'overdue' ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[var(--color-danger)] uppercase">
+                              <AlertTriangle size={10} />
+                              Nasiya · Muddati o'tgan
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[var(--color-purple)] uppercase">
+                              <Clock size={10} />
+                              Nasiya · Aktiv
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] font-bold uppercase text-[var(--color-success)]">To'landi</div>
+                      )
+                    ) : (
+                      <div className="text-[10px] font-bold uppercase text-[var(--color-danger)]">Bekor qilingan</div>
+                    )}
+                    {/* Progress micro-bar for credit sales */}
+                    {sale.paymentMethod === 'credit' && sale.debtTotal && Number(sale.debtTotal) > 0 && (
+                      <div className="mt-1.5 flex items-center gap-1.5">
+                        <div className="flex-1 h-1 bg-[var(--color-border)] rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all",
+                              sale.debtStatus === 'paid' ? "bg-[var(--color-success)]" : "bg-[var(--color-purple)]"
+                            )}
+                            style={{
+                              width: `${Math.min(100, (Number(sale.debtPaid || 0) / Number(sale.debtTotal)) * 100)}%`
+                            }}
+                          />
+                        </div>
+                        <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] whitespace-nowrap">
+                          {Math.round((Number(sale.debtPaid || 0) / Number(sale.debtTotal)) * 100)}%
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center rounded-md bg-[var(--color-bg-elevated)] px-2 py-0.5 text-[11px] font-bold border border-[var(--color-border)] uppercase">
-                      {sale.paymentMethod}
-                    </span>
+                    <div className={cn(
+                      "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold border uppercase",
+                      sale.paymentMethod === 'credit' && sale.debtStatus === 'paid'
+                        ? "bg-[var(--color-success)]/10 border-[var(--color-success)]/20 text-[var(--color-success)]"
+                        : sale.paymentMethod === 'credit'
+                        ? "bg-[var(--color-purple)]/10 border-[var(--color-purple)]/20 text-[var(--color-purple)]"
+                        : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
+                    )}>
+                      {sale.paymentMethod === 'cash' ? 'Naqd'
+                        : sale.paymentMethod === 'card' ? 'Karta'
+                        : sale.paymentMethod === 'transfer' ? "O'tkazma"
+                        : 'Nasiya'}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-[var(--color-text-secondary)] whitespace-nowrap">
                     {formatDate(sale.createdAt)}

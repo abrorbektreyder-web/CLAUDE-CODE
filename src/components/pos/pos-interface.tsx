@@ -151,7 +151,7 @@ export function PosInterface() {
     try {
       const saleResult = await createSale({
         tenantId: session.user.tenantId,
-        branchId: '00000000-0000-0000-0000-000000000000', // Mock branch for now
+        branchId: (session.user as any).branchId || '00000000-0000-0000-0000-000000000000',
         cashierId: session.user.id,
         subtotal: total,
         total: total,
@@ -498,33 +498,59 @@ export function PosInterface() {
                     </div>
 
                     <div className="relative">
-                      <select
+                      <input
+                        type="number"
+                        min={1}
+                        max={60}
+                        placeholder="Muddat (oyda)"
                         value={debtMonths}
-                        onChange={(e) => setDebtMonths(Number(e.target.value))}
-                        className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-10 text-sm font-medium outline-none focus:border-[var(--color-accent)] transition-all appearance-none"
-                      >
-                        <option value={1}>1 oy muddatga</option>
-                        <option value={3}>3 oy muddatga</option>
-                        <option value={6}>6 oy muddatga</option>
-                        <option value={12}>12 oy muddatga</option>
-                      </select>
+                        onChange={(e) => setDebtMonths(Math.max(1, Number(e.target.value)))}
+                        className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-10 text-sm font-medium outline-none focus:border-[var(--color-accent)] transition-all"
+                      />
                       <Calendar size={18} className="absolute left-3 top-3.5 text-[var(--color-text-tertiary)]" />
-                      <ChevronDown size={18} className="absolute right-3 top-3.5 text-[var(--color-text-tertiary)] pointer-events-none" />
+                      <div className="absolute right-3 top-3.5 text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase">OY</div>
                     </div>
 
                     {/* Quick Debt Calculation Info */}
                     <div className="mt-2 p-3 rounded-2xl bg-[var(--color-accent)]/5 border border-[var(--color-accent)]/10 space-y-1">
                       <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
                         <span>Qolgan qarz:</span>
-                        <span className="text-[var(--color-foreground)]">
+                        <span className="text-[var(--color-foreground)] font-bold">
                           {new Intl.NumberFormat('uz-UZ').format(total - (Number(downPayment) || 0))} so'm
                         </span>
                       </div>
                       <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
                         <span>Oylik to'lov:</span>
-                        <span className="text-[var(--color-accent)]">
-                          {new Intl.NumberFormat('uz-UZ').format(Math.ceil((total - (Number(downPayment) || 0)) / debtMonths))} so'm
+                        <span className="text-[var(--color-accent)] font-bold text-sm">
+                          {new Intl.NumberFormat('uz-UZ').format(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)))} so'm
                         </span>
+                      </div>
+                    </div>
+
+                    {/* Schedule Preview */}
+                    <div className="mt-2 border border-[var(--color-border)] rounded-2xl overflow-hidden bg-[var(--color-bg-base)]/50">
+                      <div className="px-4 py-2 bg-[var(--color-bg-elevated)] border-b border-[var(--color-border)] flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-tertiary)]">To'lovlar grafigi</span>
+                        <span className="text-[10px] font-bold text-[var(--color-accent)]">{debtMonths} oy</span>
+                      </div>
+                      <div className="max-h-32 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                        {Array.from({ length: debtMonths }).map((_, i) => {
+                          const d = new Date();
+                          d.setMonth(d.getMonth() + i + 1);
+                          const amt = i === debtMonths - 1 
+                            ? (total - (Number(downPayment) || 0)) - (Math.ceil((total - (Number(downPayment) || 0)) / debtMonths) * (debtMonths - 1))
+                            : Math.ceil((total - (Number(downPayment) || 0)) / debtMonths);
+                          
+                          return (
+                            <div key={i} className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-[var(--color-bg-elevated)] transition-colors text-[11px]">
+                              <div className="flex items-center gap-2">
+                                <span className="h-4 w-4 rounded bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center text-[8px] font-bold text-[var(--color-text-tertiary)]">{i + 1}</span>
+                                <span className="font-medium">{d.toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' })}</span>
+                              </div>
+                              <span className="font-bold">{new Intl.NumberFormat('uz-UZ').format(amt)} so'm</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

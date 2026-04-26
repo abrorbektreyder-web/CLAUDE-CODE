@@ -10,7 +10,10 @@ import {
   ShoppingBag,
   MoreVertical,
   ArrowUpRight,
-  UserPlus
+  UserPlus,
+  X,
+  Loader2,
+  CheckCircle2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +35,11 @@ interface CustomerListProps {
 export function CustomerList({ initialData }: CustomerListProps) {
   const [search, setSearch] = useState('');
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({ fullName: '', phone: '', address: '', passport: '', notes: '' });
+
   const filteredData = initialData.filter(item => 
     item.fullName.toLowerCase().includes(search.toLowerCase()) ||
     (item.phoneLastFour?.includes(search) ?? false)
@@ -50,6 +58,28 @@ export function CustomerList({ initialData }: CustomerListProps) {
     }).format(new Date(date));
   };
 
+  const handleAddCustomer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Xatolik yuz berdi');
+      
+      setIsAddModalOpen(false);
+      window.location.reload(); // Refresh to show new customer
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -59,12 +89,134 @@ export function CustomerList({ initialData }: CustomerListProps) {
           <p className="text-sm text-[var(--color-text-secondary)]">Sodiq mijozlar va qarzdorliklar bazasi</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:bg-[var(--color-accent-hover)]">
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:bg-[var(--color-accent-hover)]"
+          >
             <UserPlus size={18} />
             Yangi mijoz
           </button>
         </div>
       </div>
+
+      {/* Add Customer Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-lg bg-[var(--color-bg-card)] rounded-3xl border border-[var(--color-border)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-6 border-b border-[var(--color-border)] flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-[var(--color-accent)]/10 flex items-center justify-center text-[var(--color-accent)]">
+                  <UserPlus size={20} />
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg">Yangi mijoz qo'shish</h2>
+                  <p className="text-[11px] text-[var(--color-text-tertiary)] uppercase font-bold tracking-wider">CRM tizimi</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-2 rounded-full hover:bg-[var(--color-bg-elevated)] transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddCustomer} className="p-6 space-y-4">
+              {error && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-medium">
+                  {error}
+                </div>
+              )}
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] ml-1">F.I.SH *</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
+                    <input 
+                      required
+                      type="text" 
+                      placeholder="Ism Familiya" 
+                      className="w-full h-11 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] pl-10 pr-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all"
+                      value={form.fullName}
+                      onChange={e => setForm({...form, fullName: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] ml-1">Telefon *</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
+                    <input 
+                      required
+                      type="tel" 
+                      placeholder="+998" 
+                      className="w-full h-11 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] pl-10 pr-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all"
+                      value={form.phone}
+                      onChange={e => setForm({...form, phone: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] ml-1">Pasport (ixtiyoriy)</label>
+                  <div className="relative">
+                    <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={16} />
+                    <input 
+                      type="text" 
+                      placeholder="AA1234567" 
+                      className="w-full h-11 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] pl-10 pr-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all"
+                      value={form.passport}
+                      onChange={e => setForm({...form, passport: e.target.value})}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] ml-1">Manzil</label>
+                  <input 
+                    type="text" 
+                    placeholder="Shahar, tuman, ko'cha..." 
+                    className="w-full h-11 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all"
+                    value={form.address}
+                    onChange={e => setForm({...form, address: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] ml-1">Izoh</label>
+                <textarea 
+                  placeholder="Qo'shimcha ma'lumotlar..." 
+                  rows={2}
+                  className="w-full rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] p-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all resize-none"
+                  value={form.notes}
+                  onChange={e => setForm({...form, notes: e.target.value})}
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="flex-1 h-12 rounded-xl border border-[var(--color-border)] font-bold text-sm hover:bg-[var(--color-bg-elevated)] transition-all"
+                >
+                  Bekor qilish
+                </button>
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="flex-[2] h-12 rounded-xl bg-[var(--color-accent)] text-white font-bold text-sm shadow-xl shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] transition-all flex items-center justify-center gap-2"
+                >
+                  {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
+                  Saqlash
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

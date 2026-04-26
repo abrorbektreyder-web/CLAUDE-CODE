@@ -21,6 +21,11 @@ export default async function SalesPage() {
     ...s,
     total: s.total.toString(),
     receiptNumber: s.receiptNumber.toString(),
+    // Debt enrichment — pass through (already string | null from Supabase decimal)
+    debtStatus: s.debtStatus ?? null,
+    debtRemaining: s.debtRemaining?.toString() ?? null,
+    debtTotal: s.debtTotal?.toString() ?? null,
+    debtPaid: s.debtPaid?.toString() ?? null,
   }));
 
   return <SalesList initialData={serializedSales} />;

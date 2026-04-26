@@ -245,6 +245,43 @@ export async function getDebts(tenantId: string) {
   });
 }
 
+export async function getDebtDetails(debtId: string, tenantId: string) {
+  const supabase = getSupabase();
+
+  const [debtRes, paymentsRes, schedulesRes] = await Promise.all([
+    supabase
+      .from('debts')
+      .select('*, customers(*)')
+      .eq('id', debtId)
+      .eq('tenant_id', tenantId)
+      .single(),
+    supabase
+      .from('payments')
+      .select('*')
+      .eq('debt_id', debtId)
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('debt_schedules')
+      .select('*')
+      .eq('debt_id', debtId)
+      .eq('tenant_id', tenantId)
+      .order('due_date', { ascending: true })
+  ]);
+
+  if (debtRes.error) throw debtRes.error;
+
+  const debt = debtRes.data;
+  const customer = Array.isArray(debt.customers) ? debt.customers[0] : debt.customers;
+
+  return {
+    ...debt,
+    customer,
+    payments: paymentsRes.data || [],
+    schedules: schedulesRes.data || []
+  };
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // 8. DASHBOARD: today's KPIs
 // ════════════════════════════════════════════════════════════════════════════
@@ -320,11 +357,15 @@ export async function getTenant(id: string) {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function getSales(tenantId: string, limit = 50) {
-  const { data, error } = await getSupabase()
+  const supabase = getSupabase();
+
+  // Fetch sales with customer info
+  const { data, error } = await supabase
     .from('sales')
     .select(`
       *,
-      customers (full_name, phone_last_four)
+      customers (full_name, phone_last_four),
+      debts (id, status, remaining_amount, total_amount, paid_amount)
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
@@ -334,6 +375,9 @@ export async function getSales(tenantId: string, limit = 50) {
 
   return (data || []).map(s => {
     const customer = Array.isArray(s.customers) ? s.customers[0] : s.customers;
+    // A sale can have one linked debt record when payment_method = 'credit'
+    const debt = Array.isArray(s.debts) ? s.debts[0] : s.debts;
+
     return {
       id: s.id,
       receiptNumber: s.receipt_number,
@@ -343,8 +387,230 @@ export async function getSales(tenantId: string, limit = 50) {
       paymentMethod: s.payment_method,
       status: s.status,
       createdAt: s.created_at,
+      // Debt-specific enrichment (only for credit sales)
+      debtStatus: debt?.status || null,                    // 'active' | 'paid' | 'overdue' | null
+      debtRemaining: debt?.remaining_amount ?? null,
+      debtTotal: debt?.total_amount ?? null,
+      debtPaid: debt?.paid_amount ?? null,
     };
   });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 15. CREATE CUSTOMER (Standalone)
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function createCustomer(data: {
+  tenantId: string;
+  fullName: string;
+  phone: string;
+  address?: string;
+  passport?: string;
+  notes?: string;
+}) {
+  const supabase = getSupabase();
+  const normalizedPhone = normalizePhone(data.phone);
+  
+  if (!normalizedPhone) {
+    throw new Error('Noto\'g\'ri telefon raqami');
+  }
+
+  const phoneHash = hashSensitive(normalizedPhone)!;
+
+  // Check if exists
+  const { data: existing } = await supabase
+    .from('customers')
+    .select('id')
+    .eq('tenant_id', data.tenantId)
+    .eq('phone_hash', phoneHash)
+    .maybeSingle();
+
+  if (existing) {
+    throw new Error('Ushbu raqamli mijoz allaqachon mavjud');
+  }
+
+  const { data: customer, error } = await supabase
+    .from('customers')
+    .insert({
+      tenant_id: data.tenantId,
+      full_name: data.fullName,
+      phone_hash: phoneHash,
+      phone_last_four: normalizedPhone.slice(-4),
+      address: data.address,
+      passport_hash: data.passport ? hashSensitive(data.passport) : undefined,
+      notes: data.notes,
+      total_purchases: 0,
+      total_debt: 0,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return customer;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 16. RECORD DEBT PAYMENT
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function recordDebtPayment(data: {
+  tenantId: string;
+  debtId: string;
+  amount: number;
+  paymentMethod: string;
+  cashierId: string;
+  notes?: string;
+}) {
+  const supabase = getSupabase();
+
+  // 1. Get debt info
+  const { data: debt, error: debtError } = await supabase
+    .from('debts')
+    .select('id, customer_id, remaining_amount, paid_amount, total_amount')
+    .eq('id', data.debtId)
+    .eq('tenant_id', data.tenantId)
+    .single();
+
+  if (debtError || !debt) throw new Error('Qarz topilmadi');
+
+  if (data.amount > Number(debt.remaining_amount)) {
+    throw new Error('To\'lov summasi qolgan qarzdan ko\'p bo\'lishi mumkin emas');
+  }
+
+  // 2. Create payment record
+  const prevRemaining = Number(debt.remaining_amount);
+  const currentRemaining = Math.max(0, prevRemaining - data.amount);
+  
+  const historyNote = `[TIZIM] To'lovgacha qarz: ${prevRemaining.toLocaleString()} so'm. ` +
+                     `To'landi: ${data.amount.toLocaleString()} so'm. ` +
+                     `Qoldi: ${currentRemaining.toLocaleString()} so'm. ` +
+                     (data.notes ? `\nIzoh: ${data.notes}` : '');
+
+  const { data: payment, error: payError } = await supabase
+    .from('payments')
+    .insert({
+      tenant_id: data.tenantId,
+      debt_id: data.debtId,
+      payment_type: 'debt_payment',
+      amount: data.amount,
+      method: data.paymentMethod,
+      received_by: data.cashierId,
+      notes: historyNote,
+    })
+    .select()
+    .single();
+
+  if (payError) throw payError;
+
+  // 3. Update debt status
+  const newPaidAmount = Number(debt.paid_amount) + data.amount;
+  const newRemainingAmount = Math.max(0, Number(debt.remaining_amount) - data.amount);
+  const newStatus = newRemainingAmount <= 0 ? 'paid' : 'active';
+
+  const { error: updateDebtError } = await supabase
+    .from('debts')
+    .update({
+      paid_amount: newPaidAmount,
+      remaining_amount: newRemainingAmount,
+      status: newStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', data.debtId);
+
+  if (updateDebtError) throw updateDebtError;
+
+  // 4. Update customer total debt
+  const { data: customer } = await supabase
+    .from('customers')
+    .select('total_debt')
+    .eq('id', debt.customer_id)
+    .single();
+
+  if (customer) {
+    await supabase
+      .from('customers')
+      .update({
+        total_debt: Math.max(0, Number(customer.total_debt) - data.amount),
+      })
+      .eq('id', debt.customer_id);
+  }
+
+  // 5. Update debt schedules (mark as paid)
+  const { data: schedules } = await supabase
+    .from('debt_schedules')
+    .select('id, expected_amount, paid_amount')
+    .eq('debt_id', data.debtId)
+    .order('due_date', { ascending: true });
+
+  if (schedules) {
+    let remainingToApply = data.amount;
+    for (const schedule of schedules) {
+      if (remainingToApply <= 0) break;
+      
+      const unpaidInSchedule = Number(schedule.expected_amount) - Number(schedule.paid_amount || 0);
+      if (unpaidInSchedule > 0) {
+        const applyToThis = Math.min(remainingToApply, unpaidInSchedule);
+        const totalPaidInSchedule = Number(schedule.paid_amount || 0) + applyToThis;
+        const isFullyPaid = totalPaidInSchedule >= Number(schedule.expected_amount);
+        
+        await supabase
+          .from('debt_schedules')
+          .update({
+            paid_amount: totalPaidInSchedule,
+            paid_at: isFullyPaid ? new Date().toISOString() : null
+          })
+          .eq('id', schedule.id);
+        
+        remainingToApply -= applyToThis;
+      }
+    }
+  }
+
+  return payment;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 17. CREATE BRANCH
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function createBranch(data: {
+  tenantId: string;
+  name: string;
+  address: string;
+  phone: string;
+  type: string;
+}) {
+  const supabase = getSupabase();
+  const { data: branch, error } = await supabase
+    .from('branches')
+    .insert({
+      tenant_id: data.tenantId,
+      name: data.name,
+      address: data.address,
+      phone: data.phone,
+      type: data.type === 'Asosiy' ? 'main' : 'branch',
+      status: 'active',
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return branch;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 18. GET BRANCHES
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function getBranches(tenantId: string) {
+  const { data, error } = await getSupabase()
+    .from('branches')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -491,56 +757,71 @@ export async function createSale(data: {
 
   if (itemsError) throw itemsError;
 
-  // 4. Handle Debt (Nasiya)
-  if (data.paymentMethod === 'credit' && customerId) {
-    const months = data.debtMonths || 1;
-    const monthlyPayment = Math.ceil(data.debtAmount / months);
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setMonth(endDate.getMonth() + months);
+    // 4. Handle Debt (Nasiya)
+    if (data.paymentMethod === 'credit' && customerId) {
+      const months = Math.max(1, Number(data.debtMonths || 1));
+      const debtAmount = Number(data.debtAmount);
+      const monthlyPayment = Math.ceil(debtAmount / months);
+      
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setMonth(endDate.getMonth() + months);
 
-    const { data: debt, error: debtError } = await supabase
-      .from('debts')
-      .insert({
-        tenant_id: data.tenantId,
-        customer_id: customerId,
-        sale_id: sale.id,
-        principal_amount: data.debtAmount,
-        total_amount: data.debtAmount,
-        total_months: months,
-        monthly_payment: monthlyPayment,
-        start_date: startDate.toISOString().split('T')[0],
-        end_date: endDate.toISOString().split('T')[0],
-        remaining_amount: data.debtAmount,
-        paid_amount: 0,
-        notes: data.customerData?.imei ? `IMEI: ${data.customerData.imei}` : undefined,
-        status: 'active',
-      })
-      .select()
-      .single();
+      console.log(`[TIZIM] Qarz yaratilmoqda: Summa=${debtAmount}, Muddat=${months}, Oylik=${monthlyPayment}`);
 
-    if (debtError) throw debtError;
+      const { data: debt, error: debtError } = await supabase
+        .from('debts')
+        .insert({
+          tenant_id: data.tenantId,
+          customer_id: customerId,
+          sale_id: sale.id,
+          principal_amount: debtAmount,
+          total_amount: debtAmount,
+          total_months: months,
+          monthly_payment: monthlyPayment,
+          start_date: startDate.toISOString().split('T')[0],
+          end_date: endDate.toISOString().split('T')[0],
+          remaining_amount: debtAmount,
+          paid_amount: 0,
+          notes: data.customerData?.imei ? `IMEI: ${data.customerData.imei}` : undefined,
+          status: 'active',
+        })
+        .select()
+        .single();
 
-    // Create debt schedule
-    const schedules = Array.from({ length: months }, (_, i) => {
-      const dueDate = new Date();
-      dueDate.setMonth(dueDate.getMonth() + i + 1);
-      return {
-        tenant_id: data.tenantId,
-        debt_id: debt.id,
-        installment_number: i + 1,
-        due_date: dueDate.toISOString().split('T')[0],
-        expected_amount: i === months - 1
-          ? Number(data.debtAmount) - (monthlyPayment * (months - 1))
-          : monthlyPayment,
-      };
-    });
+      if (debtError) {
+        console.error('[TIZIM] Debts insert error:', debtError);
+        throw debtError;
+      }
 
-    const { error: scheduleError } = await supabase
-      .from('debt_schedules')
-      .insert(schedules);
+      // Create debt schedule
+      const schedules = Array.from({ length: months }, (_, i) => {
+        const dueDate = new Date(startDate);
+        dueDate.setMonth(dueDate.getMonth() + i + 1);
+        
+        return {
+          tenant_id: data.tenantId,
+          debt_id: debt.id,
+          installment_number: i + 1,
+          due_date: dueDate.toISOString().split('T')[0],
+          expected_amount: i === months - 1
+            ? debtAmount - (monthlyPayment * (months - 1))
+            : monthlyPayment,
+          paid_amount: 0,
+          is_overdue: false
+        };
+      });
 
-    if (scheduleError) throw scheduleError;
+      console.log(`[TIZIM] Grafik yaratilmoqda: ${schedules.length} ta oylik`);
+
+      const { error: scheduleError } = await supabase
+        .from('debt_schedules')
+        .insert(schedules);
+
+      if (scheduleError) {
+        console.error('[TIZIM] Schedules insert error:', scheduleError);
+        throw scheduleError;
+      }
 
     // Update customer debt total
     const { data: customer } = await supabase
