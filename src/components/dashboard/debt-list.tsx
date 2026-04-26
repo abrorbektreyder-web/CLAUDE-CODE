@@ -54,6 +54,7 @@ export function DebtList({ initialData }: DebtListProps) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [selectedDebtDetails, setSelectedDebtDetails] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'schedules' | 'payments'>('schedules');
+  const [payingInstallmentId, setPayingInstallmentId] = useState<string | null>(null);
 
   const debtsWithDebt = initialData.filter(d => Number(d.remainingAmount) > 0);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -81,6 +82,16 @@ export function DebtList({ initialData }: DebtListProps) {
     return new Intl.DateTimeFormat('uz-UZ', { 
       day: 'numeric', 
       month: 'short',
+    }).format(new Date(dateStr));
+  };
+
+  const formatDateTime = (dateStr: string | null) => {
+    if (!dateStr) return '-';
+    return new Intl.DateTimeFormat('uz-UZ', { 
+      day: 'numeric', 
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
     }).format(new Date(dateStr));
   };
 
@@ -127,6 +138,48 @@ export function DebtList({ initialData }: DebtListProps) {
       console.error(err);
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handlePayInstallment = async (installment: any) => {
+    if (!selectedDebtDetails) return;
+    
+    // Quick confirmation
+    if (!window.confirm(`${formatPrice(installment.expected_amount)} so'm to'lovni tasdiqlaysizmi?`)) {
+      return;
+    }
+
+    setPayingInstallmentId(installment.id);
+    try {
+      const amountToPay = Number(installment.expected_amount) - Number(installment.paid_amount || 0);
+      
+      const res = await fetch('/api/credit/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          debtId: selectedDebtDetails.id,
+          amount: amountToPay,
+          paymentMethod: 'cash', // Default to cash for quick action
+          notes: `${formatDate(installment.due_date)} muddati uchun to'lov.`
+        }),
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Xatolik yuz berdi');
+      
+      // Refresh modal data
+      const refreshRes = await fetch(`/api/credit/${selectedDebtDetails.id}`);
+      const refreshData = await refreshRes.json();
+      if (refreshRes.ok) {
+        setSelectedDebtDetails(refreshData);
+      }
+      
+      // We don't reload the whole page here to keep the modal open and feel "Pro",
+      // but we might want to tell the parent to refresh if the user closes the modal.
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setPayingInstallmentId(null);
     }
   };
 
@@ -541,18 +594,47 @@ export function DebtList({ initialData }: DebtListProps) {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="flex items-center gap-3">
                           {Number(s.paid_amount) >= Number(s.expected_amount) ? (
-                            <div className="flex items-center gap-1 text-[var(--color-success)] text-[10px] font-bold uppercase">
-                              <CheckCircle2 size={12} />
-                              Yopilgan
-                            </div>
-                          ) : Number(s.paid_amount) > 0 ? (
-                            <div className="text-[var(--color-info)] text-[10px] font-bold uppercase">
-                              Qisman: {formatPrice(s.paid_amount)}
+                            <div className="flex flex-col items-end gap-0.5">
+                              <div className="flex items-center gap-1 text-[var(--color-success)] text-[10px] font-bold uppercase">
+                                <CheckCircle2 size={12} />
+                                To'langan
+                              </div>
+                              {s.paid_at && (
+                                <div className="text-[9px] font-bold text-[var(--color-text-tertiary)] flex items-center gap-1">
+                                  <Clock size={10} />
+                                  {formatDateTime(s.paid_at)}
+                                </div>
+                              )}
                             </div>
                           ) : (
-                            <div className="text-[var(--color-text-tertiary)] text-[10px] font-bold uppercase">To'lanmagan</div>
+                            <div className="flex items-center gap-3">
+                              {Number(s.paid_amount) > 0 ? (
+                                <div className="text-[var(--color-info)] text-[10px] font-bold uppercase text-right">
+                                  Qisman: {formatPrice(s.paid_amount)}
+                                </div>
+                              ) : (
+                                <div className="text-[var(--color-text-tertiary)] text-[10px] font-bold uppercase">To'lanmagan</div>
+                              )}
+                              
+                              <button
+                                onClick={() => handlePayInstallment(s)}
+                                disabled={payingInstallmentId !== null}
+                                className={cn(
+                                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all",
+                                  "bg-[var(--color-accent)]/10 text-[var(--color-accent)] border border-[var(--color-accent)]/20 hover:bg-[var(--color-accent)] hover:text-white",
+                                  payingInstallmentId === s.id && "opacity-50 cursor-not-allowed"
+                                )}
+                              >
+                                {payingInstallmentId === s.id ? (
+                                  <Loader2 size={10} className="animate-spin" />
+                                ) : (
+                                  <HandCoins size={10} />
+                                )}
+                                To'lash
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -600,8 +682,9 @@ export function DebtList({ initialData }: DebtListProps) {
                 onClick={() => {
                   setIsDetailModalOpen(false);
                   setSelectedDebtDetails(null);
+                  window.location.reload(); // Refresh main list on close
                 }}
-                className="w-full py-3 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] font-bold text-sm hover:bg-[var(--color-bg-card)] transition-all"
+                className="w-full py-3 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-sm font-bold transition-all hover:bg-[var(--color-bg-elevated)] active:scale-[0.98]"
               >
                 Yopish
               </button>
