@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 
 // ════════════════════════════════════════════════════════════════════════════
 // MIDDLEWARE — runs on EVERY request before reaching the route
@@ -14,6 +14,8 @@ const PUBLIC_PATHS = [
   '/login',
   '/register',
   '/forgot-password',
+  '/cashier-login',
+  '/api/cashier',
   '/api/auth',
   '/api/health',
   '/_next',
@@ -102,3 +104,4 @@ export const config = {
     '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
   ],
 };
+

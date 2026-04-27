@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+﻿import { createClient } from '@supabase/supabase-js';
 
 // ════════════════════════════════════════════════════════════════════════════
 // SUPABASE HTTP ADAPTER FOR BETTER AUTH
@@ -111,6 +111,7 @@ const SNAKE_TO_CAMEL: Record<string, Record<string, string>> = {
     deleted_at: 'deletedAt',
     avatar_url: 'avatarUrl',
     image: 'image',
+    role: 'role',
   },
   sessions: {
     token_hash: 'token',
@@ -516,3 +517,4 @@ export const supabaseAdapter = {
     return count ?? 0;
   },
 };
+
