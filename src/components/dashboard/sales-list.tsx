@@ -107,7 +107,7 @@ export function SalesList({ initialData }: SalesListProps) {
             Eksport
           </button>
           <Link
-            href="/pos"
+            href="/dashboard/sales/new"
             className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:bg-[var(--color-accent-hover)] active:scale-95"
           >
             <Plus size={18} />
@@ -117,41 +117,41 @@ export function SalesList({ initialData }: SalesListProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="premium-card rounded-2xl p-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Bugungi jami savdo</div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div className="premium-card rounded-2xl p-4 md:p-5">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Bugungi jami savdo</div>
           <div className="flex items-end gap-2">
-            <div className="text-2xl font-bold">{formatPrice(initialData.reduce((acc, i) => acc + Number(i.total), 0).toString())}</div>
-            <div className="mb-1 text-xs text-[var(--color-text-tertiary)] uppercase font-bold">so'm</div>
-            <div className="ml-auto flex items-center gap-1 rounded-md bg-[var(--color-success)]/10 px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-success)]">
-              <ArrowUpRight size={12} />
+            <div className="text-xl md:text-2xl font-bold">{formatPrice(initialData.reduce((acc, i) => acc + Number(i.total), 0).toString())}</div>
+            <div className="mb-1 text-[10px] text-[var(--color-text-tertiary)] uppercase font-bold">so'm</div>
+            <div className="ml-auto flex items-center gap-1 rounded-md bg-[var(--color-success)]/10 px-1.5 py-0.5 text-[9px] md:text-[10px] font-bold text-[var(--color-success)]">
+              <ArrowUpRight size={10} />
               12%
             </div>
           </div>
         </div>
-        <div className="premium-card rounded-2xl p-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Sotilgan tovarlar</div>
+        <div className="premium-card rounded-2xl p-4 md:p-5">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Sotilgan tovarlar</div>
           <div className="flex items-end gap-2">
-            <div className="text-2xl font-bold">{initialData.length}</div>
-            <div className="mb-1 text-xs text-[var(--color-text-tertiary)] uppercase font-bold">dona</div>
-            <div className="ml-auto flex items-center gap-1 rounded-md bg-[var(--color-success)]/10 px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-success)]">
-              <ArrowUpRight size={12} />
+            <div className="text-xl md:text-2xl font-bold">{initialData.length}</div>
+            <div className="mb-1 text-[10px] text-[var(--color-text-tertiary)] uppercase font-bold">dona</div>
+            <div className="ml-auto flex items-center gap-1 rounded-md bg-[var(--color-success)]/10 px-1.5 py-0.5 text-[9px] md:text-[10px] font-bold text-[var(--color-success)]">
+              <ArrowUpRight size={10} />
               8 ta
             </div>
           </div>
         </div>
-        <div className="premium-card rounded-2xl p-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">O'rtacha chek</div>
+        <div className="premium-card rounded-2xl p-4 md:p-5 sm:col-span-2 md:col-span-1">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">O'rtacha chek</div>
           <div className="flex items-end gap-2">
-            <div className="text-2xl font-bold">
+            <div className="text-xl md:text-2xl font-bold">
               {initialData.length > 0
                 ? formatPrice((initialData.reduce((acc, i) => acc + Number(i.total), 0) / initialData.length).toFixed(0))
                 : 0
               }
             </div>
-            <div className="mb-1 text-xs text-[var(--color-text-tertiary)] uppercase font-bold">so'm</div>
-            <div className="ml-auto flex items-center gap-1 rounded-md bg-[var(--color-danger)]/10 px-1.5 py-0.5 text-[10px] font-bold text-[var(--color-danger)]">
-              <ArrowDownLeft size={12} />
+            <div className="mb-1 text-[10px] text-[var(--color-text-tertiary)] uppercase font-bold">so'm</div>
+            <div className="ml-auto flex items-center gap-1 rounded-md bg-[var(--color-danger)]/10 px-1.5 py-0.5 text-[9px] md:text-[10px] font-bold text-[var(--color-danger)]">
+              <ArrowDownLeft size={10} />
               3%
             </div>
           </div>
@@ -160,12 +160,12 @@ export function SalesList({ initialData }: SalesListProps) {
 
       {/* Table Section */}
       <div className="premium-card overflow-hidden rounded-2xl">
-        <div className="flex items-center gap-4 border-b border-[var(--color-border)] p-4">
+        <div className="flex flex-col md:flex-row md:items-center gap-4 border-b border-[var(--color-border)] p-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={18} />
             <input
               type="text"
-              placeholder="Chek raqami, mijoz yoki telefon bo'yicha qidirish..."
+              placeholder="Qidirish..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-all"
@@ -174,7 +174,7 @@ export function SalesList({ initialData }: SalesListProps) {
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={cn(
-              "flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all active:scale-95",
+              "flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all active:scale-95",
               isFilterOpen
                 ? "bg-[var(--color-accent)] text-white border-[var(--color-accent)]"
                 : "bg-[var(--color-bg-card)] border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]"
@@ -186,13 +186,13 @@ export function SalesList({ initialData }: SalesListProps) {
         </div>
 
         {isFilterOpen && (
-          <div className="bg-[var(--color-bg-elevated)]/30 border-b border-[var(--color-border)] p-4 flex gap-4 animate-in slide-in-from-top duration-200">
+          <div className="bg-[var(--color-bg-elevated)]/30 border-b border-[var(--color-border)] p-4 grid grid-cols-2 gap-4 animate-in slide-in-from-top duration-200">
             <div className="flex flex-col gap-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">To'lov turi</span>
               <select className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-card)] px-3 py-1.5 text-xs outline-none focus:border-[var(--color-accent)]">
                 <option>Barchasi</option>
                 <option>Naqd</option>
-                <option>Plastik</option>
+                <option>Karta</option>
                 <option>Nasiya</option>
               </select>
             </div>
@@ -205,8 +205,8 @@ export function SalesList({ initialData }: SalesListProps) {
             </div>
           </div>
         )}
-
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]/30 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
@@ -228,125 +228,109 @@ export function SalesList({ initialData }: SalesListProps) {
                   </td>
                   <td className="px-6 py-4">
                     <div className="font-bold">{formatPrice(sale.total)}</div>
-                    {/* Smart status — uses real debt.status from DB join */}
                     {sale.status === 'completed' ? (
                       sale.paymentMethod === 'credit' ? (
                         <div className="flex items-center gap-1 mt-0.5">
                           {sale.debtStatus === 'paid' ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[var(--color-success)] uppercase">
                               <CheckCircle2 size={10} />
-                              Nasiya · To'landi
-                            </span>
-                          ) : sale.debtStatus === 'overdue' ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[var(--color-danger)] uppercase">
-                              <AlertTriangle size={10} />
-                              Nasiya · Muddati o'tgan
+                              To'landi
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[var(--color-purple)] uppercase">
                               <Clock size={10} />
-                              Nasiya · Aktiv
+                              Nasiya
                             </span>
                           )}
                         </div>
                       ) : (
-                        <div className="text-[10px] font-bold uppercase text-[var(--color-success)]">To'landi</div>
+                        <div className="text-[10px] font-bold uppercase text-[var(--color-success)]">Sotildi</div>
                       )
                     ) : (
-                      <div className="text-[10px] font-bold uppercase text-[var(--color-danger)]">Bekor qilingan</div>
-                    )}
-                    {/* Progress micro-bar for credit sales */}
-                    {sale.paymentMethod === 'credit' && sale.debtTotal && Number(sale.debtTotal) > 0 && (
-                      <div className="mt-1.5 flex items-center gap-1.5">
-                        <div className="flex-1 h-1 bg-[var(--color-border)] rounded-full overflow-hidden">
-                          <div
-                            className={cn(
-                              "h-full rounded-full transition-all",
-                              sale.debtStatus === 'paid' ? "bg-[var(--color-success)]" : "bg-[var(--color-purple)]"
-                            )}
-                            style={{
-                              width: `${Math.min(100, (Number(sale.debtPaid || 0) / Number(sale.debtTotal)) * 100)}%`
-                            }}
-                          />
-                        </div>
-                        <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] whitespace-nowrap">
-                          {Math.round((Number(sale.debtPaid || 0) / Number(sale.debtTotal)) * 100)}%
-                        </span>
-                      </div>
+                      <div className="text-[10px] font-bold uppercase text-[var(--color-danger)]">Bekor qilindi</div>
                     )}
                   </td>
                   <td className="px-6 py-4">
                     <div className={cn(
                       "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-bold border uppercase",
-                      sale.paymentMethod === 'credit' && sale.debtStatus === 'paid'
-                        ? "bg-[var(--color-success)]/10 border-[var(--color-success)]/20 text-[var(--color-success)]"
-                        : sale.paymentMethod === 'credit'
-                          ? "bg-[var(--color-purple)]/10 border-[var(--color-purple)]/20 text-[var(--color-purple)]"
-                          : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
+                      sale.paymentMethod === 'credit' ? "bg-[var(--color-purple)]/10 border-[var(--color-purple)]/20 text-[var(--color-purple)]" : "bg-[var(--color-bg-elevated)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
                     )}>
-                      {sale.paymentMethod === 'cash' ? 'Naqd'
-                        : sale.paymentMethod === 'card' ? 'Karta'
-                          : sale.paymentMethod === 'transfer' ? "O'tkazma"
-                            : 'Nasiya'}
+                      {sale.paymentMethod}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-[var(--color-text-secondary)] whitespace-nowrap">
                     {formatDate(sale.createdAt)}
                   </td>
-                  <td className="px-6 py-4 text-right relative">
+                  <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => setOpenMenuId(openMenuId === sale.id ? null : sale.id)}
                       className="rounded-lg p-2 text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-foreground)] transition-colors"
                     >
                       <MoreHorizontal size={18} />
                     </button>
-
                     {openMenuId === sale.id && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-10"
-                          onClick={() => setOpenMenuId(null)}
-                        />
-                        <div className="absolute right-8 top-10 z-20 w-40 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1 shadow-xl animate-in fade-in zoom-in-95">
-                          <button
-                            onClick={() => {
-                              setSelectedSale(sale);
-                              setModalType('edit');
-                              setOpenMenuId(null);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[var(--color-bg-hover)] transition-colors"
-                          >
-                            <Edit2 size={14} />
-                            Tahrirlash
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedSale(sale);
-                              setModalType('delete');
-                              setOpenMenuId(null);
-                            }}
-                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
-                          >
-                            <Trash2 size={14} />
-                            O'chirish
-                          </button>
-                        </div>
-                      </>
+                      <div className="absolute right-8 z-20 w-40 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1 shadow-xl animate-in fade-in zoom-in-95">
+                        <button onClick={() => { setSelectedSale(sale); setModalType('edit'); setOpenMenuId(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[var(--color-bg-hover)] transition-colors"><Edit2 size={14} /> Tahrirlash</button>
+                        <button onClick={() => { setSelectedSale(sale); setModalType('delete'); setOpenMenuId(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"><Trash2 size={14} /> O'chirish</button>
+                      </div>
                     )}
                   </td>
                 </tr>
               )) : (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-[var(--color-text-tertiary)]">
-                    <div className="flex flex-col items-center gap-2">
-                      <ShoppingCart size={40} className="opacity-20" />
-                      <p>Sotuvlar topilmadi</p>
-                    </div>
-                  </td>
-                </tr>
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-[var(--color-text-tertiary)]">Topilmadi</td></tr>
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-[var(--color-border)]">
+          {filteredData.length > 0 ? filteredData.map((sale) => (
+            <div key={sale.id} className="p-4 space-y-4 active:bg-[var(--color-bg-hover)] transition-colors">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-mono font-bold text-[var(--color-accent)] mb-1">#{sale.receiptNumber}</div>
+                  <div className="font-bold text-base">{sale.customerName}</div>
+                  <div className="text-xs text-[var(--color-text-tertiary)]">{sale.customerPhone}</div>
+                </div>
+                <button
+                  onClick={() => setOpenMenuId(openMenuId === sale.id ? null : sale.id)}
+                  className="rounded-lg p-2 text-[var(--color-text-tertiary)] bg-[var(--color-bg-elevated)]"
+                >
+                  <MoreHorizontal size={18} />
+                </button>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] mb-0.5">Summa</div>
+                  <div className="font-bold text-lg">{formatPrice(sale.total)} <span className="text-[10px] text-[var(--color-text-tertiary)] uppercase">so'm</span></div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] mb-1">Status</div>
+                  <div className={cn(
+                    "inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold border uppercase",
+                    sale.paymentMethod === 'credit' ? "bg-[var(--color-purple)]/10 border-[var(--color-purple)]/20 text-[var(--color-purple)]" : "bg-[var(--color-success)]/10 border-[var(--color-success)]/20 text-[var(--color-success)]"
+                  )}>
+                    {sale.paymentMethod}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border)]/50">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase">
+                  <Calendar size={12} />
+                  {formatDate(sale.createdAt)}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => { setSelectedSale(sale); setModalType('edit'); }} className="p-2 rounded-lg bg-[var(--color-bg-elevated)] text-[var(--color-text-tertiary)]"><Edit2 size={14} /></button>
+                  <button onClick={() => { setSelectedSale(sale); setModalType('delete'); }} className="p-2 rounded-lg bg-red-500/10 text-red-500"><Trash2 size={14} /></button>
+                </div>
+              </div>
+            </div>
+          )) : (
+            <div className="p-8 text-center text-[var(--color-text-tertiary)]">Topilmadi</div>
+          )}
         </div>
       </div>
 

@@ -1,10 +1,5 @@
 'use client';
 
-import { InventoryList } from '../dashboard/inventory-list';
-import { CustomerList } from '../dashboard/customer-list';
-import { DebtList } from '../dashboard/debt-list';
-import { SalesList } from '../dashboard/sales-list';
-
 import { useState, useEffect, useRef } from 'react';
 import {
   ScanBarcode,
@@ -23,6 +18,7 @@ import {
   Smartphone,
   Headphones,
   HandCoins,
+  Wallet,
   Loader2,
   CheckCircle2,
   Printer,
@@ -39,6 +35,9 @@ import { cn } from '@/lib/utils';
 import { useSession } from '@/lib/auth-client';
 import { createSale, searchProducts } from '@/db/queries';
 import { useRouter } from 'next/navigation';
+import { InventoryList } from '@/components/dashboard/inventory-list';
+import { CustomerList } from '@/components/dashboard/customer-list';
+import { DebtList } from '@/components/dashboard/debt-list';
 
 interface CartItem {
   id: string;
@@ -56,20 +55,23 @@ export function PosInterface({
   inventoryData = [],
   customersData = [],
   salesData = [],
-  debtsData = []
+  debtsData = [],
+  hideSidebar = false
 }: {
   inventoryData?: any[];
   customersData?: any[];
   salesData?: any[];
   debtsData?: any[];
+  hideSidebar?: boolean;
 }) {
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('pos');
+  const [mobileView, setMobileView] = useState<'catalog' | 'cart'>('catalog');
   const [search, setSearch] = useState('');
-  const [products, setProducts] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(true);
+  const [products, setProducts] = useState<any[]>(inventoryData);
+  const [isSearching, setIsSearching] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit'>('cash');
@@ -92,6 +94,12 @@ export function PosInterface({
   useEffect(() => {
     if (!session?.user) return;
 
+    if (!search.trim()) {
+      setProducts(inventoryData);
+      setIsSearching(false);
+      return;
+    }
+
     setIsSearching(true);
     const timer = setTimeout(async () => {
       try {
@@ -105,7 +113,7 @@ export function PosInterface({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [search, session?.user]);
+  }, [search, session?.user, inventoryData]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -242,283 +250,363 @@ export function PosInterface({
   if (!session) return null;
 
   return (
-    <div className="flex h-screen w-full bg-[var(--color-bg-base)] text-[var(--color-foreground)] overflow-hidden font-sans">
-      {/* Left Sidebar - Quick Actions */}
-      <div className="flex w-16 flex-col items-center border-r border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-6 gap-2">
-        <div className="h-10 w-10 rounded-xl bg-[var(--color-accent)] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[var(--color-accent)]/20 mb-4">
-          M
+    <div className={cn(
+      "flex flex-col md:flex-row w-full bg-[var(--color-bg-base)] text-[var(--color-foreground)] overflow-hidden font-sans",
+      !hideSidebar ? "h-screen" : "h-[calc(100vh-64px)] md:h-full"
+    )}>
+      {/* Left Sidebar - Quick Actions (Desktop) */}
+      {!hideSidebar && (
+        <div className="hidden md:flex w-16 flex-col items-center border-r border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-6 gap-2">
+          <div className="h-10 w-10 rounded-xl bg-[var(--color-accent)] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[var(--color-accent)]/20 mb-4">
+            M
+          </div>
+          {([
+            { tab: 'pos' as ActiveTab, icon: ShoppingCart, label: 'Sotuvlar' },
+            { tab: 'inventory' as ActiveTab, icon: Package, label: 'Ombor' },
+            { tab: 'customers' as ActiveTab, icon: Users, label: 'Mijozlar' },
+            { tab: 'credit' as ActiveTab, icon: CreditCard, label: 'Nasiya' },
+          ]).map(({ tab, icon: Icon, label }) => (
+            <button
+              key={tab}
+              title={label}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'p-3 rounded-xl transition-all relative group',
+                activeTab === tab
+                  ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+                  : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)]'
+              )}
+            >
+              <Icon size={22} />
+              {activeTab === tab && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[var(--color-accent)] rounded-r-full" />}
+            </button>
+          ))}
+
+          <div className="w-8 h-px bg-[var(--color-border)] my-2" />
+
+          {([
+            { tab: 'reports' as ActiveTab, icon: BarChart, label: 'Hisobotlar' },
+            { tab: 'audit' as ActiveTab, icon: Activity, label: 'Audit log' },
+          ]).map(({ tab, icon: Icon, label }) => (
+            <button
+              key={tab}
+              title={label}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'p-3 rounded-xl transition-all relative',
+                activeTab === tab
+                  ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+                  : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)]'
+              )}
+            >
+              <Icon size={22} />
+              {activeTab === tab && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[var(--color-accent)] rounded-r-full" />}
+            </button>
+          ))}
+
+          <div className="mt-auto flex flex-col gap-2">
+            <button title="Sozlamalar" className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors">
+              <Settings size={22} />
+            </button>
+            <button title="Chiqish" onClick={() => router.push('/cashier-login')} className="p-3 rounded-xl hover:bg-red-500/10 text-red-500 transition-colors">
+              <LogOut size={22} />
+            </button>
+          </div>
         </div>
-        {([
-          { tab: 'pos' as ActiveTab, icon: ShoppingCart, label: 'Sotuvlar' },
-          { tab: 'inventory' as ActiveTab, icon: Package, label: 'Ombor' },
-          { tab: 'customers' as ActiveTab, icon: Users, label: 'Mijozlar' },
-          { tab: 'credit' as ActiveTab, icon: CreditCard, label: 'Nasiya' },
-        ]).map(({ tab, icon: Icon, label }) => (
-          <button
-            key={tab}
-            title={label}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              'p-3 rounded-xl transition-all relative group',
-              activeTab === tab
-                ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
-                : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)]'
-            )}
-          >
-            <Icon size={22} />
-            {activeTab === tab && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[var(--color-accent)] rounded-r-full" />}
-          </button>
-        ))}
+      )}
 
-        <div className="w-8 h-px bg-[var(--color-border)] my-2" />
-
-        {([
-          { tab: 'reports' as ActiveTab, icon: BarChart, label: 'Hisobotlar' },
-          { tab: 'audit' as ActiveTab, icon: Activity, label: 'Audit log' },
-        ]).map(({ tab, icon: Icon, label }) => (
-          <button
-            key={tab}
-            title={label}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              'p-3 rounded-xl transition-all relative',
-              activeTab === tab
-                ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
-                : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)]'
-            )}
-          >
-            <Icon size={22} />
-            {activeTab === tab && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[var(--color-accent)] rounded-r-full" />}
-          </button>
-        ))}
-
-        <div className="mt-auto flex flex-col gap-2">
-          <button title="Sozlamalar" className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors">
-            <Settings size={22} />
-          </button>
-          <button title="Chiqish" onClick={() => router.push('/cashier-login')} className="p-3 rounded-xl hover:bg-red-500/10 text-red-500 transition-colors">
-            <LogOut size={22} />
-          </button>
+      {/* Mobile Bottom Navigation (Visible only on small screens) */}
+      {!hideSidebar && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] pb-safe pt-2 px-2">
+          {[
+            { tab: 'pos' as ActiveTab, icon: ShoppingCart, label: 'Kassa' },
+            { tab: 'inventory' as ActiveTab, icon: Package, label: 'Ombor' },
+            { tab: 'customers' as ActiveTab, icon: Users, label: 'Mijozlar' },
+            { tab: 'credit' as ActiveTab, icon: CreditCard, label: 'Nasiya' },
+            { tab: 'reports' as ActiveTab, icon: BarChart, label: 'Hisob' },
+          ].map(({ tab, icon: Icon, label }) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={cn(
+                'flex flex-col items-center gap-1 p-2 rounded-xl transition-all',
+                activeTab === tab ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-tertiary)]'
+              )}
+            >
+              <Icon size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-tight">{label}</span>
+            </button>
+          ))}
         </div>
-      </div>
+      )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={cn(
+        "flex-1 flex flex-col min-w-0 pb-[70px] md:pb-0",
+        activeTab !== 'pos' && "overflow-hidden"
+      )}>
         {/* Actual Components for non-POS views */}
         {activeTab === 'inventory' && (
-          <div className="flex-1 overflow-y-auto p-6 bg-[var(--color-bg-base)]">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--color-bg-base)]">
             <InventoryList initialData={inventoryData} />
           </div>
         )}
         {activeTab === 'customers' && (
-          <div className="flex-1 overflow-y-auto p-6 bg-[var(--color-bg-base)]">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--color-bg-base)]">
             <CustomerList initialData={customersData} />
           </div>
         )}
         {activeTab === 'credit' && (
-          <div className="flex-1 overflow-y-auto p-6 bg-[var(--color-bg-base)]">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--color-bg-base)]">
             <DebtList initialData={debtsData} />
           </div>
         )}
         {activeTab === 'reports' && (
-          <div className="flex-1 overflow-y-auto p-6 bg-[var(--color-bg-base)]">
-            <SalesList initialData={salesData} />
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--color-bg-base)] text-center py-20">
+            <BarChart size={64} className="mx-auto mb-4 opacity-20" />
+            <h2 className="text-xl font-bold">Hisobotlar</h2>
+            <p className="text-[var(--color-text-secondary)]">Ushbu bo'lim tez orada ishga tushadi.</p>
           </div>
         )}
         {activeTab === 'audit' && (
-          <div className="flex-1 flex flex-col items-center justify-center text-[var(--color-text-tertiary)] gap-4">
-            <Activity size={64} strokeWidth={1} />
-            <h2 className="text-2xl font-bold text-[var(--color-foreground)]">Audit log</h2>
-            <p className="text-sm">Audit log tez orada qo'shiladi</p>
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--color-bg-base)] text-center py-20">
+            <Activity size={64} className="mx-auto mb-4 opacity-20" />
+            <h2 className="text-xl font-bold">Audit Log</h2>
+            <p className="text-[var(--color-text-secondary)]">Tizim harakatlari jurnali bu yerda ko'rinadi.</p>
           </div>
         )}
-        {activeTab === 'pos' && <>
-        {/* Top Header */}
-        <header className="h-16 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="font-display text-xl font-bold">Kassa #1</h1>
-            <span className="inline-flex items-center gap-2 rounded-full bg-[var(--color-success)]/10 px-3 py-1 text-[10px] font-bold text-[var(--color-success)] border border-[var(--color-success)]/20">
-              <div className="h-1.5 w-1.5 rounded-full bg-[var(--color-success)] animate-pulse" />
-              Smena ochiq
-            </span>
-          </div>
-          <div className="flex items-center gap-6">
-            <button
-              onClick={() => {
-                setCart([]);
-                setSearch('');
-                setPaymentMethod('cash');
-                // Optional: set focus to search
-                if (searchInputRef.current) {
-                  searchInputRef.current.focus();
-                }
-              }}
-              className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] transition-all active:scale-95"
-            >
-              <Plus size={20} />
-              Yangi savdo
-            </button>
-            <div className="w-px h-8 bg-[var(--color-border)]" />
-            <div className="text-right">
-              <div className="text-sm font-bold">{session.user.name}</div>
-              <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)]">Kassir / Filial #1</div>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[var(--color-accent)] to-orange-400" />
-          </div>
-        </header>
-
-        {/* Content Area */}
-        <div className="flex-1 p-6 flex gap-6 overflow-hidden">
-          {/* Product Search & Catalog */}
-          <div className="flex-1 flex flex-col gap-6 min-w-0">
-            {/* Search Bar */}
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-4 flex items-center text-[var(--color-text-tertiary)] group-focus-within:text-[var(--color-accent)] transition-colors">
-                <ScanBarcode size={24} />
-              </div>
-              <input
-                ref={searchInputRef}
-                autoFocus
-                type="text"
-                placeholder="Barcode skaner qiling yoki tovar nomini yozing... (F1)"
-                className="w-full h-16 rounded-2xl bg-[var(--color-bg-elevated)] border-2 border-[var(--color-border)] px-14 text-lg font-medium outline-none focus:border-[var(--color-accent)] focus:ring-8 focus:ring-[var(--color-accent)]/5 transition-all shadow-sm"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <div className="absolute inset-y-0 right-4 flex items-center">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider">
-                  <Keyboard size={12} />
-                  F1 Qidirish
+        {activeTab === 'pos' && (
+          <>
+            {/* Top Header */}
+            <header className="flex h-16 md:h-20 shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]/50 px-4 md:px-8 backdrop-blur-md sticky top-0 z-10">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex h-8 w-8 md:h-10 md:w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--color-info)] to-[var(--color-purple)] text-white shadow-lg">
+                  <Smartphone size={18} className="md:size-22" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm md:text-lg font-bold leading-none">Kassa #1</span>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-success)] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--color-success)]"></span>
+                    </span>
+                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-[var(--color-success)]">Smena ochiq</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Catalog Grid */}
-            <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 content-start custom-scrollbar">
-              {isSearching ? (
-                <div className="col-span-full flex justify-center py-10 text-[var(--color-text-tertiary)]">
-                  <Loader2 className="animate-spin" size={32} />
-                </div>
-              ) : products.length > 0 ? (
-                products.map((p) => (
+              {/* Mobile View Switcher */}
+              <div className="flex md:hidden items-center bg-[var(--color-bg-card)] rounded-xl p-1 border border-[var(--color-border)]">
+                <button
+                  onClick={() => setMobileView('catalog')}
+                  className={cn(
+                    "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                    mobileView === 'catalog' ? "bg-[var(--color-accent)] text-white" : "text-[var(--color-text-tertiary)]"
+                  )}
+                >
+                  Katalog
+                </button>
+                <button
+                  onClick={() => setMobileView('cart')}
+                  className={cn(
+                    "px-4 py-1.5 rounded-lg text-xs font-bold transition-all relative",
+                    mobileView === 'cart' ? "bg-[var(--color-accent)] text-white" : "text-[var(--color-text-tertiary)]"
+                  )}
+                >
+                  Savat
+                  {cart.length > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--color-danger)] text-[8px] text-white">
+                      {cart.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {!hideSidebar && (
+                <div className="hidden md:flex items-center gap-6">
                   <button
-                    key={p.id}
-                    onClick={() => addToCart(p)}
-                    className="premium-card group rounded-2xl p-4 text-left hover:border-[var(--color-accent)] transition-all active:scale-95"
+                    onClick={() => {
+                      setCart([]);
+                      setSearch('');
+                      setPaymentMethod('cash');
+                      if (searchInputRef.current) {
+                        searchInputRef.current.focus();
+                      }
+                    }}
+                    className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] transition-all active:scale-95"
                   >
-                    <div className="mb-3 aspect-square rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center group-hover:bg-[var(--color-accent)]/5 transition-colors overflow-hidden">
-                      {p.productType === 'phone' ? <Smartphone size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" /> : <Headphones size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" />}
-                    </div>
-                    <div className="font-bold text-sm line-clamp-2 h-10 mb-1">{pName(p)}</div>
-                    <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-3">{p.brand}</div>
-                    <div className="flex items-end justify-between">
-                      <div className="font-display text-lg font-bold text-[var(--color-accent)]">
-                        {new Intl.NumberFormat('uz-UZ').format(p.retailPrice)}
-                      </div>
-                      <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] mb-1">SO'M</div>
-                    </div>
+                    <Plus size={20} />
+                    Yangi savdo
                   </button>
-                ))
-              ) : (
-                <div className="col-span-full flex flex-col items-center justify-center py-20 text-[var(--color-text-tertiary)] opacity-50">
-                  <ScanBarcode size={64} className="mb-4" />
-                  <p>Mahsulot topilmadi</p>
+                  <div className="w-px h-8 bg-[var(--color-border)]" />
+                  <div className="text-right">
+                    <div className="text-sm font-bold">{session.user.name}</div>
+                    <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)]">Kassir / Filial #1</div>
+                  </div>
+                  <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[var(--color-accent)] to-orange-400" />
                 </div>
               )}
-            </div>
-          </div>
+            </header>
 
-          {/* Right Sidebar - Cart */}
-          <div className="w-[400px] flex flex-col bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-3xl overflow-hidden shadow-2xl">
-            {/* Cart Header */}
-            <div className="p-6 border-b border-[var(--color-border)] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-[var(--color-accent)]/10 flex items-center justify-center text-[var(--color-accent)]">
-                  <ShoppingCart size={20} />
-                </div>
-                <div>
-                  <div className="font-bold">Savat</div>
-                  <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)]">{cart.length} ta mahsulot</div>
-                </div>
-              </div>
-              <button
-                onClick={() => setCart([])}
-                className="p-2 text-[var(--color-text-tertiary)] hover:text-red-500 transition-colors"
-              >
-                <Trash2 size={20} />
-              </button>
-            </div>
-
-            {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
-              {cart.length > 0 ? cart.map((item) => (
-                <div key={item.id} className="p-3 rounded-2xl bg-[var(--color-bg-base)] border border-[var(--color-border)] flex flex-col gap-3 group">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm truncate">{item.name}</div>
-                      {item.imei && <div className="text-[10px] font-mono text-[var(--color-accent)]">IMEI: {item.imei}</div>}
-                    </div>
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-[var(--color-text-tertiary)] hover:text-red-500 transition-colors"
-                    >
-                      <X size={16} />
-                    </button>
+            {/* Content Area */}
+            <div className="flex-1 p-3 md:p-6 flex flex-col md:flex-row gap-4 md:gap-6 overflow-hidden">
+              {/* Product Search & Catalog */}
+              <div className={cn(
+                "flex-1 flex flex-col gap-4 md:gap-6 min-w-0",
+                mobileView === 'cart' && "hidden md:flex"
+              )}>
+                {/* Search Bar */}
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-4 flex items-center text-[var(--color-text-tertiary)] group-focus-within:text-[var(--color-accent)] transition-colors pointer-events-none">
+                    <ScanBarcode size={24} className="md:size-7" />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1">
-                      <button
-                        onClick={() => updateQuantity(item.id, -1)}
-                        className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] transition-colors"
-                      >
-                        <Minus size={14} />
-                      </button>
-                      <span className="w-8 text-center text-sm font-bold">{item.quantity}</span>
-                      <button
-                        onClick={() => updateQuantity(item.id, 1)}
-                        className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] transition-colors"
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold">{new Intl.NumberFormat('uz-UZ').format(item.price * item.quantity)}</div>
-                      <div className="text-[9px] font-bold text-[var(--color-text-tertiary)] uppercase">SO'M</div>
+                  <input
+                    ref={searchInputRef}
+                    autoFocus
+                    type="text"
+                    placeholder="Tovar nomi... (F1)"
+                    className="w-full h-12 md:h-16 rounded-2xl bg-[var(--color-bg-elevated)] border-2 border-[var(--color-border)] px-12 md:px-14 text-sm md:text-lg font-medium outline-none focus:border-[var(--color-accent)] focus:ring-8 focus:ring-[var(--color-accent)]/5 transition-all shadow-sm"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  <div className="hidden md:flex absolute inset-y-0 right-4 items-center">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--color-bg-base)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider">
+                      <Keyboard size={12} />
+                      F1 Qidirish
                     </div>
                   </div>
                 </div>
-              )) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-[var(--color-text-tertiary)] opacity-30 gap-3">
-                  <ShoppingCart size={64} strokeWidth={1} />
-                  <p className="font-medium">Savat bo'sh</p>
-                </div>
-              )}
-            </div>
 
-            {/* Cart Footer */}
-            <div className="p-6 bg-[var(--color-bg-base)] border-t border-[var(--color-border)] space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-[var(--color-text-secondary)]">Jami</span>
-                <div className="text-right">
-                  <span className="text-3xl font-display font-bold text-[var(--color-accent)]">
-                    {new Intl.NumberFormat('uz-UZ').format(total)}
-                  </span>
-                  <span className="text-[10px] font-bold text-[var(--color-text-tertiary)] ml-1 uppercase">SO'M</span>
+                {/* Catalog Grid */}
+                <div className="flex-1 overflow-y-auto pr-1 grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 content-start custom-scrollbar">
+                  {isSearching ? (
+                    <div className="col-span-full flex justify-center py-10 text-[var(--color-text-tertiary)]">
+                      <Loader2 className="animate-spin" size={32} />
+                    </div>
+                  ) : products.length > 0 ? (
+                    products.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => addToCart(p)}
+                        className="premium-card group rounded-2xl p-3 md:p-4 text-left hover:border-[var(--color-accent)] transition-all active:scale-95"
+                      >
+                        <div className="mb-2 md:mb-3 aspect-square rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center group-hover:bg-[var(--color-accent)]/5 transition-colors overflow-hidden">
+                          {p.productType === 'phone' ? <Smartphone size={24} className="md:size-32 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" /> : <Headphones size={24} className="md:size-32 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" />}
+                        </div>
+                        <div className="font-bold text-xs md:text-sm line-clamp-2 h-8 md:h-10 mb-1">{pName(p)}</div>
+                        <div className="text-[9px] md:text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-2 md:mb-3">{p.brand}</div>
+                        <div className="flex items-end justify-between">
+                          <div className="font-display text-base md:text-lg font-bold text-[var(--color-accent)]">
+                            {new Intl.NumberFormat('uz-UZ').format(p.retailPrice)}
+                          </div>
+                          <div className="text-[9px] md:text-[10px] font-bold text-[var(--color-text-tertiary)] mb-0.5">SO'M</div>
+                        </div>
+                      </button>
+                    ))
+                  ) : (
+                    <div className="col-span-full flex flex-col items-center justify-center py-12 md:py-20 text-[var(--color-text-tertiary)] opacity-50">
+                      <ScanBarcode size={48} className="md:size-64 mb-4" />
+                      <p className="text-sm md:text-base">Mahsulot topilmadi</p>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <button
-                onClick={() => setIsPaymentModalOpen(true)}
-                disabled={cart.length === 0}
-                className="w-full h-16 rounded-2xl bg-[var(--color-accent)] text-white font-bold text-xl flex items-center justify-center gap-3 shadow-xl shadow-[var(--color-accent)]/30 hover:bg-[var(--color-accent-hover)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:scale-100"
-              >
-                <Banknote size={24} />
-                To'lov (F2)
-              </button>
+              {/* Cart / Right Sidebar */}
+              <div className={cn(
+                "w-full md:w-[350px] lg:w-[400px] flex flex-col bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-3xl overflow-hidden shadow-2xl",
+                mobileView === 'catalog' && "hidden md:flex"
+              )}>
+                {/* Cart Header */}
+                <div className="p-4 md:p-6 border-b border-[var(--color-border)] flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 md:h-10 md:w-10 rounded-xl bg-[var(--color-accent)]/10 flex items-center justify-center text-[var(--color-accent)]">
+                      <ShoppingCart size={18} className="md:size-20" />
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm md:text-base">Savat</div>
+                      <div className="text-[9px] md:text-[10px] font-bold uppercase text-[var(--color-text-tertiary)]">{cart.length} ta mahsulot</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setCart([])}
+                    className="p-2 text-[var(--color-text-tertiary)] hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                    title="Savatni tozalash"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+
+                {/* Cart Items */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar min-h-0">
+                  {cart.length > 0 ? (
+                    cart.map((item) => (
+                      <div key={item.id} className="group relative flex items-center gap-3 md:gap-4 p-3 rounded-2xl bg-[var(--color-bg-base)] border border-[var(--color-border)] hover:border-[var(--color-accent)]/50 transition-all">
+                        <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-[var(--color-bg-elevated)] flex items-center justify-center shrink-0">
+                          {item.type === 'phone' ? <Smartphone size={18} className="md:size-20 text-[var(--color-text-tertiary)]" /> : <Headphones size={18} className="md:size-20 text-[var(--color-text-tertiary)]" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-xs md:text-sm truncate pr-6">{item.name}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center bg-[var(--color-bg-elevated)] rounded-lg border border-[var(--color-border)]">
+                              <button
+                                onClick={() => updateQuantity(item.id, -1)}
+                                className="px-2 py-1 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors"
+                              >
+                                -
+                              </button>
+                              <span className="px-2 text-xs font-mono font-bold">{item.quantity}</span>
+                              <button
+                                onClick={() => updateQuantity(item.id, 1)}
+                                className="px-2 py-1 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors"
+                              >
+                                +
+                              </button>
+                            </div>
+                            <div className="text-[10px] md:text-xs font-bold text-[var(--color-accent)]">
+                              {new Intl.NumberFormat('uz-UZ').format(item.price * item.quantity)}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[var(--color-text-tertiary)] opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-tertiary)] opacity-50 space-y-4">
+                      <ShoppingCart size={48} />
+                      <p className="text-xs font-bold uppercase tracking-widest">Savat bo'sh</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Cart Footer */}
+                <div className="p-4 md:p-6 bg-[var(--color-bg-card)] border-t border-[var(--color-border)] space-y-4 md:space-y-6">
+                  <div className="flex items-end justify-between">
+                    <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] tracking-widest">Jami</div>
+                    <div className="flex items-baseline gap-1.5">
+                      <div className="font-display text-2xl md:text-3xl font-bold text-[var(--color-accent)]">{new Intl.NumberFormat('uz-UZ').format(total)}</div>
+                      <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] mb-1 uppercase">so'm</div>
+                    </div>
+                  </div>
+
+                  <button
+                    disabled={cart.length === 0 || isProcessing}
+                    onClick={() => setIsPaymentModalOpen(true)}
+                    className="w-full h-12 md:h-14 rounded-2xl bg-[var(--color-accent)] text-white font-bold flex items-center justify-center gap-3 shadow-xl shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:scale-100"
+                  >
+                    <Wallet size={20} className="shrink-0" />
+                    To'lov (F2)
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        </>}
+          </>
+        )}
       </div>
 
       {/* Payment Modal */}
@@ -814,7 +902,7 @@ export function PosInterface({
         </div>
       )}
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           .no-print { display: none !important; }
           body * { visibility: hidden; }
@@ -825,7 +913,7 @@ export function PosInterface({
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--color-text-tertiary); }
-      `}</style>
+      `}} />
     </div>
   );
 }

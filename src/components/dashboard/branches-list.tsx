@@ -47,14 +47,14 @@ export default function BranchesList({ initialData }: BranchesListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl">Filiallar</h1>
+          <h1 className="font-display text-2xl md:text-3xl">Filiallar</h1>
           <p className="text-sm text-[var(--color-text-secondary)]">Do'konlar va savdo shoxobchalari boshqaruvi</p>
         </div>
         <button 
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] active:scale-95 transition-all"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] active:scale-95 transition-all"
         >
           <Plus size={18} /> Yangi filial
         </button>

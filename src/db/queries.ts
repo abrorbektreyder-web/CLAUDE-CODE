@@ -108,13 +108,18 @@ export async function findPhoneByImei(imei: string, tenantId: string) {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function searchProducts(query: string, tenantId: string, limit = 20) {
-  const { data, error } = await getSupabase()
+  let dbQuery = getSupabase()
     .from('products')
     .select('*')
     .eq('tenant_id', tenantId)
     .is('deleted_at', null)
-    .eq('is_active', true)
-    .or(`name.ilike.%${query}%,sku.eq.${query},barcode.eq.${query}`)
+    .eq('is_active', true);
+
+  if (query.trim()) {
+    dbQuery = dbQuery.or(`name.ilike.%${query}%,sku.eq.${query},barcode.eq.${query}`);
+  }
+
+  const { data, error } = await dbQuery
     .order('is_featured', { ascending: false })
     .limit(limit);
 

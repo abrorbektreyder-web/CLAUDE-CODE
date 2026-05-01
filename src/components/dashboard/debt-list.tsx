@@ -350,43 +350,42 @@ export function DebtList({ initialData }: DebtListProps) {
           </div>
         </div>
       )}
-
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="premium-card rounded-2xl p-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Jami nasiya</div>
-          <div className="text-2xl font-bold">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+        <div className="premium-card rounded-2xl p-4 md:p-5">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Jami nasiya</div>
+          <div className="text-xl md:text-2xl font-bold">
             {formatPrice(initialData.reduce((acc, i) => acc + Number(i.remainingAmount), 0).toString())}
-            <span className="text-xs font-normal text-[var(--color-text-tertiary)] ml-1">so'm</span>
+            <span className="text-[10px] md:text-xs font-normal text-[var(--color-text-tertiary)] ml-1">so'm</span>
           </div>
         </div>
-        <div className="premium-card rounded-2xl p-5 border-l-4 border-l-[var(--color-danger)]">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Muddati o'tgan</div>
+        <div className="premium-card rounded-2xl p-4 md:p-5 border-l-4 border-l-[var(--color-danger)]">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Muddati o'tgan</div>
           <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-[var(--color-danger)]">
+            <div className="text-xl md:text-2xl font-bold text-[var(--color-danger)]">
               {initialData.filter(i => i.isOverdue).length}
             </div>
-            <AlertCircle size={16} className="text-[var(--color-danger)]" />
+            <AlertCircle size={14} className="text-[var(--color-danger)]" />
           </div>
         </div>
-        <div className="premium-card rounded-2xl p-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Bugun kutilayotgan</div>
-          <div className="text-2xl font-bold text-[var(--color-info)]">~ 4.5 mln</div>
+        <div className="premium-card rounded-2xl p-4 md:p-5">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Bugun kutilayotgan</div>
+          <div className="text-xl md:text-2xl font-bold text-[var(--color-info)]">~ 4.5 mln</div>
         </div>
-        <div className="premium-card rounded-2xl p-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Yopilgan nasiyalar</div>
-          <div className="text-2xl font-bold">{initialData.filter(i => i.status === 'paid').length}</div>
+        <div className="premium-card rounded-2xl p-4 md:p-5">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Yopilgan nasiyalar</div>
+          <div className="text-xl md:text-2xl font-bold">{initialData.filter(i => i.status === 'paid').length}</div>
         </div>
       </div>
 
       {/* Table Section */}
       <div className="premium-card overflow-hidden rounded-2xl">
         <div className="p-4 border-b border-[var(--color-border)]">
-          <div className="relative max-w-md">
+          <div className="relative w-full md:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={18} />
             <input 
               type="text" 
-              placeholder="Mijoz ismi bo'yicha qidirish..." 
+              placeholder="Qidirish..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-all"
@@ -394,7 +393,8 @@ export function DebtList({ initialData }: DebtListProps) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]/30 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
@@ -410,7 +410,6 @@ export function DebtList({ initialData }: DebtListProps) {
             <tbody className="divide-y divide-[var(--color-border)]">
               {filteredData.length > 0 ? filteredData.map((debt) => {
                 const isOverdue = debt.isOverdue;
-
                 return (
                   <tr key={debt.id} className="group transition-colors hover:bg-[var(--color-bg-hover)]">
                     <td className="px-6 py-4 font-semibold">{debt.customerName}</td>
@@ -428,53 +427,79 @@ export function DebtList({ initialData }: DebtListProps) {
                       <div className="font-bold">{formatPrice(debt.monthlyPayment)}</div>
                       <div className="text-[10px] text-[var(--color-text-tertiary)] uppercase font-bold">SO'M / OY</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 font-medium">
-                        <Calendar size={14} className="text-[var(--color-text-tertiary)]" />
-                        {formatDate(debt.nextPaymentDate)}
-                      </div>
+                    <td className="px-6 py-4 text-[var(--color-text-secondary)] whitespace-nowrap">
+                      {formatDate(debt.nextPaymentDate)}
                     </td>
                     <td className="px-6 py-4">
                       {isOverdue ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-danger)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-danger)] border border-[var(--color-danger)]/20">
-                          <Clock size={12} />
-                          Muddati o'tgan
-                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-danger)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-danger)] border border-[var(--color-danger)]/20"><Clock size={12} />Muddati o'tgan</span>
                       ) : debt.status === 'paid' ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-success)] border border-[var(--color-success)]/20">
-                          <CheckCircle2 size={12} />
-                          Yopilgan
-                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-success)] border border-[var(--color-success)]/20"><CheckCircle2 size={12} />Yopilgan</span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-info)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-info)] border border-[var(--color-info)]/20">
-                          Aktiv
-                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-info)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-info)] border border-[var(--color-info)]/20">Aktiv</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button 
-                        onClick={() => handleShowDetails(debt.id)}
-                        className="flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-bold transition-all hover:bg-[var(--color-bg-elevated)]"
-                      >
-                        Batafsil
-                        <ChevronRight size={14} />
+                      <button onClick={() => handleShowDetails(debt.id)} className="flex items-center gap-1 rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-bold transition-all hover:bg-[var(--color-bg-elevated)]">
+                        Batafsil <ChevronRight size={14} />
                       </button>
                     </td>
                   </tr>
                 );
               }) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-[var(--color-text-tertiary)]">
-                    <div className="flex flex-col items-center gap-2">
-                      <CreditCard size={40} className="opacity-20" />
-                      <p>Nasiya savdolari topilmadi</p>
-                    </div>
-                  </td>
-                </tr>
+                <tr><td colSpan={7} className="px-6 py-12 text-center text-[var(--color-text-tertiary)]">Topilmadi</td></tr>
               )}
             </tbody>
           </table>
-      </div>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-[var(--color-border)]">
+          {filteredData.length > 0 ? filteredData.map((debt) => {
+            const isOverdue = debt.isOverdue;
+            return (
+              <div key={debt.id} className="p-4 space-y-4 active:bg-[var(--color-bg-hover)] transition-colors">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-bold text-base leading-tight mb-0.5">{debt.customerName}</div>
+                    <div className="text-[10px] text-[var(--color-text-tertiary)] font-bold uppercase">№ {debt.id.slice(0,8).toUpperCase()}</div>
+                  </div>
+                  <button onClick={() => handleShowDetails(debt.id)} className="rounded-lg p-2 text-[var(--color-text-tertiary)] bg-[var(--color-bg-elevated)]">
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] mb-0.5">Qoldiq</div>
+                    <div className={cn("font-bold text-base", isOverdue ? "text-[var(--color-danger)]" : "text-[var(--color-foreground)]")}>
+                      {formatPrice(debt.remainingAmount)} <span className="text-[10px] text-[var(--color-text-tertiary)]">SO'M</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] mb-0.5">Oylik to'lov</div>
+                    <div className="font-bold text-base">{formatPrice(debt.monthlyPayment)} <span className="text-[10px] text-[var(--color-text-tertiary)]">SO'M</span></div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border)]/50">
+                  <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase flex items-center gap-1">
+                    <Calendar size={12} /> Keyingi: {formatDate(debt.nextPaymentDate)}
+                  </div>
+                  {isOverdue ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-danger)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--color-danger)] border border-[var(--color-danger)]/20"><Clock size={10} />Muddati o'tgan</span>
+                  ) : debt.status === 'paid' ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--color-success)] border border-[var(--color-success)]/20">Yopilgan</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-info)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--color-info)] border border-[var(--color-info)]/20">Aktiv</span>
+                  )}
+                </div>
+              </div>
+            );
+          }) : (
+            <div className="p-12 text-center text-[var(--color-text-tertiary)]">Topilmadi</div>
+          )}
+        </div>
       </div>
 
       {/* Debt Details Modal */}

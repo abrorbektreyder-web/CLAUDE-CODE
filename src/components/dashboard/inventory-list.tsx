@@ -84,8 +84,14 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
       onSuccess({
         id: p.id, name: p.name, sku: p.sku, barcode: p.barcode,
         brand: p.brand, model: p.model, productType: p.product_type,
-        retailPrice: String(p.retail_price), minStock: p.min_stock,
-        imageUrl: p.image_url, totalQuantity: 0, phoneCount: 0,
+        costPrice: String(p.cost_price),
+        retailPrice: String(p.retail_price),
+        wholesalePrice: p.wholesale_price ? String(p.wholesale_price) : null,
+        minStock: p.min_stock,
+        warrantyMonths: p.warranty_months || 0,
+        description: p.description || null,
+        imageUrl: p.image_url || null,
+        totalQuantity: 0, phoneCount: 0,
       });
     } catch (err: any) {
       setError(err.message);
@@ -596,6 +602,14 @@ export function InventoryList({ initialData }: InventoryListProps) {
           <p className="text-sm text-[var(--color-text-secondary)]">Mavjud tovarlar va zaxira nazorati</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          {/* Add Product Button */}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:opacity-90 active:scale-95"
+          >
+            <Plus size={16} />
+            Qo'shish
+          </button>
           {/* Filter button */}
           <div className="relative" ref={filterRef}>
             <button
@@ -623,71 +637,56 @@ export function InventoryList({ initialData }: InventoryListProps) {
               />
             )}
           </div>
-
-          {/* Add Product button */}
-          <button
-            id="inventory-add-product-btn"
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:opacity-90 active:scale-95"
-          >
-            <Plus size={18} />
-            Tovar qo'shish
-          </button>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="premium-card rounded-2xl p-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Jami tovarlar</div>
-          <div className="text-2xl font-bold">{items.length} <span className="text-xs font-normal text-[var(--color-text-tertiary)]">tur</span></div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+        <div className="premium-card rounded-2xl p-4 md:p-5">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Jami tovarlar</div>
+          <div className="text-xl md:text-2xl font-bold">{items.length} <span className="text-[10px] md:text-xs font-normal text-[var(--color-text-tertiary)]">tur</span></div>
         </div>
-        <div className="premium-card rounded-2xl p-5 border-l-4 border-l-[var(--color-accent)]">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Zaxira (Umumiy)</div>
-          <div className="text-2xl font-bold">{items.reduce((acc, i) => acc + i.totalQuantity + i.phoneCount, 0)} <span className="text-xs font-normal text-[var(--color-text-tertiary)]">dona</span></div>
+        <div className="premium-card rounded-2xl p-4 md:p-5 border-l-4 border-l-[var(--color-accent)]">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Zaxira (Umumiy)</div>
+          <div className="text-xl md:text-2xl font-bold">{items.reduce((acc, i) => acc + i.totalQuantity + i.phoneCount, 0)} <span className="text-[10px] md:text-xs font-normal text-[var(--color-text-tertiary)]">dona</span></div>
         </div>
-        <div className="premium-card rounded-2xl p-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Kam qolganlar</div>
+        <div className="premium-card rounded-2xl p-4 md:p-5">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Kam qolganlar</div>
           <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-[var(--color-danger)]">
+            <div className="text-xl md:text-2xl font-bold text-[var(--color-danger)]">
               {items.filter(i => (i.totalQuantity + i.phoneCount) <= i.minStock).length}
             </div>
-            <AlertTriangle size={16} className="text-[var(--color-danger)]" />
+            <AlertTriangle size={14} className="text-[var(--color-danger)]" />
           </div>
         </div>
-        <div className="premium-card rounded-2xl p-5">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Ombor qiymati</div>
-          <div className="text-xl font-bold">
+        <div className="premium-card rounded-2xl p-4 md:p-5 sm:col-span-2 md:col-span-1">
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Ombor qiymati</div>
+          <div className="text-lg md:text-xl font-bold">
             {totalValue > 0
               ? `~ ${new Intl.NumberFormat('uz-UZ').format(Math.round(totalValue / 1_000_000))} mln`
               : '~ 1.2 mlrd'}
-            <span className="text-xs font-normal text-[var(--color-text-tertiary)]"> so'm</span>
+            <span className="text-[10px] md:text-xs font-normal text-[var(--color-text-tertiary)]"> so'm</span>
           </div>
         </div>
       </div>
 
       {/* Table Section */}
       <div className="premium-card overflow-hidden rounded-2xl">
-        <div className="flex flex-col sm:flex-row items-center gap-4 border-b border-[var(--color-border)] p-4">
-          <div className="relative w-full sm:flex-1">
+        <div className="flex flex-col md:flex-row items-center gap-4 border-b border-[var(--color-border)] p-4">
+          <div className="relative w-full md:flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={18} />
             <input
               type="text"
-              placeholder="Tovar nomi, SKU, brend yoki barcode bo'yicha qidirish..."
+              placeholder="Qidirish..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-all"
             />
-            {search && (
-              <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] hover:text-[var(--color-foreground)]">
-                <X size={14} />
-              </button>
-            )}
           </div>
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="w-full sm:w-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-2.5 text-sm font-semibold outline-none focus:border-[var(--color-accent)] transition-all cursor-pointer"
+            className="w-full md:w-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-2.5 text-sm font-semibold outline-none focus:border-[var(--color-accent)] transition-all cursor-pointer"
           >
             {dynamicTypes.map(t => (
               <option key={t.value} value={t.value}>{t.label}</option>
@@ -695,21 +694,8 @@ export function InventoryList({ initialData }: InventoryListProps) {
           </select>
         </div>
 
-        {/* Results count */}
-        {(search || filterType !== 'all') && (
-          <div className="flex items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]/30 px-5 py-2">
-            <span className="text-xs text-[var(--color-text-tertiary)]">
-              {filteredData.length} ta natija topildi
-              {filterType !== 'all' && <span className="ml-1">· <b>{activeFilterLabel}</b></span>}
-            </span>
-            <button onClick={() => { setSearch(''); setFilterType('all'); }}
-              className="text-xs text-[var(--color-accent)] hover:underline font-medium">
-              Tozalash
-            </button>
-          </div>
-        )}
-
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]/30 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
@@ -726,7 +712,6 @@ export function InventoryList({ initialData }: InventoryListProps) {
               {filteredData.length > 0 ? filteredData.map((item) => {
                 const stock = item.productType === 'phone' ? item.phoneCount : item.totalQuantity;
                 const isLow = stock <= item.minStock;
-
                 return (
                   <tr key={item.id} className="group transition-colors hover:bg-[var(--color-bg-hover)]">
                     <td className="px-6 py-4">
@@ -742,9 +727,7 @@ export function InventoryList({ initialData }: InventoryListProps) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="capitalize">{item.productType}</span>
-                    </td>
+                    <td className="px-6 py-4 capitalize">{item.productType}</td>
                     <td className="px-6 py-4 font-mono text-xs">
                       <div className="text-[var(--color-foreground)]">{item.sku}</div>
                       <div className="text-[var(--color-text-tertiary)]">{item.barcode}</div>
@@ -761,13 +744,9 @@ export function InventoryList({ initialData }: InventoryListProps) {
                     </td>
                     <td className="px-6 py-4">
                       {isLow ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-danger)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-danger)] border border-[var(--color-danger)]/20">
-                          Kam qolgan
-                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-danger)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-danger)] border border-[var(--color-danger)]/20">Kam qolgan</span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-success)] border border-[var(--color-success)]/20">
-                          Mavjud
-                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success)]/10 px-2.5 py-0.5 text-[10px] font-bold text-[var(--color-success)] border border-[var(--color-success)]/20">Mavjud</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -776,42 +755,76 @@ export function InventoryList({ initialData }: InventoryListProps) {
                         onDelete={async () => {
                           try {
                             const res = await fetch(`/api/inventory?id=${item.id}`, { method: 'DELETE' });
-                            if (res.ok) {
-                              setItems(prev => prev.filter(i => i.id !== item.id));
-                            }
-                          } catch (err) {
-                            console.error('Delete error:', err);
-                          }
+                            if (res.ok) setItems(prev => prev.filter(i => i.id !== item.id));
+                          } catch (err) { console.error('Delete error:', err); }
                         }}
                       />
                     </td>
                   </tr>
                 );
               }) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-16 text-center text-[var(--color-text-tertiary)]">
-                    <div className="flex flex-col items-center gap-3">
-                      <Package size={44} className="opacity-20" />
-                      <p className="text-base font-medium">Tovar topilmadi</p>
-                      {(search || filterType !== 'all') && (
-                        <button onClick={() => { setSearch(''); setFilterType('all'); }}
-                          className="text-sm text-[var(--color-accent)] hover:underline">
-                          Filtrni tozalash
-                        </button>
-                      )}
-                      {!search && filterType === 'all' && (
-                        <button
-                          onClick={() => setShowAddModal(true)}
-                          className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white">
-                          <Plus size={15} /> Birinchi tovarni qo'shing
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
+                <tr><td colSpan={7} className="px-6 py-16 text-center text-[var(--color-text-tertiary)]">Topilmadi</td></tr>
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-[var(--color-border)]">
+          {filteredData.length > 0 ? filteredData.map((item) => {
+            const stock = item.productType === 'phone' ? item.phoneCount : item.totalQuantity;
+            const isLow = stock <= item.minStock;
+            return (
+              <div key={item.id} className="p-4 space-y-4 active:bg-[var(--color-bg-hover)] transition-colors">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[var(--color-text-tertiary)]">
+                      {getIcon(item.productType)}
+                    </div>
+                    <div>
+                      <div className="font-bold text-base leading-tight mb-0.5">{item.name}</div>
+                      <div className="text-[10px] text-[var(--color-text-tertiary)] uppercase font-bold tracking-wider">{item.brand} {item.model}</div>
+                    </div>
+                  </div>
+                  <ActionMenu
+                    onEdit={() => setEditingItem(item)}
+                    onDelete={async () => {
+                      try {
+                        const res = await fetch(`/api/inventory?id=${item.id}`, { method: 'DELETE' });
+                        if (res.ok) setItems(prev => prev.filter(i => i.id !== item.id));
+                      } catch (err) { console.error('Delete error:', err); }
+                    }}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] mb-0.5">Narxi</div>
+                    <div className="font-bold text-base">{formatPrice(item.retailPrice)} <span className="text-[10px] text-[var(--color-text-tertiary)]">SO'M</span></div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] mb-0.5">Qoldiq</div>
+                    <div className={cn("font-bold text-base", isLow ? "text-[var(--color-danger)]" : "text-[var(--color-foreground)]")}>
+                      {stock} <span className="text-[10px] text-[var(--color-text-tertiary)]">DONA</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-[var(--color-border)]/50">
+                  <div className="text-[10px] font-mono text-[var(--color-text-tertiary)] truncate max-w-[150px]">
+                    {item.sku}
+                  </div>
+                  {isLow ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-danger)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--color-danger)] border border-[var(--color-danger)]/20">Kam qolgan</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[var(--color-success)]/10 px-2 py-0.5 text-[9px] font-bold text-[var(--color-success)] border border-[var(--color-success)]/20">Mavjud</span>
+                  )}
+                </div>
+              </div>
+            );
+          }) : (
+            <div className="p-12 text-center text-[var(--color-text-tertiary)]">Topilmadi</div>
+          )}
         </div>
       </div>
 
@@ -825,6 +838,7 @@ export function InventoryList({ initialData }: InventoryListProps) {
           }}
         />
       )}
+
       {/* Edit Modal */}
       {editingItem && (
         <EditProductModal
