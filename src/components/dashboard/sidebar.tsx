@@ -91,11 +91,11 @@ export function Sidebar({ user, tenant }: SidebarProps) {
         <div className="border-b border-[var(--color-border)] p-5 relative">
           <Link href="/dashboard" className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-[var(--color-accent)] to-orange-400 font-bold text-white shadow-[0_0_24px_rgba(255,107,53,0.25)]">
-            {tenant?.businessName?.[0] || 'M'}
+            A
           </div>
           <div className="leading-tight">
             <div className="font-display text-lg truncate max-w-[140px]">
-              {tenant?.businessName || 'Mobile POS'}
+              APPLE TTT
             </div>
             <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-[var(--color-text-tertiary)]">
               {tenant?.plan || 'Free'} · Premium
@@ -112,11 +112,11 @@ export function Sidebar({ user, tenant }: SidebarProps) {
         {/* Tenant switcher / Info */}
         <div className="mt-4 flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3">
           <div className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-gradient-to-br from-[var(--color-info)] to-[var(--color-purple)] text-[10px] font-bold text-white">
-            {(tenant?.businessName || 'MC').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+            AT
           </div>
           <div className="flex-1 overflow-hidden text-left">
             <div className="truncate text-sm font-semibold">
-              {tenant?.businessName || 'Mobi Center'}
+              APPLE TTT
             </div>
             <div className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">
               {user.role === 'tenant_owner' ? 'Ega' : 'Xodim'} · Faol
