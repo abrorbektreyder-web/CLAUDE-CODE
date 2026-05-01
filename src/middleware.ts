@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 // ════════════════════════════════════════════════════════════════════════════
 // MIDDLEWARE — runs on EVERY request before reaching the route
@@ -22,8 +22,8 @@ const PUBLIC_PATHS = [
   '/favicon.ico',
 ];
 
-const CASHIER_PATHS = ['/pos', '/api/sales', '/api/cashier'];
-const ADMIN_PATHS = ['/dashboard', '/api/admin'];
+// Kassir yo'llari: /staff/* va /pos — alohida login sahifasi
+const STAFF_PATHS = ['/staff', '/pos'];
 
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl;
@@ -75,20 +75,23 @@ export async function middleware(req: NextRequest) {
   }
 
   // ─── 5. Auth check (read session cookie) ───────────────────────────────
-  const sessionCookie = req.cookies.get('better-auth.session_token') || req.cookies.get('__Secure-better-auth.session_token');
+  const sessionCookie =
+    req.cookies.get('better-auth.session_token') ||
+    req.cookies.get('__Secure-better-auth.session_token');
 
   if (!sessionCookie) {
-    // No session → redirect to login
+    // /staff/* va /pos — kassir login sahifasiga yo'naltirish
+    const isStaffPath = STAFF_PATHS.some((p) => pathname.startsWith(p));
+    if (isStaffPath) {
+      return NextResponse.redirect(new URL('/cashier-login', req.url));
+    }
+    // Admin va boshqa himoyalangan yo'llar → asosiy login sahifasiga
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('callback', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  // ─── 6. (Optional) Role-based path restrictions ────────────────────────
-  // Note: Full role check happens in API route via createApiRoute.
-  // This is just a quick redirect — full validation in handler.
-
-  // ─── 7. Route to correct app section based on path ─────────────────────
+  // ─── 6. Route to correct app section based on path ─────────────────────
   return response;
 }
 

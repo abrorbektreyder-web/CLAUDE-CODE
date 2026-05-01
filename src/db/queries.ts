@@ -625,6 +625,7 @@ export async function createSale(data: {
   customerData?: {
     fullName: string;
     phone: string;
+    imei?: string;
   };
   subtotal: number;
   total: number;

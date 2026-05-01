@@ -984,3 +984,30 @@ Bu loyiha — texnik jihatdan murakkab, lekin to'g'ri rejalashtirish bilan 6 haf
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Hujjat oxiri
 Versiya 1.0  •  23 Aprel, 2026
+
+================================================================================
+10. KASSIR ISH MUHITI (STAFF DASHBOARD) - QO'SHIMCHA
+================================================================================
+
+## 📊 Ishlar holati (Status)
+- [x] Auth: Kassir login sahifasi yaratildi (/cashier-login)
+- [x] API: Kassir uchun maxsus login API yaratildi (/api/cashier/login)
+- [/] Sidebar: Kassir uchun alohida StaffSidebar (Jarayonda...)
+- [ ] Layout: Kassir uchun alohida Dashboard Layout yaratish
+- [ ] Middleware Guard: Kassirni Admin paneldan cheklash
+- [ ] Staff Inventory: Omborning kassir uchun cheklangan versiyasi
+- [ ] Staff Sales: Savdolar tarixi va chek chiqarish
+- [ ] Staff Credit: Nasiya to'lovlarini qabul qilish
+- [ ] Telegram Alerts: Owner-ga har bir sotuv haqida botdan xabar borishi
+
+## 10.1. Arxitektura va Yo'nalishlar
+Admin paneli (/inventory, /sales) ga mutloq tegmasdan, kassir uchun alohida route group yaratiladi.
+* Base URL: /staff/*
+* Auth: Kassir faqat /cashier-login orqali kiradi.
+
+## 10.2. Funksional Cheklovlar
+Kassirda O'chirish (Delete) va Global tahrirlash huquqi bo'lmaydi.
+* Ombor: Yangi mahsulot qo'shish (OK), O'chirish (TAQIQLANGAN).
+* Savdolar: Sotuv qilish (OK), Sotuvni o'chirish (TAQIQLANGAN).
+* Moliya: Tannarx va Foyda (YASHIRILGAN).
+

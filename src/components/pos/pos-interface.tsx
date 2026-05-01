@@ -1,5 +1,10 @@
 'use client';
 
+import { InventoryList } from '../dashboard/inventory-list';
+import { CustomerList } from '../dashboard/customer-list';
+import { DebtList } from '../dashboard/debt-list';
+import { SalesList } from '../dashboard/sales-list';
+
 import { useState, useEffect, useRef } from 'react';
 import {
   ScanBarcode,
@@ -24,7 +29,11 @@ import {
   User as UserIcon,
   Calendar,
   Phone as PhoneIcon,
-  ChevronDown
+  ChevronDown,
+  Package,
+  Users,
+  BarChart,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSession } from '@/lib/auth-client';
@@ -41,12 +50,26 @@ interface CartItem {
   brand: string;
 }
 
-export function PosInterface() {
-  const { data: session } = useSession();
+type ActiveTab = 'pos' | 'inventory' | 'customers' | 'credit' | 'reports' | 'audit';
+
+export function PosInterface({
+  inventoryData = [],
+  customersData = [],
+  salesData = [],
+  debtsData = []
+}: {
+  inventoryData?: any[];
+  customersData?: any[];
+  salesData?: any[];
+  debtsData?: any[];
+}) {
+  const { data: session, isPending } = useSession();
   const router = useRouter();
 
+  const [activeTab, setActiveTab] = useState<ActiveTab>('pos');
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit'>('cash');
@@ -69,12 +92,15 @@ export function PosInterface() {
   useEffect(() => {
     if (!session?.user) return;
 
+    setIsSearching(true);
     const timer = setTimeout(async () => {
       try {
-        const results = await searchProducts(search, session.user.tenantId);
+        const results = await searchProducts(search, (session.user as any).tenantId);
         setProducts(results);
       } catch (err) {
         console.error('Search failed:', err);
+      } finally {
+        setIsSearching(false);
       }
     }, 300);
 
@@ -150,7 +176,7 @@ export function PosInterface() {
     setIsProcessing(true);
     try {
       const saleResult = await createSale({
-        tenantId: session.user.tenantId,
+        tenantId: (session.user as any).tenantId,
         branchId: (session.user as any).branchId || '00000000-0000-0000-0000-000000000000',
         cashierId: session.user.id,
         subtotal: total,
@@ -204,36 +230,109 @@ export function PosInterface() {
     window.print();
   };
 
-  if (!session) return <div className="flex h-screen items-center justify-center bg-[var(--color-bg-base)] text-[var(--color-text-tertiary)]"><Loader2 className="animate-spin" /></div>;
+  // Redirect if not logged in
+  useEffect(() => {
+    if (!isPending && !session) {
+      router.push('/cashier-login');
+    }
+  }, [session, isPending, router]);
+
+  if (isPending) return <div className="flex h-screen items-center justify-center bg-[var(--color-bg-base)] text-[var(--color-text-tertiary)]"><Loader2 className="animate-spin" /></div>;
+  
+  if (!session) return null;
 
   return (
     <div className="flex h-screen w-full bg-[var(--color-bg-base)] text-[var(--color-foreground)] overflow-hidden font-sans">
       {/* Left Sidebar - Quick Actions */}
-      <div className="flex w-16 flex-col items-center border-r border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-6 gap-6">
-        <div className="h-10 w-10 rounded-xl bg-[var(--color-accent)] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[var(--color-accent)]/20">
+      <div className="flex w-16 flex-col items-center border-r border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-6 gap-2">
+        <div className="h-10 w-10 rounded-xl bg-[var(--color-accent)] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[var(--color-accent)]/20 mb-4">
           M
         </div>
-        <button className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors" onClick={() => router.push('/dashboard')}>
-          <Monitor size={24} />
-        </button>
-        <button className="p-3 rounded-xl bg-[var(--color-accent)]/10 text-[var(--color-accent)] transition-colors">
-          <ShoppingCart size={24} />
-        </button>
-        <button className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors" onClick={() => router.push('/sales')}>
-          <Clock size={24} />
-        </button>
-        <div className="mt-auto flex flex-col gap-4">
-          <button className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors">
-            <Settings size={24} />
+        {([
+          { tab: 'pos' as ActiveTab, icon: ShoppingCart, label: 'Sotuvlar' },
+          { tab: 'inventory' as ActiveTab, icon: Package, label: 'Ombor' },
+          { tab: 'customers' as ActiveTab, icon: Users, label: 'Mijozlar' },
+          { tab: 'credit' as ActiveTab, icon: CreditCard, label: 'Nasiya' },
+        ]).map(({ tab, icon: Icon, label }) => (
+          <button
+            key={tab}
+            title={label}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              'p-3 rounded-xl transition-all relative group',
+              activeTab === tab
+                ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+                : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)]'
+            )}
+          >
+            <Icon size={22} />
+            {activeTab === tab && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[var(--color-accent)] rounded-r-full" />}
           </button>
-          <button className="p-3 rounded-xl hover:bg-red-500/10 text-red-500 transition-colors">
-            <LogOut size={24} />
+        ))}
+
+        <div className="w-8 h-px bg-[var(--color-border)] my-2" />
+
+        {([
+          { tab: 'reports' as ActiveTab, icon: BarChart, label: 'Hisobotlar' },
+          { tab: 'audit' as ActiveTab, icon: Activity, label: 'Audit log' },
+        ]).map(({ tab, icon: Icon, label }) => (
+          <button
+            key={tab}
+            title={label}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              'p-3 rounded-xl transition-all relative',
+              activeTab === tab
+                ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+                : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)]'
+            )}
+          >
+            <Icon size={22} />
+            {activeTab === tab && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-[var(--color-accent)] rounded-r-full" />}
+          </button>
+        ))}
+
+        <div className="mt-auto flex flex-col gap-2">
+          <button title="Sozlamalar" className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors">
+            <Settings size={22} />
+          </button>
+          <button title="Chiqish" onClick={() => router.push('/cashier-login')} className="p-3 rounded-xl hover:bg-red-500/10 text-red-500 transition-colors">
+            <LogOut size={22} />
           </button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Actual Components for non-POS views */}
+        {activeTab === 'inventory' && (
+          <div className="flex-1 overflow-y-auto p-6 bg-[var(--color-bg-base)]">
+            <InventoryList initialData={inventoryData} />
+          </div>
+        )}
+        {activeTab === 'customers' && (
+          <div className="flex-1 overflow-y-auto p-6 bg-[var(--color-bg-base)]">
+            <CustomerList initialData={customersData} />
+          </div>
+        )}
+        {activeTab === 'credit' && (
+          <div className="flex-1 overflow-y-auto p-6 bg-[var(--color-bg-base)]">
+            <DebtList initialData={debtsData} />
+          </div>
+        )}
+        {activeTab === 'reports' && (
+          <div className="flex-1 overflow-y-auto p-6 bg-[var(--color-bg-base)]">
+            <SalesList initialData={salesData} />
+          </div>
+        )}
+        {activeTab === 'audit' && (
+          <div className="flex-1 flex flex-col items-center justify-center text-[var(--color-text-tertiary)] gap-4">
+            <Activity size={64} strokeWidth={1} />
+            <h2 className="text-2xl font-bold text-[var(--color-foreground)]">Audit log</h2>
+            <p className="text-sm">Audit log tez orada qo'shiladi</p>
+          </div>
+        )}
+        {activeTab === 'pos' && <>
         {/* Top Header */}
         <header className="h-16 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -244,6 +343,22 @@ export function PosInterface() {
             </span>
           </div>
           <div className="flex items-center gap-6">
+            <button
+              onClick={() => {
+                setCart([]);
+                setSearch('');
+                setPaymentMethod('cash');
+                // Optional: set focus to search
+                if (searchInputRef.current) {
+                  searchInputRef.current.focus();
+                }
+              }}
+              className="px-4 py-2 bg-[var(--color-accent)] text-white rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] transition-all active:scale-95"
+            >
+              <Plus size={20} />
+              Yangi savdo
+            </button>
+            <div className="w-px h-8 bg-[var(--color-border)]" />
             <div className="text-right">
               <div className="text-sm font-bold">{session.user.name}</div>
               <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)]">Kassir / Filial #1</div>
@@ -280,25 +395,36 @@ export function PosInterface() {
 
             {/* Catalog Grid */}
             <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 content-start custom-scrollbar">
-              {(products.length > 0 ? products : mockProducts).map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => addToCart(p)}
-                  className="premium-card group rounded-2xl p-4 text-left hover:border-[var(--color-accent)] transition-all active:scale-95"
-                >
-                  <div className="mb-3 aspect-square rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center group-hover:bg-[var(--color-accent)]/5 transition-colors overflow-hidden">
-                    {p.productType === 'phone' ? <Smartphone size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" /> : <Headphones size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" />}
-                  </div>
-                  <div className="font-bold text-sm line-clamp-2 h-10 mb-1">{pName(p)}</div>
-                  <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-3">{p.brand}</div>
-                  <div className="flex items-end justify-between">
-                    <div className="font-display text-lg font-bold text-[var(--color-accent)]">
-                      {new Intl.NumberFormat('uz-UZ').format(p.retailPrice)}
+              {isSearching ? (
+                <div className="col-span-full flex justify-center py-10 text-[var(--color-text-tertiary)]">
+                  <Loader2 className="animate-spin" size={32} />
+                </div>
+              ) : products.length > 0 ? (
+                products.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => addToCart(p)}
+                    className="premium-card group rounded-2xl p-4 text-left hover:border-[var(--color-accent)] transition-all active:scale-95"
+                  >
+                    <div className="mb-3 aspect-square rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center group-hover:bg-[var(--color-accent)]/5 transition-colors overflow-hidden">
+                      {p.productType === 'phone' ? <Smartphone size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" /> : <Headphones size={32} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" />}
                     </div>
-                    <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] mb-1">SO'M</div>
-                  </div>
-                </button>
-              ))}
+                    <div className="font-bold text-sm line-clamp-2 h-10 mb-1">{pName(p)}</div>
+                    <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-3">{p.brand}</div>
+                    <div className="flex items-end justify-between">
+                      <div className="font-display text-lg font-bold text-[var(--color-accent)]">
+                        {new Intl.NumberFormat('uz-UZ').format(p.retailPrice)}
+                      </div>
+                      <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] mb-1">SO'M</div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="col-span-full flex flex-col items-center justify-center py-20 text-[var(--color-text-tertiary)] opacity-50">
+                  <ScanBarcode size={64} className="mb-4" />
+                  <p>Mahsulot topilmadi</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -392,6 +518,7 @@ export function PosInterface() {
             </div>
           </div>
         </div>
+        </>}
       </div>
 
       {/* Payment Modal */}
@@ -703,13 +830,3 @@ export function PosInterface() {
   );
 }
 
-const mockProducts = [
-  { id: '1', name: 'iPhone 15 Pro Max, 256GB, Blue Titanium', brand: 'Apple', retailPrice: 16450000, productType: 'phone', barcode: '358291039284712' },
-  { id: '2', name: 'Samsung Galaxy S24 Ultra, 512GB, Gray', brand: 'Samsung', retailPrice: 14200000, productType: 'phone', barcode: '357712039200192' },
-  { id: '3', name: 'AirPods Pro (2nd Gen) with MagSafe', brand: 'Apple', retailPrice: 2850000, productType: 'accessory' },
-  { id: '4', name: 'Xiaomi Redmi Note 13 Pro+, 12/512GB', brand: 'Xiaomi', retailPrice: 4600000, productType: 'phone', barcode: '359910029384755' },
-  { id: '5', name: 'Apple Watch Series 9, 45mm, GPS', brand: 'Apple', retailPrice: 5200000, productType: 'accessory' },
-  { id: '6', name: 'Sony WH-1000XM5 Noise Cancelling', brand: 'Sony', retailPrice: 4800000, productType: 'accessory' },
-  { id: '7', name: 'Samsung Galaxy Buds 2 Pro', brand: 'Samsung', retailPrice: 1950000, productType: 'accessory' },
-  { id: '8', name: 'iPhone 13, 128GB, Midnight', brand: 'Apple', retailPrice: 8900000, productType: 'phone', barcode: '352210049583722' },
-];

@@ -128,13 +128,13 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
             {/* Product Type */}
             <div>
               <label className={labelCls}>Tovar turi *</label>
-              <input 
-                list="product-types" 
-                value={form.productType} 
-                onChange={set('productType')} 
-                placeholder="masalan: Telefon, Chexol, Xizmat..." 
-                className={inputCls} 
-                required 
+              <input
+                list="product-types"
+                value={form.productType}
+                onChange={set('productType')}
+                placeholder="masalan: Telefon, Chexol, Xizmat..."
+                className={inputCls}
+                required
               />
               <datalist id="product-types">
                 <option value="Telefon" />
@@ -270,14 +270,14 @@ function FilterPanel({
 
 // ── Edit Product Modal ─────────────────────────────────────────────────────
 
-function EditProductModal({ 
-  item, 
-  onClose, 
-  onSuccess 
-}: { 
-  item: InventoryItem; 
-  onClose: () => void; 
-  onSuccess: (item: InventoryItem) => void 
+function EditProductModal({
+  item,
+  onClose,
+  onSuccess
+}: {
+  item: InventoryItem;
+  onClose: () => void;
+  onSuccess: (item: InventoryItem) => void
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -331,7 +331,7 @@ function EditProductModal({
         id: p.id, name: p.name, sku: p.sku, barcode: p.barcode,
         brand: p.brand, model: p.model, productType: p.product_type,
         costPrice: String(p.cost_price),
-        retailPrice: String(p.retail_price), 
+        retailPrice: String(p.retail_price),
         wholesalePrice: p.wholesale_price ? String(p.wholesale_price) : null,
         minStock: p.min_stock,
         warrantyMonths: p.warranty_months,
@@ -379,13 +379,13 @@ function EditProductModal({
             {/* Product Type */}
             <div>
               <label className={labelCls}>Tovar turi *</label>
-              <input 
-                list="product-types" 
-                value={form.productType} 
-                onChange={set('productType')} 
-                placeholder="masalan: Telefon, Chexol, Xizmat..." 
-                className={inputCls} 
-                required 
+              <input
+                list="product-types"
+                value={form.productType}
+                onChange={set('productType')}
+                placeholder="masalan: Telefon, Chexol, Xizmat..."
+                className={inputCls}
+                required
               />
               <datalist id="product-types">
                 <option value="Telefon" />
@@ -485,12 +485,12 @@ function EditProductModal({
 
 // ── Action Menu ─────────────────────────────────────────────────────────────
 
-function ActionMenu({ 
-  onEdit, 
-  onDelete 
-}: { 
-  onEdit: () => void; 
-  onDelete: () => void 
+function ActionMenu({
+  onEdit,
+  onDelete
+}: {
+  onEdit: () => void;
+  onDelete: () => void
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -507,23 +507,23 @@ function ActionMenu({
 
   return (
     <div className="relative" ref={menuRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="rounded-lg p-2 text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-foreground)] transition-colors"
       >
         <MoreHorizontal size={18} />
       </button>
-      
+
       {isOpen && (
         <div className="absolute right-0 top-full z-40 mt-1 w-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-1 shadow-xl">
-          <button 
+          <button
             onClick={() => { onEdit(); setIsOpen(false); }}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium hover:bg-[var(--color-bg-elevated)] transition-colors"
           >
             Tahrirlash
           </button>
-          <button 
-            onClick={() => { if(confirm('Haqiqatdan ham o\'chirmoqchimisiz?')) onDelete(); setIsOpen(false); }}
+          <button
+            onClick={() => { if (confirm('Haqiqatdan ham o\'chirmoqchimisiz?')) onDelete(); setIsOpen(false); }}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 transition-colors"
           >
             O'chirish
@@ -771,7 +771,7 @@ export function InventoryList({ initialData }: InventoryListProps) {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <ActionMenu 
+                      <ActionMenu
                         onEdit={() => setEditingItem(item)}
                         onDelete={async () => {
                           try {
