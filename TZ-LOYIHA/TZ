@@ -996,8 +996,10 @@ Versiya 1.0  •  23 Aprel, 2026
 - [ ] Layout: Kassir uchun alohida Dashboard Layout yaratish
 - [ ] Middleware Guard: Kassirni Admin paneldan cheklash
 - [ ] Staff Inventory: Omborning kassir uchun cheklangan versiyasi
-- [ ] Staff Sales: Savdolar tarixi va chek chiqarish
-- [ ] Staff Credit: Nasiya to'lovlarini qabul qilish
+- [/] Staff Sales: Savdolar tarixi + Pro Date Filter + Mobile UI
+- [/] Staff Credit: Nasiya bo'limi + Pro Date Filter + Stats Sync
+- [x] Date Filter: Kun, Hafta, Oy, Custom Month/Year Picker (Pro-level)
+- [x] UX/UI: Mobile-first bottom sheet picker + Touch optimization
 - [ ] Telegram Alerts: Owner-ga har bir sotuv haqida botdan xabar borishi
 
 ## 10.1. Arxitektura va Yo'nalishlar
