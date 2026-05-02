@@ -4,29 +4,25 @@ const token = process.env.TELEGRAM_BOT_TOKEN;
 export const bot = token ? new Bot(token) : null;
 import { formatSum } from './utils';
 
-export async function sendTelegramAlert(tenantId: string, message: string) {
+export async function sendTelegramMessage(chatId: string | number | bigint, message: string) {
   if (!bot) {
-    console.warn('Telegram bot is not configured (TELEGRAM_BOT_TOKEN missing).');
+    console.warn('Telegram bot is not configured.');
     return;
   }
 
   try {
-    // In a real app, you would fetch the tenant's configured Telegram Chat ID from the DB.
-    // For now, we will use a fallback or a default admin group ID if provided in env.
-    // Let's assume the owner has a specific chat ID stored in their settings, or we use a global one for the MVP.
-    // Since we don't have the chat ID passed yet, we will log it.
-    // You should add the specific CHAT_ID here or fetch it from tenant settings.
-    
-    // As a placeholder for the MVP, we can look for an env variable:
-    const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
-    
-    if (chatId) {
-      await bot.api.sendMessage(chatId, message, { parse_mode: 'HTML' });
-    } else {
-      console.log('TELEGRAM_ADMIN_CHAT_ID is not set, could not send message:', message);
-    }
+    await bot.api.sendMessage(chatId.toString(), message, { parse_mode: 'HTML' });
   } catch (error) {
-    console.error('Failed to send Telegram alert:', error);
+    console.error(`Failed to send Telegram message to ${chatId}:`, error);
+  }
+}
+
+export async function sendTelegramAlert(tenantId: string, message: string) {
+  const chatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+  if (chatId) {
+    await sendTelegramMessage(chatId, message);
+  } else {
+    console.log('TELEGRAM_ADMIN_CHAT_ID is not set, could not send alert.');
   }
 }
 
