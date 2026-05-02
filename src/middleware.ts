@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
   '/api/cashier',
   '/api/auth',
   '/api/health',
+  '/api/cron',
   '/_next',
   '/favicon.ico',
 ];

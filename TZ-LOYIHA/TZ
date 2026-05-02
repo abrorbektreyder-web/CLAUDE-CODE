@@ -88,7 +88,7 @@ MVP (Minimum Viable Product) bosqichida quyidagi 15 ta asosiy funksional modul i
 7	✅ Mijozlar bazasi	CRUD, sotib olish tarixi, qarz tarixi	P0
 8	✅ Nasiya/qarz	Foiz hisoblash, oylik to'lov grafigi	P0
 9	✅ Kafolat	Avtomatik hisoblanadi, alert sistemasi	P0
-10	✅ Telegram bot	Real-time savdo xabari, qarz eslatma	P0
+10	✅ Telegram bot	Real-time savdo, bepul qarz eslatmalari (Bugun va -2 kun)	P0 (Done)
 11	✅ Smena boshqaruv	Smena ochish/yopish, kassa pul tekshiruvi	P0
 12	✅ Chek chop etish	ESC/POS thermal printer support	P0
 13	✅ Asosiy hisobotlar	Kunlik, oylik savdo, top mahsulotlar	P0
@@ -100,7 +100,7 @@ MVP (Minimum Viable Product) bosqichida quyidagi 15 ta asosiy funksional modul i
 •SMS gateway integratsiya (Eskiz.uz/Playmobile)
 •Mobile app (kassir uchun React Native)
 •Yetkazib beruvchilar moduli
-•Multi-currency (USD/UZS)
+103	✅ Multi-currency (USD/UZS) (Asosiy: USD)
 •Bonus dastur va loyalty cards
 •Cross-sell tavsiyalari (AI-powered)
 •Multi-branch (filial qo'shish)

@@ -21,7 +21,7 @@ import { formatSum } from '@/lib/utils';
 // Supabase client instance (lazy initialized)
 let supabaseInstance: any = null;
 
-function getSupabase() {
+export async function getSupabase() {
   if (supabaseInstance) return supabaseInstance;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -110,7 +110,7 @@ export async function findPhoneByImei(imei: string, tenantId: string) {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function searchProducts(query: string, tenantId: string, limit = 20) {
-  let dbQuery = getSupabase()
+  let dbQuery = await getSupabase()
     .from('products')
     .select('*')
     .eq('tenant_id', tenantId)
@@ -144,7 +144,7 @@ export async function searchProducts(query: string, tenantId: string, limit = 20
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function getInventory(tenantId: string, branchId?: string) {
-  let query = getSupabase()
+  let query = await getSupabase()
     .from('products')
     .select(`
       id,
@@ -254,7 +254,7 @@ export async function getDebts(tenantId: string) {
 }
 
 export async function getDebtDetails(debtId: string, tenantId: string) {
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
 
   const [debtRes, paymentsRes, schedulesRes] = await Promise.all([
     supabase
@@ -299,7 +299,7 @@ export async function getDashboardKpis(tenantId?: string) {
   today.setHours(0, 0, 0, 0);
 
   // Today's sales
-  let salesQuery = getSupabase()
+  let salesQuery = await getSupabase()
     .from('sales')
     .select('total, status')
     .gte('created_at', today.toISOString())
@@ -308,7 +308,7 @@ export async function getDashboardKpis(tenantId?: string) {
   if (tenantId) salesQuery = salesQuery.eq('tenant_id', tenantId);
 
   // Active debts
-  let debtQuery = getSupabase()
+  let debtQuery = await getSupabase()
     .from('debts')
     .select('remaining_amount, is_overdue')
     .eq('status', 'active');
@@ -365,7 +365,7 @@ export async function getTenant(id: string) {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function getSales(tenantId: string, limit = 50) {
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
 
   // Fetch sales with customer info
   const { data, error } = await supabase
@@ -421,7 +421,7 @@ export async function createCustomer(data: {
   passport?: string;
   notes?: string;
 }) {
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
   const normalizedPhone = normalizePhone(data.phone);
   
   if (!normalizedPhone) {
@@ -474,7 +474,7 @@ export async function recordDebtPayment(data: {
   cashierId: string;
   notes?: string;
 }) {
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
 
   // 1. Get debt info
   const { data: debt, error: debtError } = await supabase
@@ -593,7 +593,7 @@ export async function createBranch(data: {
   phone: string;
   type: string;
 }) {
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
   const { data: branch, error } = await supabase
     .from('branches')
     .insert({
@@ -655,7 +655,7 @@ export async function createSale(data: {
     total: number;
   }>;
 }) {
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
 
   // 1. Handle Customer (Create if doesn't exist)
   let customerId = data.customerId;
@@ -901,7 +901,7 @@ export async function createSale(data: {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function openShift(tenantId: string, cashierId: string, branchId: string, openingCash: number) {
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
   
   // Check if already open
   const { data: existing } = await supabase
@@ -958,7 +958,7 @@ export async function openShift(tenantId: string, cashierId: string, branchId: s
 }
 
 export async function closeShift(tenantId: string, shiftId: string, closingCash: number, expectedCash: number, closingNotes?: string) {
-  const supabase = getSupabase();
+  const supabase = await getSupabase();
   
   const cashDifference = closingCash - expectedCash;
   
