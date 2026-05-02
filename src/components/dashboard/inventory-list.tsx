@@ -49,9 +49,9 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     name: '', brand: '', model: '', sku: '', barcode: '',
     productType: 'accessory' as string,
     costPrice: '', retailPrice: '', wholesalePrice: '',
-    costCurrency: 'UZS' as 'UZS' | 'USD',
-    retailCurrency: 'UZS' as 'UZS' | 'USD',
-    wholesaleCurrency: 'UZS' as 'UZS' | 'USD',
+    costCurrency: 'USD' as 'UZS' | 'USD',
+    retailCurrency: 'USD' as 'UZS' | 'USD',
+    wholesaleCurrency: 'USD' as 'UZS' | 'USD',
     minStock: '5', warrantyMonths: '12', description: '',
   });
 
@@ -214,7 +214,7 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 
             {/* Prices */}
             <div>
-              <label className={labelCls}>Narxlar (so'm) *</label>
+              <label className={labelCls}>Narxlar (Asosiy: USD $) *</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Cost Price */}
                 <div className="relative">
@@ -399,9 +399,9 @@ function EditProductModal({
     costPrice: item.costPrice,
     retailPrice: item.retailPrice,
     wholesalePrice: item.wholesalePrice || '',
-    costCurrency: 'UZS' as 'UZS' | 'USD',
-    retailCurrency: 'UZS' as 'UZS' | 'USD',
-    wholesaleCurrency: 'UZS' as 'UZS' | 'USD',
+    costCurrency: 'USD' as 'UZS' | 'USD',
+    retailCurrency: 'USD' as 'UZS' | 'USD',
+    wholesaleCurrency: 'USD' as 'UZS' | 'USD',
     minStock: String(item.minStock),
     warrantyMonths: String(item.warrantyMonths),
     description: item.description || '',
@@ -565,7 +565,7 @@ function EditProductModal({
 
             {/* Prices */}
             <div>
-              <label className={labelCls}>Narxlar (so'm) *</label>
+              <label className={labelCls}>Narxlar (Asosiy: USD $) *</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Cost Price */}
                 <div className="relative">
@@ -945,9 +945,9 @@ export function InventoryList({ initialData }: InventoryListProps) {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <div className="font-bold text-sm">{formatSum(item.retailPrice)}</div>
-                        <div className="text-[11px] font-bold text-[var(--color-accent)]">
-                          {formatUSD(item.retailPrice)}
+                        <div className="font-bold text-sm text-[var(--color-accent)]">{formatUSD(item.retailPrice)}</div>
+                        <div className="text-[11px] font-medium text-[var(--color-text-tertiary)]">
+                          {formatSum(item.retailPrice)}
                         </div>
                       </div>
                     </td>
@@ -1015,8 +1015,8 @@ export function InventoryList({ initialData }: InventoryListProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="flex flex-col">
-                      <div className="font-bold text-base leading-none mb-1">{formatSum(item.retailPrice)}</div>
-                      <div className="text-xs font-bold text-[var(--color-accent)]">{formatUSD(item.retailPrice)}</div>
+                      <div className="font-bold text-base leading-none mb-1 text-[var(--color-accent)]">{formatUSD(item.retailPrice)}</div>
+                      <div className="text-xs font-medium text-[var(--color-text-tertiary)]">{formatSum(item.retailPrice)}</div>
                     </div>
                   </div>
                   <div>

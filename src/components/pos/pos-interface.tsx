@@ -572,10 +572,10 @@ export function PosInterface({
                         <div className="text-[9px] md:text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-2 md:mb-3">{p.brand}</div>
                         <div className="flex flex-col items-end">
                           <div className="font-display text-base md:text-lg font-bold text-[var(--color-accent)] leading-none">
-                            {formatSum(p.retailPrice)}
-                          </div>
-                          <div className="text-[10px] font-bold text-[var(--color-accent)]/80 mt-0.5">
                             {formatUSD(p.retailPrice)}
+                          </div>
+                          <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] mt-0.5">
+                            {formatSum(p.retailPrice)}
                           </div>
                         </div>
                       </button>
@@ -642,10 +642,10 @@ export function PosInterface({
                             </div>
                             <div className="flex flex-col items-end">
                               <div className="text-[11px] font-bold text-[var(--color-accent)]">
-                                {formatSum(item.price * item.quantity)}
+                                {formatUSD(item.price * item.quantity)}
                               </div>
                               <div className="text-[10px] font-medium text-[var(--color-text-tertiary)]">
-                                {formatUSD(item.price * item.quantity)}
+                                {formatSum(item.price * item.quantity)}
                               </div>
                             </div>
                           </div>
@@ -672,10 +672,10 @@ export function PosInterface({
                     <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] tracking-widest">Jami</div>
                     <div className="flex flex-col items-end">
                       <div className="flex items-baseline gap-1.5 leading-none">
-                        <div className="font-display text-2xl md:text-3xl font-bold text-[var(--color-accent)]">{formatSum(total)}</div>
+                        <div className="font-display text-2xl md:text-3xl font-bold text-[var(--color-accent)]">{formatUSD(total)}</div>
                       </div>
                       <div className="text-xs md:text-sm font-bold text-[var(--color-text-tertiary)] opacity-80 mt-1">
-                        {formatUSD(total)}
+                        {formatSum(total)}
                       </div>
                     </div>
                   </div>
@@ -760,11 +760,11 @@ export function PosInterface({
 
               <div className="flex flex-col items-center justify-center py-6 px-6 rounded-[32px] bg-[var(--color-bg-base)] border border-[var(--color-border)]">
                 <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-[0.2em] mb-1">Jami summa</div>
-                <div className="text-3xl font-display font-bold text-[var(--color-foreground)] mb-1">
-                  {formatSum(total)}
-                </div>
-                <div className="text-xl font-display font-bold text-[var(--color-accent)]">
+                <div className="text-3xl font-display font-bold text-[var(--color-accent)] mb-1">
                   {formatUSD(total)}
+                </div>
+                <div className="text-xl font-display font-bold text-[var(--color-foreground)] opacity-70">
+                  {formatSum(total)}
                 </div>
               </div>
 
@@ -865,15 +865,15 @@ export function PosInterface({
                       <div className="flex justify-between items-start text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
                         <span>Qolgan qarz:</span>
                         <div className="text-right">
-                          <div className="text-[var(--color-foreground)] font-bold">{formatSum(total - (Number(downPayment) || 0))}</div>
-                          <div className="text-[var(--color-accent)]/70">{formatUSD(total - (Number(downPayment) || 0))}</div>
+                          <div className="text-[var(--color-accent)] font-bold">{formatUSD(total - (Number(downPayment) || 0))}</div>
+                          <div className="text-[var(--color-foreground)]/70">{formatSum(total - (Number(downPayment) || 0))}</div>
                         </div>
                       </div>
                       <div className="flex justify-between items-start text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] pt-1 border-t border-[var(--color-accent)]/10">
                         <span>Oylik to'lov:</span>
                         <div className="text-right">
-                          <div className="text-[var(--color-accent)] font-bold text-sm">{formatSum(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)))}</div>
-                          <div className="text-[var(--color-accent)]/80">{formatUSD(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)))}</div>
+                          <div className="text-[var(--color-accent)] font-bold text-sm">{formatUSD(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)))}</div>
+                          <div className="text-[var(--color-text-tertiary)]/80">{formatSum(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)))}</div>
                         </div>
                       </div>
                     </div>
@@ -899,8 +899,8 @@ export function PosInterface({
                                 <span className="font-medium">{d.getDate()} {['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyn', 'Iyl', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'][d.getMonth()]}</span>
                               </div>
                               <div className="flex flex-col items-end">
-                                <span className="font-bold">{formatSum(amt)}</span>
-                                <span className="text-[9px] text-[var(--color-text-tertiary)]">{formatUSD(amt)}</span>
+                                <span className="font-bold text-[var(--color-accent)]">{formatUSD(amt)}</span>
+                                <span className="text-[9px] text-[var(--color-text-tertiary)]">{formatSum(amt)}</span>
                               </div>
                             </div>
                           );
