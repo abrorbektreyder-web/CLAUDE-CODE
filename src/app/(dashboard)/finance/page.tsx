@@ -62,34 +62,65 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div style={{
-      background: 'rgba(255,255,255,0.03)',
-      border: '1px solid rgba(255,255,255,0.07)',
-      borderRadius: 16,
-      padding: '20px 24px',
+    <div className="group relative overflow-hidden transition-all duration-300 hover:translate-y-[-2px]" style={{
+      background: 'rgba(24, 25, 27, 0.4)',
+      backdropFilter: 'blur(10px)',
+      border: '1px solid var(--color-border)',
+      borderRadius: 20,
+      padding: '24px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 12,
-      backdropFilter: 'blur(12px)',
+      gap: 16,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ color: '#94a3b8', fontSize: 13, fontWeight: 500 }}>{title}</span>
-        <span style={{
-          background: `${color}20`,
-          borderRadius: 10,
-          padding: '6px 8px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <Icon size={16} color={color} />
-        </span>
+      {/* Decorative gradient blur */}
+      <div style={{
+        position: 'absolute',
+        top: -20,
+        right: -20,
+        width: 100,
+        height: 100,
+        background: `${color}15`,
+        filter: 'blur(30px)',
+        borderRadius: '50%',
+        zIndex: 0
+      }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+        <span style={{ color: 'var(--color-text-secondary)', fontSize: 13, fontWeight: 600, letterSpacing: '0.02em', textTransform: 'uppercase' }}>{title}</span>
+        <div style={{
+          background: `${color}15`,
+          borderRadius: 12,
+          width: 38,
+          height: 38,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          border: `1px solid ${color}30`,
+          transition: 'transform 0.3s ease',
+        }} className="group-hover:scale-110">
+          <Icon size={18} color={color} />
+        </div>
       </div>
-      <div>
-        <p style={{ fontSize: 26, fontWeight: 700, color: '#f1f5f9', margin: 0 }}>{value}</p>
+
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <p style={{ fontSize: 32, fontWeight: 800, color: 'var(--color-foreground)', margin: 0, letterSpacing: '-0.02em' }}>{value}</p>
         {sub && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-            {trend === 'up' && <ArrowUpRight size={14} color="#22c55e" />}
-            {trend === 'down' && <ArrowDownRight size={14} color="#ef4444" />}
-            <span style={{ color: trend === 'up' ? '#22c55e' : trend === 'down' ? '#ef4444' : '#64748b', fontSize: 12 }}>{sub}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '2px 8px',
+              borderRadius: 6,
+              background: trend === 'up' ? 'rgba(48, 209, 88, 0.1)' : trend === 'down' ? 'rgba(255, 69, 58, 0.1)' : 'rgba(255,255,255,0.05)',
+            }}>
+              {trend === 'up' && <ArrowUpRight size={14} color="var(--color-success)" />}
+              {trend === 'down' && <ArrowDownRight size={14} color="var(--color-danger)" />}
+              <span style={{
+                color: trend === 'up' ? 'var(--color-success)' : trend === 'down' ? 'var(--color-danger)' : 'var(--color-text-secondary)',
+                fontSize: 12,
+                fontWeight: 600
+              }}>
+                {sub}
+              </span>
+            </div>
           </div>
         )}
       </div>
@@ -184,22 +215,35 @@ export default function FinancePage() {
   const totalExp = Object.values(byCategory).reduce((a, b) => a + b, 0);
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
-      padding: '24px',
-      fontFamily: '"Inter", sans-serif',
-      color: '#f1f5f9',
+    <div className="animate-fade-up" style={{
+      minHeight: '100%',
+      background: 'transparent',
+      paddingBottom: '40px',
+      fontFamily: 'var(--font-sans)',
+      color: 'var(--color-foreground)',
     }}>
+      {/* Background ambient light */}
+      <div style={{
+        position: 'fixed',
+        top: '20%',
+        left: '50%',
+        width: '600px',
+        height: '600px',
+        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%)',
+        filter: 'blur(100px)',
+        transform: 'translate(-50%, -50%)',
+        pointerEvents: 'none',
+        zIndex: 0
+      }} />
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <BarChart3 size={28} color="#818cf8" />
+          <h1 className="font-display" style={{ margin: 0, fontSize: 32, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <BarChart3 size={32} color="var(--color-accent)" />
             Finance Pro
           </h1>
-          <p style={{ margin: '4px 0 0', color: '#64748b', fontSize: 14 }}>
-            Tushumlar, xarajatlar va sof foyda tahlili
+          <p style={{ margin: '4px 0 0', color: 'var(--color-text-secondary)', fontSize: 15, fontWeight: 500 }}>
+            Biznesingizning moliyaviy o'sishini kuzatib boring
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -214,33 +258,38 @@ export default function FinancePage() {
 
       {/* Date Filter */}
       <div style={{
-        display: 'flex', gap: 12, alignItems: 'center', marginBottom: 24,
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: 12, padding: '12px 16px',
+        display: 'flex', gap: 16, alignItems: 'center', marginBottom: 32,
+        background: 'var(--color-bg-elevated)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 16, padding: '14px 20px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        position: 'relative',
+        zIndex: 1
       }}>
-        <Calendar size={16} color="#64748b" />
-        <span style={{ color: '#64748b', fontSize: 13 }}>Davr:</span>
-        <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={dateInput} />
-        <span style={{ color: '#475569' }}>—</span>
-        <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={dateInput} />
+        <Calendar size={18} color="var(--color-text-secondary)" />
+        <span style={{ color: 'var(--color-text-secondary)', fontSize: 14, fontWeight: 600 }}>Sana oralig'i:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={dateInput} />
+          <span style={{ color: 'var(--color-text-quaternary)' }}>—</span>
+          <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={dateInput} />
+        </div>
       </div>
 
       {/* Stat Cards */}
       {summary && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 28 }}>
           <StatCard title="Jami Tushum" value={`$${fmt(summary.totalRevenue)}`}
-            icon={DollarSign} color="#22c55e" trend="up" sub="Savdolardan" />
+            icon={DollarSign} color="var(--color-success)" trend="up" sub="Savdolardan" />
           <StatCard title="Tovar Tannarxi" value={`$${fmt(summary.totalCost)}`}
             icon={ShoppingCart} color="#f59e0b" trend="neutral" sub="Xarid narxi" />
           <StatCard title="Yalpi Foyda" value={`$${fmt(summary.grossProfit)}`}
-            icon={TrendingUp} color="#818cf8" trend={summary.grossProfit > 0 ? 'up' : 'down'}
+            icon={TrendingUp} color="var(--color-accent)" trend={summary.grossProfit > 0 ? 'up' : 'down'}
             sub={`Margin: ${summary.grossProfit > 0 && summary.totalRevenue > 0 ? ((summary.grossProfit / summary.totalRevenue) * 100).toFixed(1) : 0}%`} />
           <StatCard title="Xarajatlar" value={`$${fmt(summary.totalExpenses)}`}
-            icon={TrendingDown} color="#ef4444" trend="down" sub="Jami chiqim" />
+            icon={TrendingDown} color="var(--color-danger)" trend="down" sub="Jami chiqim" />
           <StatCard
             title="SOF FOYDA" value={`$${fmt(summary.netProfit)}`}
-            icon={Wallet} color={summary.netProfit >= 0 ? '#22c55e' : '#ef4444'}
+            icon={Wallet} color={summary.netProfit >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}
             trend={summary.netProfit >= 0 ? 'up' : 'down'}
             sub={`Margin: ${summary.margin.toFixed(1)}%`} />
         </div>
@@ -434,10 +483,18 @@ function Modal({ title, children, onClose }: {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20,
     }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
-        background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)',
-        borderRadius: 20, padding: 28, width: '100%', maxWidth: 420,
-        boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+        background: 'var(--color-bg-card)', border: '1px solid var(--color-border)',
+        borderRadius: 24, padding: 32, width: '100%', maxWidth: 440,
+        boxShadow: '0 25px 80px rgba(0,0,0,0.6)',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
+        {/* Modal accent glow */}
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: 2,
+          background: 'linear-gradient(90deg, transparent, var(--color-accent), transparent)',
+          opacity: 0.5
+        }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>{title}</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: 4 }}>
@@ -453,38 +510,48 @@ function Modal({ title, children, onClose }: {
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const btnPrimary: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 6,
-  background: 'linear-gradient(135deg, #6366f1, #818cf8)',
-  color: '#fff', border: 'none', borderRadius: 10,
-  padding: '9px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+  display: 'flex', alignItems: 'center', gap: 8,
+  background: 'var(--color-accent)',
+  color: '#fff', border: 'none', borderRadius: 12,
+  padding: '10px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+  transition: 'all 0.2s ease-in-out',
+  boxShadow: '0 4px 12px rgba(255, 107, 53, 0.2)',
 };
 
 const btnOutline: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', gap: 6,
-  background: 'transparent',
-  color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+  display: 'flex', alignItems: 'center', gap: 8,
+  background: 'rgba(255,255,255,0.03)',
+  color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)',
+  borderRadius: 12, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+  transition: 'all 0.2s ease-in-out',
 };
 
 const card: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.03)',
-  border: '1px solid rgba(255,255,255,0.07)',
-  borderRadius: 16, padding: 20, backdropFilter: 'blur(12px)',
+  background: 'var(--color-bg-card)',
+  border: '1px solid var(--color-border)',
+  borderRadius: 24, padding: 24, 
+  boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+  position: 'relative',
+  zIndex: 1
 };
 
 const dateInput: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 8, padding: '6px 10px', color: '#e2e8f0', fontSize: 13,
+  background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)',
+  borderRadius: 10, padding: '8px 12px', color: 'var(--color-foreground)', fontSize: 14,
+  fontWeight: 500,
   colorScheme: 'dark',
+  outline: 'none',
 };
 
 const labelStyle: React.CSSProperties = {
-  display: 'flex', flexDirection: 'column', gap: 6,
-  color: '#94a3b8', fontSize: 13, fontWeight: 500,
+  display: 'flex', flexDirection: 'column', gap: 8,
+  color: 'var(--color-text-secondary)', fontSize: 13, fontWeight: 600,
+  textTransform: 'uppercase', letterSpacing: '0.02em',
 };
 
 const inputStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 10, padding: '10px 14px', color: '#f1f5f9', fontSize: 14,
+  background: 'var(--color-bg-elevated)', border: '1px solid var(--color-border)',
+  borderRadius: 12, padding: '12px 16px', color: 'var(--color-foreground)', fontSize: 15,
   colorScheme: 'dark', outline: 'none',
+  transition: 'border-color 0.2s',
 };

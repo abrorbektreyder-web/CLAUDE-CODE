@@ -41,6 +41,7 @@ const navigation = [
       { href: '/sales', icon: ShoppingCart, label: 'Sotuvlar' },
       { href: '/inventory', icon: Package, label: 'Ombor' },
       { href: '/customers', icon: Users, label: 'Mijozlar' },
+      { href: '/suppliers', icon: Users, label: 'Ta\'minotchilar' },
       { href: '/credit', icon: CreditCard, label: 'Nasiya' },
     ],
   },

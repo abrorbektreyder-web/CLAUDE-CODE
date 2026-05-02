@@ -11,12 +11,12 @@ import {
 import { sendTelegramAlert, formatSaleMessage } from '@/lib/telegram';
 import { formatSum } from '@/lib/utils';
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // SUPABASE HTTP CLIENT
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // This replaces direct Drizzle/Postgres connection which is blocked by port 5432.
 // Supabase JS client uses port 443 (HTTPS) which is always open.
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 // Supabase client instance (lazy initialized)
 let supabaseInstance: any = null;
@@ -39,9 +39,9 @@ export async function getSupabase() {
   return supabaseInstance;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 1. FIND PHONE BY IMEI
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function findPhoneByImei(imei: string, tenantId: string) {
   if (!isValidImei(imei)) {
@@ -50,8 +50,7 @@ export async function findPhoneByImei(imei: string, tenantId: string) {
 
   const imeiHash = hashSensitive(imei)!;
 
-  const { data, error } = await getSupabase()
-    .from('phone_units')
+  const { data, error } = (await getSupabase()).from('phone_units')
     .select(`
       id,
       product_id,
@@ -105,13 +104,12 @@ export async function findPhoneByImei(imei: string, tenantId: string) {
   };
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 2. SEARCH PRODUCTS
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function searchProducts(query: string, tenantId: string, limit = 20) {
-  let dbQuery = await getSupabase()
-    .from('products')
+  let dbQuery = (await getSupabase()).from('products')
     .select('*')
     .eq('tenant_id', tenantId)
     .is('deleted_at', null)
@@ -139,13 +137,12 @@ export async function searchProducts(query: string, tenantId: string, limit = 20
   }));
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 10. GET INVENTORY
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getInventory(tenantId: string, branchId?: string) {
-  let query = await getSupabase()
-    .from('products')
+  let query = (await getSupabase()).from('products')
     .select(`
       id,
       name,
@@ -194,13 +191,12 @@ export async function getInventory(tenantId: string, branchId?: string) {
   }));
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 11. GET CUSTOMERS
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getCustomers(tenantId: string) {
-  const { data, error } = await getSupabase()
-    .from('customers')
+  const { data, error } = (await getSupabase()).from('customers')
     .select('*')
     .eq('tenant_id', tenantId)
     .is('deleted_at', null)
@@ -220,13 +216,12 @@ export async function getCustomers(tenantId: string) {
   }));
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 12. GET DEBTS (Nasiya)
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getDebts(tenantId: string) {
-  const { data, error } = await getSupabase()
-    .from('debts')
+  const { data, error } = (await getSupabase()).from('debts')
     .select(`
       *,
       customers (full_name, phone_last_four)
@@ -290,17 +285,16 @@ export async function getDebtDetails(debtId: string, tenantId: string) {
   };
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 8. DASHBOARD: today's KPIs
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getDashboardKpis(tenantId?: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   // Today's sales
-  let salesQuery = await getSupabase()
-    .from('sales')
+  let salesQuery = (await getSupabase()).from('sales')
     .select('total, status')
     .gte('created_at', today.toISOString())
     .eq('status', 'completed');
@@ -308,8 +302,7 @@ export async function getDashboardKpis(tenantId?: string) {
   if (tenantId) salesQuery = salesQuery.eq('tenant_id', tenantId);
 
   // Active debts
-  let debtQuery = await getSupabase()
-    .from('debts')
+  let debtQuery = (await getSupabase()).from('debts')
     .select('remaining_amount, is_overdue')
     .eq('status', 'active');
 
@@ -343,8 +336,7 @@ export async function getDashboardKpis(tenantId?: string) {
 }
 
 export async function getTenant(id: string) {
-  const { data, error } = await getSupabase()
-    .from('tenants')
+  const { data, error } = (await getSupabase()).from('tenants')
     .select('*')
     .eq('id', id)
     .single();
@@ -360,9 +352,9 @@ export async function getTenant(id: string) {
   };
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 13. GET SALES (History)
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getSales(tenantId: string, limit = 50) {
   const supabase = await getSupabase();
@@ -409,9 +401,9 @@ export async function getSales(tenantId: string, limit = 50) {
   });
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 15. CREATE CUSTOMER (Standalone)
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function createCustomer(data: {
   tenantId: string;
@@ -462,9 +454,9 @@ export async function createCustomer(data: {
   return customer;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 16. RECORD DEBT PAYMENT
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function recordDebtPayment(data: {
   tenantId: string;
@@ -582,9 +574,9 @@ export async function recordDebtPayment(data: {
   return payment;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 17. CREATE BRANCH
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function createBranch(data: {
   tenantId: string;
@@ -611,13 +603,12 @@ export async function createBranch(data: {
   return branch;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 18. GET BRANCHES
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getBranches(tenantId: string) {
-  const { data, error } = await getSupabase()
-    .from('branches')
+  const { data, error } = (await getSupabase()).from('branches')
     .select('*')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: true });
@@ -626,9 +617,9 @@ export async function getBranches(tenantId: string) {
   return data;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 14. CREATE SALE
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function createSale(data: {
   tenantId: string;
@@ -896,9 +887,9 @@ export async function createSale(data: {
   };
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 19. SHIFT MANAGEMENT
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function openShift(tenantId: string, cashierId: string, branchId: string, openingCash: number) {
   const supabase = await getSupabase();
@@ -944,11 +935,11 @@ export async function openShift(tenantId: string, cashierId: string, branchId: s
   // Telegram notification
   try {
     const { data: cashier } = await supabase.from('users').select('name').eq('id', cashierId).single();
-    const message = `🟢 <b>SMENA OCHILDI #${shiftNumber}</b>
-━━━━━━━━━━━━━━━━━
-👤 Kassir: ${cashier?.name || 'Kassir'}
-💰 Kassa qoldig'i (boshlang'ich): ${formatSum(openingCash, false)} so'm
-🕐 ${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
+    const message = `рџџў <b>SMENA OCHILDI #${shiftNumber}</b>
+в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ
+рџ‘¤ Kassir: ${cashier?.name || 'Kassir'}
+рџ’° Kassa qoldig'i (boshlang'ich): ${formatSum(openingCash, false)} so'm
+рџ•ђ ${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
     await sendTelegramAlert(tenantId, message);
   } catch (e) {
     console.error('Telegram shift alert failed:', e);
@@ -982,15 +973,15 @@ export async function closeShift(tenantId: string, shiftId: string, closingCash:
   // Telegram notification
   try {
     const cashierName = Array.isArray(shift.users) ? shift.users[0]?.name : shift.users?.name;
-    const message = `🔴 <b>SMENA YOPILDI #${shift.shift_number}</b>
-━━━━━━━━━━━━━━━━━
-👤 Kassir: ${cashierName || 'Kassir'}
-💰 Kassa qoldig'i (kutilgan): ${formatSum(expectedCash, false)} so'm
-💰 Kassa qoldig'i (haqiqiy): ${formatSum(closingCash, false)} so'm
-💰 Farq: ${formatSum(cashDifference, false)} so'm
-🕐 ${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}
+    const message = `рџ”ґ <b>SMENA YOPILDI #${shift.shift_number}</b>
+в”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓв”Ѓ
+рџ‘¤ Kassir: ${cashierName || 'Kassir'}
+рџ’° Kassa qoldig'i (kutilgan): ${formatSum(expectedCash, false)} so'm
+рџ’° Kassa qoldig'i (haqiqiy): ${formatSum(closingCash, false)} so'm
+рџ’° Farq: ${formatSum(cashDifference, false)} so'm
+рџ•ђ ${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}
 
-📝 Izoh: ${closingNotes || '-'}`;
+рџ“ќ Izoh: ${closingNotes || '-'}`;
     await sendTelegramAlert(tenantId, message);
   } catch (e) {
     console.error('Telegram shift alert failed:', e);
@@ -999,9 +990,9 @@ export async function closeShift(tenantId: string, shiftId: string, closingCash:
   return shift;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 19. EXPENSE CATEGORIES
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getExpenseCategories(tenantId: string) {
   const { data, error } = await (await getSupabase())
@@ -1037,9 +1028,9 @@ export async function createExpenseCategory(params: {
   return data;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 20. EXPENSES
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function createExpense(params: {
   tenantId: string;
@@ -1103,9 +1094,9 @@ export async function deleteExpense(expenseId: string, tenantId: string) {
   if (error) throw error;
 }
 
-// ════════════════════════════════════════════════════════════════════════════
-// 21. FINANCE ANALYTICS — NET PROFIT
-// ════════════════════════════════════════════════════════════════════════════
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
+// 21. FINANCE ANALYTICS вЂ” NET PROFIT
+// в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getFinanceSummary(params: {
   tenantId: string;
@@ -1148,3 +1139,125 @@ export async function getFinanceSummary(params: {
     margin: totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0,
   };
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// 22. SUPPLIERS
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function getSuppliers(tenantId: string) {
+  const { data, error } = await (await getSupabase())
+    .from('suppliers')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .is('deleted_at', null)
+    .order('name');
+  if (error) throw error;
+  return data;
+}
+
+export async function createSupplier(params: {
+  tenantId: string;
+  name: string;
+  contactPerson?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  inn?: string;
+}) {
+  const { data, error } = await (await getSupabase())
+    .from('suppliers')
+    .insert({
+      tenant_id: params.tenantId,
+      name: params.name,
+      contact_person: params.contactPerson,
+      phone: params.phone,
+      email: params.email,
+      address: params.address,
+      inn: params.inn,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getSupplierById(id: string, tenantId: string) {
+  const supabase = await getSupabase();
+  
+  const [supplierRes, transactionsRes] = await Promise.all([
+    supabase.from('suppliers').select('*').eq('id', id).eq('tenant_id', tenantId).single(),
+    supabase.from('supplier_transactions').select('*').eq('supplier_id', id).eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(50)
+  ]);
+
+  if (supplierRes.error) throw supplierRes.error;
+  
+  return {
+    ...supplierRes.data,
+    transactions: transactionsRes.data || []
+  };
+}
+
+export async function createSupplierTransaction(params: {
+  tenantId: string;
+  supplierId: string;
+  type: 'purchase' | 'payment' | 'return' | 'adjustment';
+  amount: number;
+  notes?: string;
+  referenceType?: string;
+  referenceId?: string;
+  performedBy: string;
+}) {
+  const supabase = await getSupabase();
+
+  // 1. Get current balance
+  const { data: supplier, error: sErr } = await supabase
+    .from('suppliers')
+    .select('current_balance')
+    .eq('id', params.supplierId)
+    .eq('tenant_id', params.tenantId)
+    .single();
+  
+  if (sErr) throw sErr;
+
+  const currentBalance = Number(supplier.current_balance || 0);
+  let newBalance = currentBalance;
+
+  if (params.type === 'purchase') {
+    newBalance += params.amount;
+  } else if (params.type === 'payment' || params.type === 'return') {
+    newBalance -= params.amount;
+  } else if (params.type === 'adjustment') {
+    newBalance = params.amount;
+  }
+
+  // 2. Insert transaction
+  const { data: transaction, error: tErr } = await supabase
+    .from('supplier_transactions')
+    .insert({
+      tenant_id: params.tenantId,
+      supplier_id: params.supplierId,
+      type: params.type,
+      amount: params.amount,
+      balance_snapshot: newBalance,
+      notes: params.notes,
+      reference_type: params.referenceType,
+      reference_id: params.referenceId,
+      performed_by: params.performedBy,
+    })
+    .select()
+    .single();
+  
+  if (tErr) throw tErr;
+
+  // 3. Update supplier balance
+  const { error: uErr } = await supabase
+    .from('suppliers')
+    .update({ current_balance: newBalance })
+    .eq('id', params.supplierId)
+    .eq('tenant_id', params.tenantId);
+  
+  if (uErr) throw uErr;
+
+  return transaction;
+}
+

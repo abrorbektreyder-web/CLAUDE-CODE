@@ -12,6 +12,7 @@ export * from './inventory';
 export * from './customers';
 export * from './sales';
 export * from './finance';
+export * from './suppliers';
 export * from './operations';
 export * from './auth';
 

@@ -95,14 +95,14 @@ MVP (Minimum Viable Product) bosqichida quyidagi 15 ta asosiy funksional modul i
 14	✅ Audit log	Immutable jurnal, har bir muhim amal	P0
 15	❌ Backup	Avtomatik kunlik backup	P0
 3.2. Phase 2 — Kengaytirilgan Biznes Boshqaruvi (1.5 - 2 oy)
-• ❌ Finance Pro: Do'kon xarajatlari (ijara, oylik, tushlik) va sof foyda hisobi
-• ❌ Analytics Dashboard: Savdo grafiklari, brendlar tahlili, sotuvchilar KPI
-• ❌ Suppliers Moduli: Ta'minotchilar bilan hisob-kitob, qarz nazorati
-• ❌ Telegram Mini App (TMA): Onlayn katalog, kredit kalkulyatori va buyurtma berish
-• ❌ Bonus & Loyalty: Mijozlar uchun keshbek va sodiqlik dasturi
+• ✅ Finance Pro: Do'kon xarajatlari (ijara, oylik, tushlik) va sof foyda hisobi
+• ✅ Analytics Dashboard: Savdo grafiklari, tushum va sof foyda tahlili
+• ✅ Suppliers Moduli: Ta'minotchilar bilan hisob-kitob, qarz nazorati
 • ✅ Multi-currency (USD/UZS) (Asosiy: USD)
 • ✅ Multi-branch (filiallar qo'shish imkoniyati)
 • ✅ Excel/PDF export (Sotuvlar va hisobotlar uchun)
+• ❌ Telegram Mini App (TMA): Onlayn katalog, halol kredit kalkulyatori va arizalar
+• ❌ Bonus & Loyalty: Mijozlar uchun keshbek va sodiqlik dasturi
 3.3. Uzoq muddatli vizyon (Phase 3 — 6 oy+)
 •WhatsApp Business integratsiya
 •Franchise rejimi (sub-tenants)
@@ -733,6 +733,34 @@ Kechikdi:
 
 Tasdiq:
 "Tolovingiz qabul qilindi. Qoldi: {summa} sum. {dokon}"
+
+10.5. Telegram Mini App (TMA) — Raqamli Vitrina va Halol Nasiya
+TMA — bu mijozning cho'ntagidagi raqamli do'kon. Uning xususiyatlari:
+
+1. Halol Brending va Dashboard:
+   • "Baraka" va "Halol Savdo" tamoyillariga urg'u.
+   • Foizsiz va yashirin to'lovsiz savdo kafolati.
+
+2. Onlayn Katalog:
+   • POS bazasi bilan real-vaqtda sinxronizatsiya.
+   • Brend, model va narx bo'yicha qidiruv/filtr.
+   • Mahsulot rasmlari va xususiyatlari.
+
+3. Halol Nasiya Kalkulyatori:
+   • 1, 3, 6 oylik muddatlar uchun variantlar.
+   • 0% boshlang'ich to'lov (pre-payment) tanlash imkoniyati.
+   • Aniq oylik to'lov summasini (markup bilan) ko'rsatish.
+
+4. Nasiya Ariza Moduli:
+   • Ko'p bosqichli ariza shakli.
+   • Passport ma'lumotlari va manzili.
+   • Kafil (Guarantor) ma'lumotlari: Ismi va telefon raqami.
+   • Arizaning holatini kuzatish (Kutilmoqda -> Tasdiqlandi -> Tayyor).
+
+5. Mijoz Portali:
+   • Aktiv qarzlar va to'lov grafigi.
+   • To'lovlar tarixi.
+   • Muddat yaqinlashganda yumshoq "birodarlik" eslatmalari.
 
 
 11. Telefon va Aksessuar Inventory Logikasi
