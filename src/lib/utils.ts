@@ -26,9 +26,10 @@ export function formatSum(
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(num)) return '0';
 
-  const formatted = num
-    .toLocaleString('ru-RU', { maximumFractionDigits: 0 })
-    .replace(/,/g, ' ');
+  // Robust formatting with space separators that works identical on server and client
+  const formatted = Math.round(num)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
   return withCurrency ? `${formatted} so'm` : formatted;
 }
@@ -55,11 +56,14 @@ export function formatCompact(amount: number): string {
  */
 export function formatDate(date: Date | string): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('uz-UZ', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+  if (isNaN(d.getTime())) return 'N/A';
+  
+  const months = ['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyn', 'Iyl', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'];
+  const day = d.getDate();
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  
+  return `${day} ${month} ${year}`;
 }
 
 /**

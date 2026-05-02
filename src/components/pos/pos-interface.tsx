@@ -31,9 +31,9 @@ import {
   BarChart,
   Activity
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatSum } from '@/lib/utils';
 import { useSession } from '@/lib/auth-client';
-import { createSale, searchProducts } from '@/db/queries';
+import { createSale, searchProducts, openShift, closeShift } from '@/db/queries';
 import { useRouter } from 'next/navigation';
 import { InventoryList } from '@/components/dashboard/inventory-list';
 import { CustomerList } from '@/components/dashboard/customer-list';
@@ -87,8 +87,35 @@ export function PosInterface({
   const [downPayment, setDownPayment] = useState('');
   const [saleImei, setSaleImei] = useState('');
 
+  // Shift Management
+  const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
+  const [shiftStatus, setShiftStatus] = useState<'open' | 'closed'>('closed');
+  const [currentShiftId, setCurrentShiftId] = useState<string | null>(null);
+  const [isShiftProcessing, setIsShiftProcessing] = useState(false);
+
   const searchInputRef = useRef<HTMLInputElement>(null);
   const receiptRef = useRef<HTMLDivElement>(null);
+
+  // Auto-open shift on mount
+  useEffect(() => {
+    async function autoOpenShift() {
+      if (!session?.user) return;
+      try {
+        const tenantId = (session.user as any).tenantId;
+        const branchId = (session.user as any).branchId || '00000000-0000-0000-0000-000000000000';
+        
+        const newShift = await openShift(tenantId, session.user.id, branchId, 0); // 0 starting cash
+        setCurrentShiftId(newShift.id);
+        setShiftStatus('open');
+      } catch (err) {
+        console.error('Auto shift open failed:', err);
+      }
+    }
+    
+    if (session?.user && shiftStatus === 'closed' && !currentShiftId) {
+      autoOpenShift();
+    }
+  }, [session?.user]);
 
   // Search products when query changes
   useEffect(() => {
@@ -204,14 +231,15 @@ export function PosInterface({
           quantity: item.quantity,
           unitPrice: item.price,
           costPrice: item.price * 0.8, // Mock cost
-          total: item.price * item.quantity
+          total: item.price * item.quantity,
+          imei: item.imei
         }))
       });
 
       setLastSale({
         ...saleResult,
         cart: [...cart],
-        time: new Date().toLocaleString('uz-UZ'),
+        time: new Date().getHours().toString().padStart(2, '0') + ':' + new Date().getMinutes().toString().padStart(2, '0'),
         cashier: session.user.name
       });
 
@@ -232,6 +260,48 @@ export function PosInterface({
       setIsProcessing(false);
       alert("Xatolik yuz berdi: " + (err as any).message);
     }
+  };
+
+  const handleShiftToggle = async () => {
+    if (!session?.user) return;
+    setIsShiftProcessing(true);
+    
+    try {
+      const tenantId = (session.user as any).tenantId;
+      const branchId = (session.user as any).branchId || '00000000-0000-0000-0000-000000000000';
+
+      if (shiftStatus === 'closed') {
+        // Open shift
+        const newShift = await openShift(tenantId, session.user.id, branchId, 0);
+        setCurrentShiftId(newShift.id);
+        setShiftStatus('open');
+      } else {
+        // Close shift
+        if (currentShiftId) {
+          await closeShift(tenantId, currentShiftId, 0, 0, "Avtomatik yopildi"); 
+        }
+        setCurrentShiftId(null);
+        setShiftStatus('closed');
+      }
+      
+      setIsShiftModalOpen(false);
+    } catch (err) {
+      alert("Smena amaliyotida xatolik: " + (err as any).message);
+    } finally {
+      setIsShiftProcessing(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (session?.user && currentShiftId && shiftStatus === 'open') {
+      try {
+        const tenantId = (session.user as any).tenantId;
+        await closeShift(tenantId, currentShiftId, 0, 0, "Chiqish tizimi orqali yopildi");
+      } catch (err) {
+        console.error('Failed to close shift on logout:', err);
+      }
+    }
+    router.push('/cashier-login');
   };
 
   const handlePrint = () => {
@@ -308,7 +378,7 @@ export function PosInterface({
             <button title="Sozlamalar" className="p-3 rounded-xl hover:bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-colors">
               <Settings size={22} />
             </button>
-            <button title="Chiqish" onClick={() => router.push('/cashier-login')} className="p-3 rounded-xl hover:bg-red-500/10 text-red-500 transition-colors">
+            <button title="Chiqish" onClick={handleLogout} className="p-3 rounded-xl hover:bg-red-500/10 text-red-500 transition-colors">
               <LogOut size={22} />
             </button>
           </div>
@@ -385,13 +455,18 @@ export function PosInterface({
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm md:text-lg font-bold leading-none">Kassa #1</span>
-                  <div className="flex items-center gap-1.5 mt-1">
+                  <button 
+                    onClick={() => setIsShiftModalOpen(true)}
+                    className="flex items-center gap-1.5 mt-1 hover:opacity-80 transition-opacity text-left"
+                  >
                     <span className="relative flex h-1.5 w-1.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-success)] opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--color-success)]"></span>
+                      {shiftStatus === 'open' && <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--color-success)] opacity-75"></span>}
+                      <span className={cn("relative inline-flex rounded-full h-1.5 w-1.5", shiftStatus === 'open' ? "bg-[var(--color-success)]" : "bg-[var(--color-danger)]")}></span>
                     </span>
-                    <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-[var(--color-success)]">Smena ochiq</span>
-                  </div>
+                    <span className={cn("text-[9px] md:text-[10px] font-bold uppercase tracking-wider", shiftStatus === 'open' ? "text-[var(--color-success)]" : "text-[var(--color-danger)]")}>
+                      {shiftStatus === 'open' ? 'Smena ochiq' : 'Smena yopiq'}
+                    </span>
+                  </button>
                 </div>
               </div>
 
@@ -497,7 +572,7 @@ export function PosInterface({
                         <div className="text-[9px] md:text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-2 md:mb-3">{p.brand}</div>
                         <div className="flex items-end justify-between">
                           <div className="font-display text-base md:text-lg font-bold text-[var(--color-accent)]">
-                            {new Intl.NumberFormat('uz-UZ').format(p.retailPrice)}
+                            {formatSum(p.retailPrice, false)}
                           </div>
                           <div className="text-[9px] md:text-[10px] font-bold text-[var(--color-text-tertiary)] mb-0.5">SO'M</div>
                         </div>
@@ -564,7 +639,7 @@ export function PosInterface({
                               </button>
                             </div>
                             <div className="text-[10px] md:text-xs font-bold text-[var(--color-accent)]">
-                              {new Intl.NumberFormat('uz-UZ').format(item.price * item.quantity)}
+                              {formatSum(item.price * item.quantity, false)}
                             </div>
                           </div>
                         </div>
@@ -589,7 +664,7 @@ export function PosInterface({
                   <div className="flex items-end justify-between">
                     <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] tracking-widest">Jami</div>
                     <div className="flex items-baseline gap-1.5">
-                      <div className="font-display text-2xl md:text-3xl font-bold text-[var(--color-accent)]">{new Intl.NumberFormat('uz-UZ').format(total)}</div>
+                      <div className="font-display text-2xl md:text-3xl font-bold text-[var(--color-accent)]">{formatSum(total, false)}</div>
                       <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] mb-1 uppercase">so'm</div>
                     </div>
                   </div>
@@ -608,6 +683,51 @@ export function PosInterface({
           </>
         )}
       </div>
+
+      {/* Shift Management Modal */}
+      {isShiftModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="w-full max-w-sm bg-[var(--color-bg-elevated)] rounded-[32px] border border-[var(--color-border)] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="p-6 md:p-8 flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-display font-bold">Smena</h2>
+                  <p className="text-xs text-[var(--color-text-secondary)]">
+                    {shiftStatus === 'closed' ? 'Yangi smena ochish' : 'Smenani yopish'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsShiftModalOpen(false)}
+                  className="h-10 w-10 rounded-full border border-[var(--color-border)] flex items-center justify-center text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <p className="text-[var(--color-text-secondary)] text-sm">
+                  {shiftStatus === 'open' ? 'Smenani yopishni tasdiqlaysizmi?' : 'Smenani ochishni tasdiqlaysizmi?'}
+                </p>
+              </div>
+
+              <div className="flex gap-3 mt-2">
+                <button
+                  onClick={handleShiftToggle}
+                  disabled={isShiftProcessing}
+                  className={cn(
+                    "w-full h-14 rounded-2xl text-white font-bold text-lg shadow-xl hover:opacity-90 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:scale-100",
+                    shiftStatus === 'closed' ? "bg-[var(--color-success)] shadow-[var(--color-success)]/20" : "bg-[var(--color-danger)] shadow-[var(--color-danger)]/20"
+                  )}
+                >
+                  {isShiftProcessing ? <Loader2 className="animate-spin" size={24} /> : (
+                    shiftStatus === 'closed' ? "Tasdiqlash" : "Smenani yopish"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payment Modal */}
       {isPaymentModalOpen && (
@@ -630,7 +750,7 @@ export function PosInterface({
               <div className="flex flex-col items-center justify-center py-6 px-6 rounded-[32px] bg-[var(--color-bg-base)] border border-[var(--color-border)]">
                 <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-[0.2em] mb-1">Jami summa</div>
                 <div className="text-4xl font-display font-bold text-[var(--color-foreground)]">
-                  {new Intl.NumberFormat('uz-UZ').format(total)}
+                  {formatSum(total, false)}
                 </div>
               </div>
 
@@ -731,13 +851,13 @@ export function PosInterface({
                       <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
                         <span>Qolgan qarz:</span>
                         <span className="text-[var(--color-foreground)] font-bold">
-                          {new Intl.NumberFormat('uz-UZ').format(total - (Number(downPayment) || 0))} so'm
+                          {formatSum(total - (Number(downPayment) || 0), false)} so'm
                         </span>
                       </div>
                       <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
                         <span>Oylik to'lov:</span>
                         <span className="text-[var(--color-accent)] font-bold text-sm">
-                          {new Intl.NumberFormat('uz-UZ').format(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)))} so'm
+                          {formatSum(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)), false)} so'm
                         </span>
                       </div>
                     </div>
@@ -760,9 +880,9 @@ export function PosInterface({
                             <div key={i} className="flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-[var(--color-bg-elevated)] transition-colors text-[11px]">
                               <div className="flex items-center gap-2">
                                 <span className="h-4 w-4 rounded bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center text-[8px] font-bold text-[var(--color-text-tertiary)]">{i + 1}</span>
-                                <span className="font-medium">{d.toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' })}</span>
+                                <span className="font-medium">{d.getDate()} {['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyn', 'Iyl', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'][d.getMonth()]}</span>
                               </div>
-                              <span className="font-bold">{new Intl.NumberFormat('uz-UZ').format(amt)} so'm</span>
+                              <span className="font-bold">{formatSum(amt, false)} so'm</span>
                             </div>
                           );
                         })}
@@ -844,7 +964,7 @@ export function PosInterface({
                       <div className="flex">
                         <span className="flex-1 font-bold">{item.name}</span>
                         <span className="w-8 text-right">{item.quantity}</span>
-                        <span className="w-20 text-right">{(item.price * item.quantity).toLocaleString()}</span>
+                        <span className="w-20 text-right">{formatSum(item.price * item.quantity, false)}</span>
                       </div>
                       <div className="text-[9px] opacity-70">IMEI: {item.imei}</div>
                     </div>
@@ -857,7 +977,7 @@ export function PosInterface({
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span>JAMI:</span>
-                  <span className="font-bold">{Number(lastSale.total).toLocaleString()} SO'M</span>
+                  <span className="font-bold">{formatSum(lastSale.total, false)} SO'M</span>
                 </div>
                 <div className="flex justify-between">
                   <span>TO'LOV TURI:</span>
@@ -869,7 +989,7 @@ export function PosInterface({
                   <div className="p-2 bg-black/5 rounded mt-2">
                     <div className="font-bold mb-1">NASIYA MA'LUMOTLARI:</div>
                     <div>Muddati: {lastSale.debtMonths} oy</div>
-                    <div>Oylik to'lov: {Math.ceil(lastSale.total / lastSale.debtMonths).toLocaleString()} SO'M</div>
+                    <div>Oylik to'lov: {formatSum(Math.ceil(lastSale.total / lastSale.debtMonths), false)} SO'M</div>
                   </div>
                 )}
               </div>

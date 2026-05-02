@@ -15,9 +15,10 @@ import {
   AlertTriangle,
   Calendar
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatSum } from '@/lib/utils';
 import Link from 'next/link';
-import { Edit2, Trash2, X } from 'lucide-react';
+import { Edit2, Trash2, X, FileText, Table } from 'lucide-react';
+import { exportToPDF, exportToCSV } from '@/lib/export-utils';
 
 interface SaleItem {
   id: string;
@@ -33,6 +34,8 @@ interface SaleItem {
   debtRemaining?: string | null;
   debtTotal?: string | null;
   debtPaid?: string | null;
+  saleItems: string;
+  notes?: string;
 }
 
 interface SalesListProps {
@@ -45,14 +48,15 @@ export function SalesList({ initialData }: SalesListProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [selectedSale, setSelectedSale] = useState<SaleItem | null>(null);
   const [modalType, setModalType] = useState<'edit' | 'delete' | null>(null);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
 
   const filteredData = initialData.filter(sale =>
     sale.customerName.toLowerCase().includes(search.toLowerCase()) ||
     sale.receiptNumber.toString().includes(search)
   );
 
-  const formatPrice = (price: string) => {
-    return new Intl.NumberFormat('uz-UZ').format(Number(price));
+  const formatPrice = (price: string | number) => {
+    return formatSum(price, false);
   };
 
   const formatDate = (dateStr: string) => {
@@ -65,29 +69,14 @@ export function SalesList({ initialData }: SalesListProps) {
     return `${day}-${month}, ${hours}:${minutes}`;
   };
 
-  const handleExport = () => {
-    // Simple CSV export
-    const headers = ['ID', 'Chek №', 'Mijoz', 'Summa', 'To\'lov turi', 'Sana'];
-    const rows = filteredData.map(s => [
-      s.id,
-      s.receiptNumber,
-      s.customerName,
-      s.total,
-      s.paymentMethod,
-      s.createdAt
-    ]);
+  const handleExportPDF = () => {
+    exportToPDF(filteredData, "Sotuvlar Hisoboti (Toliq)");
+    setIsExportMenuOpen(false);
+  };
 
-    const csvContent = "data:text/csv;charset=utf-8,"
-      + headers.join(",") + "\n"
-      + rows.map(e => e.join(",")).join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `sotuvlar_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExportCSV = () => {
+    exportToCSV(filteredData);
+    setIsExportMenuOpen(false);
   };
 
   return (
@@ -99,13 +88,33 @@ export function SalesList({ initialData }: SalesListProps) {
           <p className="text-sm text-[var(--color-text-secondary)]">Barcha amalga oshirilgan savdolar tarixi va boshqaruvi</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <button
-            onClick={handleExport}
-            className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] px-4 py-2.5 text-sm font-semibold transition-all hover:bg-[var(--color-bg-hover)] active:scale-95"
-          >
-            <Download size={18} />
-            Eksport
-          </button>
+          <div className="relative flex-1 sm:flex-none">
+            <button
+              onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
+              className={cn(
+                "flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all active:scale-95",
+                isExportMenuOpen ? "bg-[var(--color-bg-hover)] border-[var(--color-accent)]" : "border-[var(--color-border)] bg-[var(--color-bg-card)] hover:bg-[var(--color-bg-hover)]"
+              )}
+            >
+              <Download size={18} />
+              Eksport
+            </button>
+            {isExportMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-20" onClick={() => setIsExportMenuOpen(false)} />
+                <div className="absolute right-0 top-full z-30 mt-2 w-48 origin-top-right rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                  <button onClick={handleExportPDF} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-[var(--color-bg-hover)] transition-colors">
+                    <FileText size={16} className="text-red-500" />
+                    PDF Hisobot
+                  </button>
+                  <button onClick={handleExportCSV} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-[var(--color-bg-hover)] transition-colors">
+                    <Table size={16} className="text-green-500" />
+                    Excel (CSV) fayl
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <Link
             href="/dashboard/sales/new"
             className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:bg-[var(--color-accent-hover)] active:scale-95"
@@ -262,18 +271,43 @@ export function SalesList({ initialData }: SalesListProps) {
                     {formatDate(sale.createdAt)}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => setOpenMenuId(openMenuId === sale.id ? null : sale.id)}
-                      className="rounded-lg p-2 text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-foreground)] transition-colors"
-                    >
-                      <MoreHorizontal size={18} />
-                    </button>
-                    {openMenuId === sale.id && (
-                      <div className="absolute right-8 z-20 w-40 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1 shadow-xl animate-in fade-in zoom-in-95">
-                        <button onClick={() => { setSelectedSale(sale); setModalType('edit'); setOpenMenuId(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium hover:bg-[var(--color-bg-hover)] transition-colors"><Edit2 size={14} /> Tahrirlash</button>
-                        <button onClick={() => { setSelectedSale(sale); setModalType('delete'); setOpenMenuId(null); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"><Trash2 size={14} /> O'chirish</button>
-                      </div>
-                    )}
+                    <div className="relative inline-block text-left">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === sale.id ? null : sale.id);
+                        }}
+                        className="rounded-lg p-2 text-[var(--color-text-tertiary)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-foreground)] transition-colors"
+                      >
+                        <MoreHorizontal size={18} />
+                      </button>
+                      {openMenuId === sale.id && (
+                        <>
+                          {/* Overlay to close menu on click outside */}
+                          <div 
+                            className="fixed inset-0 z-10" 
+                            onClick={() => setOpenMenuId(null)}
+                          />
+                          <div className="absolute right-0 top-full z-20 mt-1 w-44 origin-top-right rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/5">
+                            <button 
+                              onClick={() => { setSelectedSale(sale); setModalType('edit'); setOpenMenuId(null); }} 
+                              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-[var(--color-bg-hover)] transition-all active:scale-95"
+                            >
+                              <Edit2 size={16} className="text-[var(--color-accent)]" /> 
+                              Tahrirlash
+                            </button>
+                            <div className="my-1 h-px bg-[var(--color-border)]/50" />
+                            <button 
+                              onClick={() => { setSelectedSale(sale); setModalType('delete'); setOpenMenuId(null); }} 
+                              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-all active:scale-95"
+                            >
+                              <Trash2 size={16} /> 
+                              O'chirish
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )) : (

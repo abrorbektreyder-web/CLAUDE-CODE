@@ -79,7 +79,10 @@ export async function middleware(req: NextRequest) {
     req.cookies.get('better-auth.session_token') ||
     req.cookies.get('__Secure-better-auth.session_token');
 
-  if (!sessionCookie) {
+  // Next.js prefetch requests shouldn't trigger a full redirect to login
+  const isPrefetch = req.headers.get('purpose') === 'prefetch' || req.headers.get('x-middleware-prefetch') === '1';
+
+  if (!sessionCookie && !isPrefetch) {
     // /staff/* va /pos — kassir login sahifasiga yo'naltirish
     const isStaffPath = STAFF_PATHS.some((p) => pathname.startsWith(p));
     if (isStaffPath) {

@@ -26,6 +26,8 @@ export default async function SalesPage() {
     debtRemaining: s.debtRemaining?.toString() ?? null,
     debtTotal: s.debtTotal?.toString() ?? null,
     debtPaid: s.debtPaid?.toString() ?? null,
+    saleItems: s.saleItems || '',
+    notes: s.notes || '',
   }));
 
   return <SalesList initialData={serializedSales} />;

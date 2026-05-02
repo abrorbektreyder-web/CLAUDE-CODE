@@ -8,6 +8,8 @@ import {
   isValidImei,
   isValidUzPhone
 } from './lib/encryption';
+import { sendTelegramAlert, formatSaleMessage } from '@/lib/telegram';
+import { formatSum } from '@/lib/utils';
 
 // ════════════════════════════════════════════════════════════════════════════
 // SUPABASE HTTP CLIENT
@@ -227,7 +229,7 @@ export async function getDebts(tenantId: string) {
     .from('debts')
     .select(`
       *,
-      customers (full_name)
+      customers (full_name, phone_last_four)
     `)
     .eq('tenant_id', tenantId)
     .order('is_overdue', { ascending: false });
@@ -239,6 +241,7 @@ export async function getDebts(tenantId: string) {
     return {
       id: d.id,
       customerName: customer?.full_name || 'Noma\'lum',
+      phoneLastFour: customer?.phone_last_four || '',
       totalAmount: d.total_amount,
       remainingAmount: d.remaining_amount,
       monthlyPayment: d.monthly_payment,
@@ -370,7 +373,8 @@ export async function getSales(tenantId: string, limit = 50) {
     .select(`
       *,
       customers (full_name, phone_last_four),
-      debts (id, status, remaining_amount, total_amount, paid_amount)
+      debts (id, status, remaining_amount, total_amount, paid_amount),
+      sale_items (product_name, quantity)
     `)
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
@@ -397,6 +401,10 @@ export async function getSales(tenantId: string, limit = 50) {
       debtRemaining: debt?.remaining_amount ?? null,
       debtTotal: debt?.total_amount ?? null,
       debtPaid: debt?.paid_amount ?? null,
+      saleItems: (s.sale_items || []).map((si: any) => 
+        `${si.product_name} x${si.quantity}`
+      ).join(', '),
+      notes: s.notes,
     };
   });
 }
@@ -486,9 +494,9 @@ export async function recordDebtPayment(data: {
   const prevRemaining = Number(debt.remaining_amount);
   const currentRemaining = Math.max(0, prevRemaining - data.amount);
   
-  const historyNote = `[TIZIM] To'lovgacha qarz: ${prevRemaining.toLocaleString()} so'm. ` +
-                     `To'landi: ${data.amount.toLocaleString()} so'm. ` +
-                     `Qoldi: ${currentRemaining.toLocaleString()} so'm. ` +
+  const historyNote = `[TIZIM] To'lovgacha qarz: ${formatSum(prevRemaining, false)} so'm. ` +
+                     `To'landi: ${formatSum(data.amount, false)} so'm. ` +
+                     `Qoldi: ${formatSum(currentRemaining, false)} so'm. ` +
                      (data.notes ? `\nIzoh: ${data.notes}` : '');
 
   const { data: payment, error: payError } = await supabase
@@ -847,10 +855,148 @@ export async function createSale(data: {
     }
   }
 
+  // 5. Send Telegram Notification
+  try {
+    const { data: cashierData } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', cashierId)
+      .single();
+      
+    const { data: branchData } = await supabase
+      .from('branches')
+      .select('name')
+      .eq('id', branchId)
+      .single();
+
+    const cashierName = cashierData?.name || 'Kassir';
+    const branchNameStr = branchData?.name || 'Do\'kon';
+    
+    const message = formatSaleMessage(
+      sale, 
+      data.items, 
+      cashierName, 
+      branchNameStr, 
+      data.customerData, 
+      {
+        debtMonths: data.debtMonths,
+        paidAmount: data.paidAmount,
+        debtAmount: data.debtAmount
+      }
+    );
+    await sendTelegramAlert(data.tenantId, message);
+  } catch (err) {
+    console.error('[TIZIM] Telegram alert yuborishda xatolik:', err);
+  }
+
   return {
     ...sale,
     items: data.items,
     customerName: data.customerData?.fullName || 'Mijoz',
   };
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// 19. SHIFT MANAGEMENT
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function openShift(tenantId: string, cashierId: string, branchId: string, openingCash: number) {
+  const supabase = getSupabase();
+  
+  // Check if already open
+  const { data: existing } = await supabase
+    .from('shifts')
+    .select('*')
+    .eq('cashier_id', cashierId)
+    .eq('status', 'open')
+    .maybeSingle();
+    
+  if (existing) {
+    return existing; // Smena allaqachon ochiq bo'lsa, o'zini qaytaradi
+  }
+
+  // Get last shift number
+  const { data: lastShift } = await supabase
+    .from('shifts')
+    .select('shift_number')
+    .eq('tenant_id', tenantId)
+    .order('shift_number', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const shiftNumber = lastShift ? Number(lastShift.shift_number) + 1 : 1;
+
+  const { data: shift, error } = await supabase
+    .from('shifts')
+    .insert({
+      tenant_id: tenantId,
+      cashier_id: cashierId,
+      branch_id: branchId,
+      shift_number: shiftNumber,
+      opening_cash: openingCash,
+      status: 'open'
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  
+  // Telegram notification
+  try {
+    const { data: cashier } = await supabase.from('users').select('name').eq('id', cashierId).single();
+    const message = `🟢 <b>SMENA OCHILDI #${shiftNumber}</b>
+━━━━━━━━━━━━━━━━━
+👤 Kassir: ${cashier?.name || 'Kassir'}
+💰 Kassa qoldig'i (boshlang'ich): ${formatSum(openingCash, false)} so'm
+🕐 ${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
+    await sendTelegramAlert(tenantId, message);
+  } catch (e) {
+    console.error('Telegram shift alert failed:', e);
+  }
+
+  return shift;
+}
+
+export async function closeShift(tenantId: string, shiftId: string, closingCash: number, expectedCash: number, closingNotes?: string) {
+  const supabase = getSupabase();
+  
+  const cashDifference = closingCash - expectedCash;
+  
+  const { data: shift, error } = await supabase
+    .from('shifts')
+    .update({
+      closing_cash: closingCash,
+      expected_cash: expectedCash,
+      cash_difference: cashDifference,
+      closing_notes: closingNotes,
+      status: 'closed',
+      closed_at: new Date().toISOString()
+    })
+    .eq('id', shiftId)
+    .eq('tenant_id', tenantId)
+    .select('*, users!shifts_cashier_id_fkey(name)')
+    .single();
+
+  if (error) throw error;
+  
+  // Telegram notification
+  try {
+    const cashierName = Array.isArray(shift.users) ? shift.users[0]?.name : shift.users?.name;
+    const message = `🔴 <b>SMENA YOPILDI #${shift.shift_number}</b>
+━━━━━━━━━━━━━━━━━
+👤 Kassir: ${cashierName || 'Kassir'}
+💰 Kassa qoldig'i (kutilgan): ${formatSum(expectedCash, false)} so'm
+💰 Kassa qoldig'i (haqiqiy): ${formatSum(closingCash, false)} so'm
+💰 Farq: ${formatSum(cashDifference, false)} so'm
+🕐 ${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}
+
+📝 Izoh: ${closingNotes || '-'}`;
+    await sendTelegramAlert(tenantId, message);
+  } catch (e) {
+    console.error('Telegram shift alert failed:', e);
+  }
+
+  return shift;
+}
+
 

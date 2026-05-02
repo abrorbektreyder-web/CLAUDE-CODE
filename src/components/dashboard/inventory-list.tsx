@@ -6,7 +6,7 @@ import {
   Smartphone, Headphones, Watch, AlertTriangle,
   X, ChevronDown, Loader2, Check, SlidersHorizontal
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatSum } from '@/lib/utils';
 
 interface InventoryItem {
   id: string;
@@ -581,8 +581,8 @@ export function InventoryList({ initialData }: InventoryListProps) {
     return <Package size={18} />;
   };
 
-  const formatPrice = (price: string) =>
-    new Intl.NumberFormat('uz-UZ').format(Number(price));
+  const formatPrice = (price: string | number) =>
+    formatSum(price, false);
 
   const uniqueTypes = Array.from(new Set(items.map(i => i.productType))).filter(Boolean);
   const dynamicTypes = [
@@ -663,7 +663,7 @@ export function InventoryList({ initialData }: InventoryListProps) {
           <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Ombor qiymati</div>
           <div className="text-lg md:text-xl font-bold">
             {totalValue > 0
-              ? `~ ${new Intl.NumberFormat('uz-UZ').format(Math.round(totalValue / 1_000_000))} mln`
+              ? `~ ${formatSum(Math.round(totalValue / 1_000_000), false)} mln`
               : '~ 1.2 mlrd'}
             <span className="text-[10px] md:text-xs font-normal text-[var(--color-text-tertiary)]"> so'm</span>
           </div>

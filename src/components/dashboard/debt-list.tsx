@@ -20,11 +20,12 @@ import {
   ListOrdered,
   Tag
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatSum } from '@/lib/utils';
 
 interface DebtItem {
   id: string;
   customerName: string;
+  phoneLastFour?: string;
   totalAmount: string;
   remainingAmount: string;
   monthlyPayment: string;
@@ -69,12 +70,17 @@ export function DebtList({ initialData }: DebtListProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredData = initialData.filter(item => 
-    item.customerName.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredData = initialData.filter(item => {
+    const searchLower = search.toLowerCase();
+    return (
+      item.customerName.toLowerCase().includes(searchLower) ||
+      item.id.toLowerCase().includes(searchLower) ||
+      (item.phoneLastFour && item.phoneLastFour.includes(searchLower))
+    );
+  });
 
-  const formatPrice = (price: string) => {
-    return new Intl.NumberFormat('uz-UZ').format(Number(price));
+  const formatPrice = (price: string | number) => {
+    return formatSum(price, false);
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -412,7 +418,19 @@ export function DebtList({ initialData }: DebtListProps) {
                 const isOverdue = debt.isOverdue;
                 return (
                   <tr key={debt.id} className="group transition-colors hover:bg-[var(--color-bg-hover)]">
-                    <td className="px-6 py-4 font-semibold">{debt.customerName}</td>
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-[var(--color-text-primary)]">{debt.customerName}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        {debt.phoneLastFour && (
+                          <div className="text-[10px] text-[var(--color-text-tertiary)] flex items-center gap-1 font-bold">
+                            <Phone size={10} /> ...{debt.phoneLastFour}
+                          </div>
+                        )}
+                        <div className="text-[10px] text-[var(--color-text-tertiary)] flex items-center gap-1 font-mono uppercase">
+                          <Tag size={10} /> {debt.id.slice(0, 8)}
+                        </div>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <div className="font-bold">{formatPrice(debt.totalAmount)}</div>
                       <div className="text-[10px] text-[var(--color-text-tertiary)] uppercase font-bold">SO'M</div>
@@ -462,7 +480,12 @@ export function DebtList({ initialData }: DebtListProps) {
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="font-bold text-base leading-tight mb-0.5">{debt.customerName}</div>
-                    <div className="text-[10px] text-[var(--color-text-tertiary)] font-bold uppercase">№ {debt.id.slice(0,8).toUpperCase()}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-[10px] text-[var(--color-text-tertiary)] font-bold uppercase">№ {debt.id.slice(0,8).toUpperCase()}</div>
+                      {debt.phoneLastFour && (
+                        <div className="text-[10px] text-[var(--color-text-tertiary)] font-bold italic">...{debt.phoneLastFour}</div>
+                      )}
+                    </div>
                   </div>
                   <button onClick={() => handleShowDetails(debt.id)} className="rounded-lg p-2 text-[var(--color-text-tertiary)] bg-[var(--color-bg-elevated)]">
                     <ChevronRight size={18} />

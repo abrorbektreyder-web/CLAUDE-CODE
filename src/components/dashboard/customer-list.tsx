@@ -15,7 +15,7 @@ import {
   Loader2,
   CheckCircle2
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, formatSum } from '@/lib/utils';
 
 interface CustomerItem {
   id: string;
@@ -45,8 +45,8 @@ export function CustomerList({ initialData }: CustomerListProps) {
     (item.phoneLastFour?.includes(search) ?? false)
   );
 
-  const formatPrice = (price: string) => {
-    return new Intl.NumberFormat('uz-UZ').format(Number(price));
+  const formatPrice = (price: string | number) => {
+    return formatSum(price, false);
   };
 
   const formatDate = (date: Date | string | null) => {

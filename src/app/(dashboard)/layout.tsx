@@ -19,6 +19,10 @@ export default async function DashboardLayout({
     redirect('/login?callback=/dashboard');
   }
 
+  if (session.user.role === 'cashier') {
+    redirect('/staff/pos');
+  }
+
   const tenant = session.user.tenantId 
     ? await getTenant(session.user.tenantId)
     : null;

@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft 
 } from 'lucide-react';
+import { formatSum } from '@/lib/utils';
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({
@@ -19,7 +20,7 @@ export default async function DashboardPage() {
   const kpisData = await getDashboardKpis(session?.user.tenantId);
 
   const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('uz-UZ').format(price);
+    return formatSum(price, false);
   };
 
   const kpis = [
