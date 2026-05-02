@@ -66,21 +66,26 @@ export async function GET(request: NextRequest) {
       const debt = Array.isArray(schedule.debts) ? schedule.debts[0] : schedule.debts;
       if (!debt) continue;
 
-      // Rate limit: Don't send more than once every 4 hours to the same debt
+      const isToday = schedule.due_date === todayStr;
+      
+      // Rate limit logic:
+      // - If today: allow twice a day (check if last was > 4 hours ago)
+      // - If 2 days before: only once a day (check if last was > 20 hours ago)
       const lastReminder = debt.last_reminder_at ? new Date(debt.last_reminder_at) : null;
-      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      const limitHours = isToday ? 4 : 20;
+      const limitMs = limitHours * 60 * 60 * 1000;
+      const timeSinceLast = lastReminder ? Date.now() - lastReminder.getTime() : Infinity;
       
       // Allow bypass via query param for testing: ?test=true
       const isTest = request.nextUrl.searchParams.get('test') === 'true';
 
-      if (lastReminder && lastReminder > fourHoursAgo && !isTest) {
+      if (timeSinceLast < limitMs && !isTest) {
         continue;
       }
 
       const customer = Array.isArray(debt.customers) ? debt.customers[0] : debt.customers;
       if (!customer) continue;
 
-      const isToday = schedule.due_date === todayStr;
       const amount = Number(schedule.expected_amount) - Number(schedule.paid_amount);
       const formattedAmount = formatSum(amount);
 
@@ -99,8 +104,11 @@ export async function GET(request: NextRequest) {
         sentToCustomer = true;
       }
 
-      // B. Notify Admin if it's Today
-      if (isToday && adminChatId) {
+      // B. Notify Admin if it's Today (Only in the morning run to avoid double admin alerts)
+      const currentHour = new Date().getHours();
+      const isMorning = currentHour < 12;
+
+      if (isToday && adminChatId && isMorning) {
         const adminMsg = `📌 <b>TO'LOV KUNI:</b>\n\nBugun <b>${customer.full_name}</b> (+998 ** *** ** ${customer.phone_last_four}) <b>${formattedAmount}</b> to'lashi kerak.`;
         await sendTelegramMessage(adminChatId, adminMsg);
         results.today++;
