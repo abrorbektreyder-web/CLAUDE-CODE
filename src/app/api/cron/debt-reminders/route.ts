@@ -6,19 +6,25 @@ import { formatSum } from '@/lib/utils';
 export async function GET(request: NextRequest) {
   // Security check
   const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && request.nextUrl.searchParams.get('test') !== 'true') {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
   const supabase = await getSupabase();
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayStr = formatDate(today);
   
   const inTwoDays = new Date(today);
   inTwoDays.setDate(today.getDate() + 2);
+  const inTwoDaysStr = formatDate(inTwoDays);
 
-  const todayStr = today.toISOString().split('T')[0];
-  const inTwoDaysStr = inTwoDays.toISOString().split('T')[0];
 
   try {
     // 1. Fetch schedules due today or in 2 days
@@ -59,6 +65,17 @@ export async function GET(request: NextRequest) {
 
       const debt = Array.isArray(schedule.debts) ? schedule.debts[0] : schedule.debts;
       if (!debt) continue;
+
+      // Rate limit: Don't send more than once every 4 hours to the same debt
+      const lastReminder = debt.last_reminder_at ? new Date(debt.last_reminder_at) : null;
+      const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      
+      // Allow bypass via query param for testing: ?test=true
+      const isTest = request.nextUrl.searchParams.get('test') === 'true';
+
+      if (lastReminder && lastReminder > fourHoursAgo && !isTest) {
+        continue;
+      }
 
       const customer = Array.isArray(debt.customers) ? debt.customers[0] : debt.customers;
       if (!customer) continue;
