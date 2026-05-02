@@ -19,7 +19,7 @@ import { cn, formatSum } from '@/lib/utils';
 import Link from 'next/link';
 import { Edit2, Trash2, X, FileText, Table } from 'lucide-react';
 import { exportToPDF, exportToCSV } from '@/lib/export-utils';
-import { DateFilter } from './date-filter';
+import { DateFilter, type DateRangeType } from './date-filter';
 import { startOfMonth, endOfDay, isWithinInterval } from 'date-fns';
 
 interface SaleItem {
@@ -51,6 +51,7 @@ export function SalesList({ initialData }: SalesListProps) {
   const [selectedSale, setSelectedSale] = useState<SaleItem | null>(null);
   const [modalType, setModalType] = useState<'edit' | 'delete' | null>(null);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [activeRange, setActiveRange] = useState<DateRangeType>('month');
   const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
     start: startOfMonth(new Date()),
     end: endOfDay(new Date())
@@ -197,7 +198,7 @@ export function SalesList({ initialData }: SalesListProps) {
             />
           </div>
           
-          <DateFilter onRangeChange={setDateRange} className="flex-none" />
+          <DateFilter onRangeChange={setDateRange} onRangeTypeChange={setActiveRange} className="flex-none" />
 
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
