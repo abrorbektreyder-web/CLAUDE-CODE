@@ -20,6 +20,7 @@ import {
   paymentType,
   debtStatus,
   notificationChannel,
+  expenseType,
 } from './_shared';
 import { tenants, branches } from './tenants';
 import { users } from './users';
@@ -204,6 +205,78 @@ export const debtSchedules = pgTable(
 );
 
 // ════════════════════════════════════════════════════════════════════════════
+// EXPENSE_CATEGORIES — Category of expenses
+// ════════════════════════════════════════════════════════════════════════════
+
+export const expenseCategories = pgTable(
+  'expense_categories',
+  {
+    id: idColumn,
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    
+    name: varchar('name', { length: 100 }).notNull(),
+    type: expenseType('type').notNull().default('operating'),
+    description: text('description'),
+    
+    icon: varchar('icon', { length: 50 }),
+    color: varchar('color', { length: 20 }),
+
+    ...timestamps,
+  },
+  (table) => ({
+    tenantIdx: index('idx_exp_cat_tenant').on(table.tenantId),
+    nameUnique: uniqueIndex('idx_exp_cat_name_unique').on(table.tenantId, table.name),
+  })
+);
+
+// ════════════════════════════════════════════════════════════════════════════
+// EXPENSES — Actual expenditure records
+// ════════════════════════════════════════════════════════════════════════════
+
+export const expenses = pgTable(
+  'expenses',
+  {
+    id: idColumn,
+    tenantId: uuid('tenant_id')
+      .notNull()
+      .references(() => tenants.id, { onDelete: 'cascade' }),
+    
+    categoryId: uuid('category_id')
+      .notNull()
+      .references(() => expenseCategories.id),
+    
+    amount: decimal('amount', { precision: 15, scale: 2 }).notNull(),
+    currency: varchar('currency', { length: 3 }).notNull().default('USD'),
+    
+    // For fixed expenses, we might want to track the month/year
+    expenseDate: date('expense_date').notNull().defaultNow(),
+    
+    description: text('description'),
+    
+    // Traceability
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id),
+    branchId: uuid('branch_id').references(() => branches.id),
+    shiftId: uuid('shift_id').references(() => shifts.id),
+    
+    // Optional: Attach to a specific sale or purchase if needed
+    attachmentUrl: text('attachment_url'), // Link to receipt photo
+
+    ...timestamps,
+  },
+  (table) => ({
+    tenantIdx: index('idx_expenses_tenant').on(table.tenantId),
+    categoryIdx: index('idx_expenses_category').on(table.categoryId),
+    dateIdx: index('idx_expenses_date').on(table.tenantId, table.expenseDate),
+    
+    amountCheck: check('positive_expense_amount', sql`amount > 0`),
+  })
+);
+
+// ════════════════════════════════════════════════════════════════════════════
 // TYPE EXPORTS
 // ════════════════════════════════════════════════════════════════════════════
 
@@ -213,6 +286,10 @@ export type Debt = typeof debts.$inferSelect;
 export type NewDebt = typeof debts.$inferInsert;
 export type DebtSchedule = typeof debtSchedules.$inferSelect;
 export type NewDebtSchedule = typeof debtSchedules.$inferInsert;
+export type ExpenseCategory = typeof expenseCategories.$inferSelect;
+export type NewExpenseCategory = typeof expenseCategories.$inferInsert;
+export type Expense = typeof expenses.$inferSelect;
+export type NewExpense = typeof expenses.$inferInsert;
 
 // Composed type
 export type DebtWithSchedule = Debt & { schedules: DebtSchedule[] };

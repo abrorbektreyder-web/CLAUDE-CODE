@@ -100,6 +100,14 @@ export const notificationChannel = pgEnum('notification_channel', [
   'in_app',
 ]);
 
+export const expenseType = pgEnum('expense_type', [
+  'operating', // Daily small expenses (lunch, taxi)
+  'fixed',     // Big monthly expenses (rent, salary, utilities)
+  'inventory', // Purchases of goods
+  'marketing', // Ad costs
+  'other',
+]);
+
 export const notificationType = pgEnum('notification_type', [
   'sale_made',
   'daily_report',

@@ -16,6 +16,7 @@ import {
   ChevronDown,
   MoreVertical,
   X,
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/dashboard/sidebar-provider';
@@ -47,6 +48,7 @@ const navigation = [
     section: 'Tahlil',
     items: [
       { href: '/reports', icon: BarChart3, label: 'Hisobotlar' },
+      { href: '/finance', icon: Wallet, label: 'Finance Pro' },
       { href: '/audit', icon: Activity, label: 'Audit log' },
     ],
   },

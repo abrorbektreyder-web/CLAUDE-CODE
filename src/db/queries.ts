@@ -999,4 +999,152 @@ export async function closeShift(tenantId: string, shiftId: string, closingCash:
   return shift;
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// 19. EXPENSE CATEGORIES
+// ════════════════════════════════════════════════════════════════════════════
 
+export async function getExpenseCategories(tenantId: string) {
+  const { data, error } = await (await getSupabase())
+    .from('expense_categories')
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('name');
+  if (error) throw error;
+  return data;
+}
+
+export async function createExpenseCategory(params: {
+  tenantId: string;
+  name: string;
+  type: 'operating' | 'fixed' | 'inventory' | 'marketing' | 'other';
+  description?: string;
+  icon?: string;
+  color?: string;
+}) {
+  const { data, error } = await (await getSupabase())
+    .from('expense_categories')
+    .insert({
+      tenant_id: params.tenantId,
+      name: params.name,
+      type: params.type,
+      description: params.description,
+      icon: params.icon,
+      color: params.color,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 20. EXPENSES
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function createExpense(params: {
+  tenantId: string;
+  categoryId: string;
+  amount: number;
+  currency?: string;
+  expenseDate?: string;
+  description?: string;
+  createdBy: string;
+  branchId?: string;
+  shiftId?: string;
+}) {
+  const { data, error } = await (await getSupabase())
+    .from('expenses')
+    .insert({
+      tenant_id: params.tenantId,
+      category_id: params.categoryId,
+      amount: params.amount,
+      currency: params.currency || 'USD',
+      expense_date: params.expenseDate || new Date().toISOString().split('T')[0],
+      description: params.description,
+      created_by: params.createdBy,
+      branch_id: params.branchId,
+      shift_id: params.shiftId,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getExpenses(params: {
+  tenantId: string;
+  startDate?: string;
+  endDate?: string;
+  categoryId?: string;
+  branchId?: string;
+}) {
+  let query = (await getSupabase())
+    .from('expenses')
+    .select(`*, category:expense_categories(name, type, icon, color)`)
+    .eq('tenant_id', params.tenantId)
+    .order('expense_date', { ascending: false });
+
+  if (params.startDate) query = query.gte('expense_date', params.startDate);
+  if (params.endDate)   query = query.lte('expense_date', params.endDate);
+  if (params.categoryId) query = query.eq('category_id', params.categoryId);
+  if (params.branchId)   query = query.eq('branch_id', params.branchId);
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteExpense(expenseId: string, tenantId: string) {
+  const { error } = await (await getSupabase())
+    .from('expenses')
+    .delete()
+    .eq('id', expenseId)
+    .eq('tenant_id', tenantId);
+  if (error) throw error;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// 21. FINANCE ANALYTICS — NET PROFIT
+// ════════════════════════════════════════════════════════════════════════════
+
+export async function getFinanceSummary(params: {
+  tenantId: string;
+  startDate: string;
+  endDate: string;
+}) {
+  const supabase = await getSupabase();
+
+  const [{ data: sales, error: sErr }, { data: expensesData, error: eErr }] = await Promise.all([
+    supabase
+      .from('sales')
+      .select('total_amount, total_cost')
+      .eq('tenant_id', params.tenantId)
+      .gte('created_at', params.startDate)
+      .lte('created_at', params.endDate)
+      .neq('status', 'cancelled'),
+    supabase
+      .from('expenses')
+      .select('amount')
+      .eq('tenant_id', params.tenantId)
+      .gte('expense_date', params.startDate)
+      .lte('expense_date', params.endDate),
+  ]);
+
+  if (sErr) throw sErr;
+  if (eErr) throw eErr;
+
+  const totalRevenue  = (sales || []).reduce((s, r) => s + Number(r.total_amount), 0);
+  const totalCost     = (sales || []).reduce((s, r) => s + Number(r.total_cost || 0), 0);
+  const grossProfit   = totalRevenue - totalCost;
+  const totalExpenses = (expensesData || []).reduce((s, e) => s + Number(e.amount), 0);
+  const netProfit     = grossProfit - totalExpenses;
+
+  return {
+    totalRevenue,
+    totalCost,
+    grossProfit,
+    totalExpenses,
+    netProfit,
+    margin: totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0,
+  };
+}

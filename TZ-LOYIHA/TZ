@@ -94,21 +94,16 @@ MVP (Minimum Viable Product) bosqichida quyidagi 15 ta asosiy funksional modul i
 13	✅ Asosiy hisobotlar	Kunlik, oylik savdo, top mahsulotlar	P0
 14	✅ Audit log	Immutable jurnal, har bir muhim amal	P0
 15	❌ Backup	Avtomatik kunlik backup	P0
-3.2. MVP'dan keyin (Phase 2 — 2 oy)
-•Trade-in moduli (eski telefonni qabul qilish)
-•Ta'mirga qabul moduli (servis tickets)
-•SMS gateway integratsiya (Eskiz.uz/Playmobile)
-•Mobile app (kassir uchun React Native)
-•Yetkazib beruvchilar moduli
-103	✅ Multi-currency (USD/UZS) (Asosiy: USD)
-•Bonus dastur va loyalty cards
-•Cross-sell tavsiyalari (AI-powered)
-•Multi-branch (filial qo'shish)
+3.2. Phase 2 — Kengaytirilgan Biznes Boshqaruvi (1.5 - 2 oy)
+• ❌ Finance Pro: Do'kon xarajatlari (ijara, oylik, tushlik) va sof foyda hisobi
+• ❌ Analytics Dashboard: Savdo grafiklari, brendlar tahlili, sotuvchilar KPI
+• ❌ Suppliers Moduli: Ta'minotchilar bilan hisob-kitob, qarz nazorati
+• ❌ Telegram Mini App (TMA): Onlayn katalog, kredit kalkulyatori va buyurtma berish
+• ❌ Bonus & Loyalty: Mijozlar uchun keshbek va sodiqlik dasturi
+• ✅ Multi-currency (USD/UZS) (Asosiy: USD)
+• ✅ Multi-branch (filiallar qo'shish imkoniyati)
 • ✅ Excel/PDF export (Sotuvlar va hisobotlar uchun)
 3.3. Uzoq muddatli vizyon (Phase 3 — 6 oy+)
-•Online do'kon ulanishi (Telegram Web App)
-•Marketplace integratsiya (Uzum, OLX)
-•AI bashorat (qaysi mahsulot qancha kerak bo'ladi)
 •WhatsApp Business integratsiya
 •Franchise rejimi (sub-tenants)
 •Public API (3rd party)
