@@ -31,7 +31,7 @@ import {
   BarChart,
   Activity
 } from 'lucide-react';
-import { cn, formatSum } from '@/lib/utils';
+import { cn, formatSum, formatUSD } from '@/lib/utils';
 import { useSession } from '@/lib/auth-client';
 import { createSale, searchProducts, openShift, closeShift } from '@/db/queries';
 import { useRouter } from 'next/navigation';
@@ -570,11 +570,13 @@ export function PosInterface({
                         </div>
                         <div className="font-bold text-xs md:text-sm line-clamp-2 h-8 md:h-10 mb-1">{pName(p)}</div>
                         <div className="text-[9px] md:text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-2 md:mb-3">{p.brand}</div>
-                        <div className="flex items-end justify-between">
-                          <div className="font-display text-base md:text-lg font-bold text-[var(--color-accent)]">
-                            {formatSum(p.retailPrice, false)}
+                        <div className="flex flex-col items-end">
+                          <div className="font-display text-base md:text-lg font-bold text-[var(--color-accent)] leading-none">
+                            {formatSum(p.retailPrice)}
                           </div>
-                          <div className="text-[9px] md:text-[10px] font-bold text-[var(--color-text-tertiary)] mb-0.5">SO'M</div>
+                          <div className="text-[10px] font-bold text-[var(--color-accent)]/80 mt-0.5">
+                            {formatUSD(p.retailPrice)}
+                          </div>
                         </div>
                       </button>
                     ))
@@ -638,8 +640,13 @@ export function PosInterface({
                                 +
                               </button>
                             </div>
-                            <div className="text-[10px] md:text-xs font-bold text-[var(--color-accent)]">
-                              {formatSum(item.price * item.quantity, false)}
+                            <div className="flex flex-col items-end">
+                              <div className="text-[11px] font-bold text-[var(--color-accent)]">
+                                {formatSum(item.price * item.quantity)}
+                              </div>
+                              <div className="text-[10px] font-medium text-[var(--color-text-tertiary)]">
+                                {formatUSD(item.price * item.quantity)}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -663,9 +670,13 @@ export function PosInterface({
                 <div className="p-4 md:p-6 bg-[var(--color-bg-card)] border-t border-[var(--color-border)] space-y-4 md:space-y-6">
                   <div className="flex items-end justify-between">
                     <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] tracking-widest">Jami</div>
-                    <div className="flex items-baseline gap-1.5">
-                      <div className="font-display text-2xl md:text-3xl font-bold text-[var(--color-accent)]">{formatSum(total, false)}</div>
-                      <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] mb-1 uppercase">so'm</div>
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-baseline gap-1.5 leading-none">
+                        <div className="font-display text-2xl md:text-3xl font-bold text-[var(--color-accent)]">{formatSum(total)}</div>
+                      </div>
+                      <div className="text-xs md:text-sm font-bold text-[var(--color-text-tertiary)] opacity-80 mt-1">
+                        {formatUSD(total)}
+                      </div>
                     </div>
                   </div>
 
@@ -749,8 +760,11 @@ export function PosInterface({
 
               <div className="flex flex-col items-center justify-center py-6 px-6 rounded-[32px] bg-[var(--color-bg-base)] border border-[var(--color-border)]">
                 <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-[0.2em] mb-1">Jami summa</div>
-                <div className="text-4xl font-display font-bold text-[var(--color-foreground)]">
-                  {formatSum(total, false)}
+                <div className="text-3xl font-display font-bold text-[var(--color-foreground)] mb-1">
+                  {formatSum(total)}
+                </div>
+                <div className="text-xl font-display font-bold text-[var(--color-accent)]">
+                  {formatUSD(total)}
                 </div>
               </div>
 
@@ -848,17 +862,19 @@ export function PosInterface({
 
                     {/* Quick Debt Calculation Info */}
                     <div className="mt-2 p-3 rounded-2xl bg-[var(--color-accent)]/5 border border-[var(--color-accent)]/10 space-y-1">
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                      <div className="flex justify-between items-start text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
                         <span>Qolgan qarz:</span>
-                        <span className="text-[var(--color-foreground)] font-bold">
-                          {formatSum(total - (Number(downPayment) || 0), false)} so'm
-                        </span>
+                        <div className="text-right">
+                          <div className="text-[var(--color-foreground)] font-bold">{formatSum(total - (Number(downPayment) || 0))}</div>
+                          <div className="text-[var(--color-accent)]/70">{formatUSD(total - (Number(downPayment) || 0))}</div>
+                        </div>
                       </div>
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
+                      <div className="flex justify-between items-start text-[10px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] pt-1 border-t border-[var(--color-accent)]/10">
                         <span>Oylik to'lov:</span>
-                        <span className="text-[var(--color-accent)] font-bold text-sm">
-                          {formatSum(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)), false)} so'm
-                        </span>
+                        <div className="text-right">
+                          <div className="text-[var(--color-accent)] font-bold text-sm">{formatSum(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)))}</div>
+                          <div className="text-[var(--color-accent)]/80">{formatUSD(Math.ceil((total - (Number(downPayment) || 0)) / (debtMonths || 1)))}</div>
+                        </div>
                       </div>
                     </div>
 
@@ -882,7 +898,10 @@ export function PosInterface({
                                 <span className="h-4 w-4 rounded bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center text-[8px] font-bold text-[var(--color-text-tertiary)]">{i + 1}</span>
                                 <span className="font-medium">{d.getDate()} {['Yan', 'Fev', 'Mar', 'Apr', 'May', 'Iyn', 'Iyl', 'Avg', 'Sen', 'Okt', 'Noy', 'Dek'][d.getMonth()]}</span>
                               </div>
-                              <span className="font-bold">{formatSum(amt, false)} so'm</span>
+                              <div className="flex flex-col items-end">
+                                <span className="font-bold">{formatSum(amt)}</span>
+                                <span className="text-[9px] text-[var(--color-text-tertiary)]">{formatUSD(amt)}</span>
+                              </div>
                             </div>
                           );
                         })}
@@ -975,9 +994,15 @@ export function PosInterface({
               <div className="border-t border-dashed border-black/20 my-4" />
 
               <div className="space-y-2">
-                <div className="flex justify-between text-xs">
-                  <span>JAMI:</span>
-                  <span className="font-bold">{formatSum(lastSale.total, false)} SO'M</span>
+                <div className="flex flex-col gap-1 text-xs">
+                  <div className="flex justify-between">
+                    <span>JAMI:</span>
+                    <span className="font-bold">{formatSum(lastSale.total)}</span>
+                  </div>
+                  <div className="flex justify-between opacity-70">
+                    <span>DOLLARDA ($):</span>
+                    <span>{formatUSD(lastSale.total)}</span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span>TO'LOV TURI:</span>

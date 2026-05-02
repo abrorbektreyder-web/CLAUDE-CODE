@@ -12,12 +12,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Joriy dollar kursi (Haqiqiy loyihada buni bazadan olish kerak)
+export const USD_RATE = 12850;
+
 /**
  * Format Uzbek sum with thousand separators
- *
- * @example
- * formatSum(12500000)         // → '12 500 000 so\'m'
- * formatSum(12500000, false)  // → '12 500 000'
  */
 export function formatSum(
   amount: number | string,
@@ -26,12 +25,38 @@ export function formatSum(
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   if (isNaN(num)) return '0';
 
-  // Robust formatting with space separators that works identical on server and client
   const formatted = Math.round(num)
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
 
   return withCurrency ? `${formatted} so'm` : formatted;
+}
+
+/**
+ * Format price in USD
+ */
+export function formatUSD(amount: number | string): string {
+  const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(num)) return '$0';
+  
+  const usdValue = num / USD_RATE;
+  
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(usdValue);
+}
+
+/**
+ * Returns both UZS and USD formatted strings
+ */
+export function formatDualPrice(amount: number | string) {
+  return {
+    uzs: formatSum(amount),
+    usd: formatUSD(amount)
+  };
 }
 
 /**

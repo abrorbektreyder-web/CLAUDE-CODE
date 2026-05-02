@@ -6,7 +6,7 @@ import {
   Smartphone, Headphones, Watch, AlertTriangle,
   X, ChevronDown, Loader2, Check, SlidersHorizontal
 } from 'lucide-react';
-import { cn, formatSum } from '@/lib/utils';
+import { cn, formatSum, formatUSD } from '@/lib/utils';
 
 interface InventoryItem {
   id: string;
@@ -662,10 +662,19 @@ export function InventoryList({ initialData }: InventoryListProps) {
         <div className="premium-card rounded-2xl p-4 md:p-5 sm:col-span-2 md:col-span-1">
           <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Ombor qiymati</div>
           <div className="text-lg md:text-xl font-bold">
-            {totalValue > 0
-              ? `~ ${formatSum(Math.round(totalValue / 1_000_000), false)} mln`
-              : '~ 1.2 mlrd'}
-            <span className="text-[10px] md:text-xs font-normal text-[var(--color-text-tertiary)]"> so'm</span>
+            {totalValue > 0 ? (
+              <div className="flex flex-col">
+                <div className="flex items-baseline gap-1">
+                  <span>~ {formatSum(Math.round(totalValue / 1_000_000), false)} mln</span>
+                  <span className="text-[10px] font-normal text-[var(--color-text-tertiary)]">so'm</span>
+                </div>
+                <div className="text-sm text-[var(--color-accent)] font-semibold">
+                  {formatUSD(totalValue)}
+                </div>
+              </div>
+            ) : (
+              '~ 1.2 mlrd so\'m'
+            )}
           </div>
         </div>
       </div>
@@ -733,8 +742,12 @@ export function InventoryList({ initialData }: InventoryListProps) {
                       <div className="text-[var(--color-text-tertiary)]">{item.barcode}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="font-bold">{formatPrice(item.retailPrice)}</div>
-                      <div className="text-[10px] text-[var(--color-text-tertiary)] uppercase font-bold">SO'M</div>
+                      <div className="flex flex-col">
+                        <div className="font-bold text-sm">{formatSum(item.retailPrice)}</div>
+                        <div className="text-[11px] font-bold text-[var(--color-accent)]">
+                          {formatUSD(item.retailPrice)}
+                        </div>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className={cn("font-bold text-lg", isLow ? "text-[var(--color-danger)]" : "text-[var(--color-foreground)]")}>
@@ -799,8 +812,10 @@ export function InventoryList({ initialData }: InventoryListProps) {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] mb-0.5">Narxi</div>
-                    <div className="font-bold text-base">{formatPrice(item.retailPrice)} <span className="text-[10px] text-[var(--color-text-tertiary)]">SO'M</span></div>
+                    <div className="flex flex-col">
+                      <div className="font-bold text-base leading-none mb-1">{formatSum(item.retailPrice)}</div>
+                      <div className="text-xs font-bold text-[var(--color-accent)]">{formatUSD(item.retailPrice)}</div>
+                    </div>
                   </div>
                   <div>
                     <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] mb-0.5">Qoldiq</div>

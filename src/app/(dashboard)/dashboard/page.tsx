@@ -9,7 +9,7 @@ import {
   ArrowUpRight,
   ArrowDownLeft 
 } from 'lucide-react';
-import { formatSum } from '@/lib/utils';
+import { formatSum, formatUSD } from '@/lib/utils';
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({
@@ -27,6 +27,7 @@ export default async function DashboardPage() {
     {
       label: 'Bugungi savdo',
       value: formatPrice(kpisData.today.revenue),
+      usdValue: formatUSD(kpisData.today.revenue),
       unit: "so'm",
       icon: <Banknote size={20} />,
       iconBg: 'rgba(255, 107, 53, 0.1)',
@@ -37,6 +38,7 @@ export default async function DashboardPage() {
     {
       label: 'Sotuvlar soni',
       value: kpisData.today.count.toString(),
+      usdValue: null,
       unit: 'chek',
       icon: <ShoppingCart size={20} />,
       iconBg: 'rgba(100, 210, 255, 0.12)',
@@ -47,6 +49,7 @@ export default async function DashboardPage() {
     {
       label: 'Sof foyda',
       value: formatPrice(kpisData.today.profit),
+      usdValue: formatUSD(kpisData.today.profit),
       unit: "so'm",
       icon: <TrendingUp size={20} />,
       iconBg: 'rgba(48, 209, 88, 0.12)',
@@ -57,12 +60,14 @@ export default async function DashboardPage() {
     {
       label: 'Aktiv qarzlar',
       value: formatPrice(kpisData.debts.totalAmount),
+      usdValue: formatUSD(kpisData.debts.totalAmount),
       unit: "so'm",
       icon: <AlertCircle size={20} />,
       iconBg: 'rgba(255, 69, 58, 0.12)',
       iconColor: 'var(--color-danger)',
       trend: kpisData.debts.overdueCount + ' ta',
       trendType: 'down',
+      isOverdue: kpisData.debts.overdueCount > 0
     },
   ];
 
@@ -96,12 +101,17 @@ export default async function DashboardPage() {
             <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[var(--color-text-tertiary)]">
               {kpi.label}
             </div>
-            <div className="font-mono-tabular text-3xl font-bold leading-none tracking-tight">
+            <div className="font-mono-tabular text-2xl md:text-3xl font-bold leading-none tracking-tight">
               {kpi.value}
               <span className="ml-1 text-sm font-medium text-[var(--color-text-tertiary)]">
                 {kpi.unit}
               </span>
             </div>
+            {kpi.usdValue && (
+              <div className="mt-2 text-sm font-bold text-[var(--color-accent)] opacity-80">
+                {kpi.usdValue}
+              </div>
+            )}
           </div>
         ))}
       </div>
