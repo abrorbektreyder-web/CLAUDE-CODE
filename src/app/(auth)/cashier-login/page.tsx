@@ -40,7 +40,7 @@ export default function CashierLoginPage() {
       const { data: resData, error } = await authClient.signIn.email({
         email: data.email,
         password: data.password,
-        callbackURL: '/pos',
+        callbackURL: '/staff/pos',
       });
 
       if (error) {
@@ -52,7 +52,7 @@ export default function CashierLoginPage() {
 
       console.log('Sign-in success:', resData);
       // Success
-      router.push('/pos');
+      router.push('/staff/pos');
       router.refresh();
     } catch (error: any) {
       console.error('Sign-in exception:', error);

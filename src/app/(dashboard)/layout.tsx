@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   }
 
   if (session.user.role === 'cashier') {
-    redirect('/staff/pos');
+    redirect('/pos');
   }
 
   const tenant = session.user.tenantId 
@@ -44,7 +44,7 @@ export default async function DashboardLayout({
 
         {/* Main content */}
         <main className="flex flex-1 flex-col overflow-hidden">
-          <Topbar />
+          <Topbar user={session.user} />
           <div className="flex-1 overflow-y-auto p-4 md:p-6">{children}</div>
         </main>
       </div>

@@ -67,6 +67,7 @@ export default async function CashierPOSPage() {
       customersData={customersData}
       debtsData={debtsData}
       salesData={salesData}
+      hideSidebar={true}
     />
   );
 }

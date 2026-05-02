@@ -15,9 +15,16 @@ const pageTitles: Record<string, { breadcrumb: string; title: string }> = {
   '/users': { breadcrumb: 'Boshqaruv', title: 'Xodimlar' },
   '/branches': { breadcrumb: 'Boshqaruv', title: 'Filiallar' },
   '/settings': { breadcrumb: 'Boshqaruv', title: 'Sozlamalar' },
+  // Staff routes
+  '/pos': { breadcrumb: 'Kassa', title: 'Yangi Sotuv' },
+  '/staff': { breadcrumb: 'Ish Stoli', title: 'Kassa' },
+  '/staff/sales': { breadcrumb: 'Savdolar', title: 'Tarix' },
+  '/staff/inventory': { breadcrumb: 'Ombor', title: 'Qoldiqlar' },
+  '/staff/customers': { breadcrumb: 'Mijozlar', title: 'Baza' },
+  '/staff/credit': { breadcrumb: 'Nasiyalar', title: 'Qarzlar' },
 };
 
-export function Topbar() {
+export function Topbar({ user }: { user?: any }) {
   const pathname = usePathname();
   const meta = pageTitles[pathname] ?? {
     breadcrumb: 'Sahifa',

@@ -22,8 +22,7 @@ const PUBLIC_PATHS = [
   '/favicon.ico',
 ];
 
-// Kassir yo'llari: /staff/* va /pos — alohida login sahifasi
-const STAFF_PATHS = ['/staff', '/pos'];
+// Public paths that don't require authentication
 
 export async function middleware(req: NextRequest) {
   const url = req.nextUrl;
@@ -74,7 +73,12 @@ export async function middleware(req: NextRequest) {
     return response;
   }
 
-  // ─── 5. Auth check (read session cookie) ───────────────────────────────
+  // ─── 5. Redirect /pos to /staff/pos ────────────────────────────────────
+  if (pathname === '/pos') {
+    return NextResponse.redirect(new URL('/staff/pos', req.url));
+  }
+
+  // ─── 6. Auth check (read session cookie) ───────────────────────────────
   const sessionCookie =
     req.cookies.get('better-auth.session_token') ||
     req.cookies.get('__Secure-better-auth.session_token');
@@ -83,9 +87,8 @@ export async function middleware(req: NextRequest) {
   const isPrefetch = req.headers.get('purpose') === 'prefetch' || req.headers.get('x-middleware-prefetch') === '1';
 
   if (!sessionCookie && !isPrefetch) {
-    // /staff/* va /pos — kassir login sahifasiga yo'naltirish
-    const isStaffPath = STAFF_PATHS.some((p) => pathname.startsWith(p));
-    if (isStaffPath) {
+    // /staff/* — kassir login sahifasiga yo'naltirish
+    if (pathname.startsWith('/staff')) {
       return NextResponse.redirect(new URL('/cashier-login', req.url));
     }
     // Admin va boshqa himoyalangan yo'llar → asosiy login sahifasiga
@@ -94,7 +97,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // ─── 6. Route to correct app section based on path ─────────────────────
+  // ─── 7. Route to correct app section based on path ─────────────────────
   return response;
 }
 
