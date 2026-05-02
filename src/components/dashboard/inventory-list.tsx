@@ -49,8 +49,40 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     name: '', brand: '', model: '', sku: '', barcode: '',
     productType: 'accessory' as string,
     costPrice: '', retailPrice: '', wholesalePrice: '',
+    costCurrency: 'UZS' as 'UZS' | 'USD',
+    retailCurrency: 'UZS' as 'UZS' | 'USD',
+    wholesaleCurrency: 'UZS' as 'UZS' | 'USD',
     minStock: '5', warrantyMonths: '12', description: '',
   });
+
+  // USD_RATE import is needed, let's assume it's available or we use the constant
+  const USD_RATE = 12850;
+
+  const handlePriceChange = (field: string, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleCurrency = (field: string) => {
+    const currencyField = `${field}Currency` as keyof typeof form;
+    const currentCurrency = form[currencyField];
+    const newCurrency = currentCurrency === 'UZS' ? 'USD' : 'UZS';
+    
+    // Optional: Convert the current value to the new currency
+    const currentValue = Number(form[field as keyof typeof form]);
+    if (currentValue > 0) {
+      const newValue = newCurrency === 'USD' 
+        ? (currentValue / USD_RATE).toFixed(2) 
+        : Math.round(currentValue * USD_RATE).toString();
+      setForm(prev => ({ ...prev, [currencyField]: newCurrency, [field]: newValue }));
+    } else {
+      setForm(prev => ({ ...prev, [currencyField]: newCurrency }));
+    }
+  };
+
+  const getFinalPrice = (val: string, currency: string) => {
+    const num = Number(val);
+    return currency === 'USD' ? Math.round(num * USD_RATE) : num;
+  };
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
@@ -70,9 +102,9 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           sku: form.sku,
           barcode: form.barcode || undefined,
           productType: form.productType,
-          costPrice: Number(form.costPrice),
-          retailPrice: Number(form.retailPrice),
-          wholesalePrice: form.wholesalePrice ? Number(form.wholesalePrice) : undefined,
+          costPrice: getFinalPrice(form.costPrice, form.costCurrency),
+          retailPrice: getFinalPrice(form.retailPrice, form.retailCurrency),
+          wholesalePrice: form.wholesalePrice ? getFinalPrice(form.wholesalePrice, form.wholesaleCurrency) : undefined,
           minStock: Number(form.minStock),
           warrantyMonths: Number(form.warrantyMonths),
           description: form.description || undefined,
@@ -184,17 +216,87 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
             <div>
               <label className={labelCls}>Narxlar (so'm) *</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <input value={form.costPrice} onChange={set('costPrice')} type="number" min="0" placeholder="Tannarx" className={inputCls} required />
-                  <span className="mt-1 block text-[10px] text-[var(--color-text-tertiary)]">Tannarx</span>
+                {/* Cost Price */}
+                <div className="relative">
+                  <input 
+                    value={form.costPrice} 
+                    onChange={(e) => handlePriceChange('costPrice', e.target.value)} 
+                    type="number" 
+                    step="any"
+                    placeholder="Tannarx" 
+                    className={cn(inputCls, "pr-14")} 
+                    required 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => toggleCurrency('costPrice')}
+                    className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
+                  >
+                    {form.costCurrency}
+                  </button>
+                  <div className="mt-1 flex justify-between px-1">
+                    <span className="text-[10px] text-[var(--color-text-tertiary)]">Tannarx</span>
+                    {Number(form.costPrice) > 0 && (
+                      <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] opacity-60">
+                        ≈ {form.costCurrency === 'USD' ? formatSum(getFinalPrice(form.costPrice, 'USD')) : formatUSD(form.costPrice)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <input value={form.retailPrice} onChange={set('retailPrice')} type="number" min="0" placeholder="Chakana" className={inputCls} required />
-                  <span className="mt-1 block text-[10px] text-[var(--color-text-tertiary)]">Chakana narx</span>
+
+                {/* Retail Price */}
+                <div className="relative">
+                  <input 
+                    value={form.retailPrice} 
+                    onChange={(e) => handlePriceChange('retailPrice', e.target.value)} 
+                    type="number" 
+                    step="any"
+                    placeholder="Chakana" 
+                    className={cn(inputCls, "pr-14")} 
+                    required 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => toggleCurrency('retailPrice')}
+                    className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
+                  >
+                    {form.retailCurrency}
+                  </button>
+                  <div className="mt-1 flex justify-between px-1">
+                    <span className="text-[10px] text-[var(--color-text-tertiary)]">Chakana</span>
+                    {Number(form.retailPrice) > 0 && (
+                      <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] opacity-60">
+                        ≈ {form.retailCurrency === 'USD' ? formatSum(getFinalPrice(form.retailPrice, 'USD')) : formatUSD(form.retailPrice)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <input value={form.wholesalePrice} onChange={set('wholesalePrice')} type="number" min="0" placeholder="Ulgurji" className={inputCls} />
-                  <span className="mt-1 block text-[10px] text-[var(--color-text-tertiary)]">Ulgurji narx</span>
+
+                {/* Wholesale Price */}
+                <div className="relative">
+                  <input 
+                    value={form.wholesalePrice} 
+                    onChange={(e) => handlePriceChange('wholesalePrice', e.target.value)} 
+                    type="number" 
+                    step="any"
+                    placeholder="Ulgurji" 
+                    className={cn(inputCls, "pr-14")} 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => toggleCurrency('wholesalePrice')}
+                    className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
+                  >
+                    {form.wholesaleCurrency}
+                  </button>
+                  <div className="mt-1 flex justify-between px-1">
+                    <span className="text-[10px] text-[var(--color-text-tertiary)]">Ulgurji</span>
+                    {Number(form.wholesalePrice) > 0 && (
+                      <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] opacity-60">
+                        ≈ {form.wholesaleCurrency === 'USD' ? formatSum(getFinalPrice(form.wholesalePrice, 'USD')) : formatUSD(form.wholesalePrice)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -297,10 +399,40 @@ function EditProductModal({
     costPrice: item.costPrice,
     retailPrice: item.retailPrice,
     wholesalePrice: item.wholesalePrice || '',
+    costCurrency: 'UZS' as 'UZS' | 'USD',
+    retailCurrency: 'UZS' as 'UZS' | 'USD',
+    wholesaleCurrency: 'UZS' as 'UZS' | 'USD',
     minStock: String(item.minStock),
     warrantyMonths: String(item.warrantyMonths),
     description: item.description || '',
   });
+
+  const USD_RATE = 12850;
+
+  const handlePriceChange = (field: string, value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const toggleCurrency = (field: string) => {
+    const currencyField = `${field}Currency` as keyof typeof form;
+    const currentCurrency = form[currencyField];
+    const newCurrency = currentCurrency === 'UZS' ? 'USD' : 'UZS';
+    
+    const currentValue = Number(form[field as keyof typeof form]);
+    if (currentValue > 0) {
+      const newValue = newCurrency === 'USD' 
+        ? (currentValue / USD_RATE).toFixed(2) 
+        : Math.round(currentValue * USD_RATE).toString();
+      setForm(prev => ({ ...prev, [currencyField]: newCurrency, [field]: newValue }));
+    } else {
+      setForm(prev => ({ ...prev, [currencyField]: newCurrency }));
+    }
+  };
+
+  const getFinalPrice = (val: string, currency: string) => {
+    const num = Number(val);
+    return currency === 'USD' ? Math.round(num * USD_RATE) : num;
+  };
 
   const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
@@ -321,9 +453,9 @@ function EditProductModal({
           sku: form.sku,
           barcode: form.barcode || undefined,
           productType: form.productType,
-          costPrice: Number(form.costPrice),
-          retailPrice: Number(form.retailPrice),
-          wholesalePrice: form.wholesalePrice ? Number(form.wholesalePrice) : undefined,
+          costPrice: getFinalPrice(String(form.costPrice), form.costCurrency),
+          retailPrice: getFinalPrice(String(form.retailPrice), form.retailCurrency),
+          wholesalePrice: form.wholesalePrice ? getFinalPrice(String(form.wholesalePrice), form.wholesaleCurrency) : undefined,
           minStock: Number(form.minStock),
           warrantyMonths: Number(form.warrantyMonths),
           description: form.description || undefined,
@@ -435,17 +567,87 @@ function EditProductModal({
             <div>
               <label className={labelCls}>Narxlar (so'm) *</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <input value={form.costPrice} onChange={set('costPrice')} type="number" min="0" placeholder="Tannarx" className={inputCls} required />
-                  <span className="mt-1 block text-[10px] text-[var(--color-text-tertiary)]">Tannarx</span>
+                {/* Cost Price */}
+                <div className="relative">
+                  <input 
+                    value={form.costPrice} 
+                    onChange={(e) => handlePriceChange('costPrice', e.target.value)} 
+                    type="number" 
+                    step="any"
+                    placeholder="Tannarx" 
+                    className={cn(inputCls, "pr-14")} 
+                    required 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => toggleCurrency('costPrice')}
+                    className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
+                  >
+                    {form.costCurrency}
+                  </button>
+                  <div className="mt-1 flex justify-between px-1">
+                    <span className="text-[10px] text-[var(--color-text-tertiary)]">Tannarx</span>
+                    {Number(form.costPrice) > 0 && (
+                      <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] opacity-60">
+                        ≈ {form.costCurrency === 'USD' ? formatSum(getFinalPrice(String(form.costPrice), 'USD')) : formatUSD(form.costPrice)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <input value={form.retailPrice} onChange={set('retailPrice')} type="number" min="0" placeholder="Chakana" className={inputCls} required />
-                  <span className="mt-1 block text-[10px] text-[var(--color-text-tertiary)]">Chakana narx</span>
+
+                {/* Retail Price */}
+                <div className="relative">
+                  <input 
+                    value={form.retailPrice} 
+                    onChange={(e) => handlePriceChange('retailPrice', e.target.value)} 
+                    type="number" 
+                    step="any"
+                    placeholder="Chakana" 
+                    className={cn(inputCls, "pr-14")} 
+                    required 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => toggleCurrency('retailPrice')}
+                    className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
+                  >
+                    {form.retailCurrency}
+                  </button>
+                  <div className="mt-1 flex justify-between px-1">
+                    <span className="text-[10px] text-[var(--color-text-tertiary)]">Chakana</span>
+                    {Number(form.retailPrice) > 0 && (
+                      <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] opacity-60">
+                        ≈ {form.retailCurrency === 'USD' ? formatSum(getFinalPrice(String(form.retailPrice), 'USD')) : formatUSD(form.retailPrice)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <input value={form.wholesalePrice} onChange={set('wholesalePrice')} type="number" min="0" placeholder="Ulgurji" className={inputCls} />
-                  <span className="mt-1 block text-[10px] text-[var(--color-text-tertiary)]">Ulgurji narx</span>
+
+                {/* Wholesale Price */}
+                <div className="relative">
+                  <input 
+                    value={form.wholesalePrice} 
+                    onChange={(e) => handlePriceChange('wholesalePrice', e.target.value)} 
+                    type="number" 
+                    step="any"
+                    placeholder="Ulgurji" 
+                    className={cn(inputCls, "pr-14")} 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => toggleCurrency('wholesalePrice')}
+                    className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
+                  >
+                    {form.wholesaleCurrency}
+                  </button>
+                  <div className="mt-1 flex justify-between px-1">
+                    <span className="text-[10px] text-[var(--color-text-tertiary)]">Ulgurji</span>
+                    {Number(form.wholesalePrice) > 0 && (
+                      <span className="text-[9px] font-bold text-[var(--color-text-tertiary)] opacity-60">
+                        ≈ {form.wholesaleCurrency === 'USD' ? formatSum(getFinalPrice(String(form.wholesalePrice), 'USD')) : formatUSD(form.wholesalePrice)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
