@@ -21,6 +21,8 @@ import {
   Tag
 } from 'lucide-react';
 import { cn, formatSum } from '@/lib/utils';
+import { DateFilter } from './date-filter';
+import { startOfMonth, endOfDay, isWithinInterval } from 'date-fns';
 
 interface DebtItem {
   id: string;
@@ -56,6 +58,10 @@ export function DebtList({ initialData }: DebtListProps) {
   const [selectedDebtDetails, setSelectedDebtDetails] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'schedules' | 'payments'>('schedules');
   const [payingInstallmentId, setPayingInstallmentId] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
+    start: startOfMonth(new Date()),
+    end: endOfDay(new Date())
+  });
 
   const debtsWithDebt = initialData.filter(d => Number(d.remainingAmount) > 0);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -71,12 +77,26 @@ export function DebtList({ initialData }: DebtListProps) {
   }, []);
 
   const filteredData = initialData.filter(item => {
+    const itemDate = new Date(item.createdAt);
+    const isInRange = isWithinInterval(itemDate, {
+      start: dateRange.start,
+      end: dateRange.end
+    });
+
     const searchLower = search.toLowerCase();
-    return (
-      item.customerName.toLowerCase().includes(searchLower) ||
+    const matchesSearch = item.customerName.toLowerCase().includes(searchLower) ||
       item.id.toLowerCase().includes(searchLower) ||
-      (item.phoneLastFour && item.phoneLastFour.includes(searchLower))
-    );
+      (item.phoneLastFour && item.phoneLastFour.includes(searchLower));
+
+    return isInRange && matchesSearch;
+  });
+
+  const visibleDataForStats = initialData.filter(item => {
+    const itemDate = new Date(item.createdAt);
+    return isWithinInterval(itemDate, {
+      start: dateRange.start,
+      end: dateRange.end
+    });
   });
 
   const formatPrice = (price: string | number) => {
@@ -361,7 +381,7 @@ export function DebtList({ initialData }: DebtListProps) {
         <div className="premium-card rounded-2xl p-4 md:p-5">
           <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Jami nasiya</div>
           <div className="text-xl md:text-2xl font-bold">
-            {formatPrice(initialData.reduce((acc, i) => acc + Number(i.remainingAmount), 0).toString())}
+            {formatPrice(visibleDataForStats.reduce((acc, i) => acc + Number(i.remainingAmount), 0).toString())}
             <span className="text-[10px] md:text-xs font-normal text-[var(--color-text-tertiary)] ml-1">so'm</span>
           </div>
         </div>
@@ -369,7 +389,7 @@ export function DebtList({ initialData }: DebtListProps) {
           <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Muddati o'tgan</div>
           <div className="flex items-center gap-2">
             <div className="text-xl md:text-2xl font-bold text-[var(--color-danger)]">
-              {initialData.filter(i => i.isOverdue).length}
+              {visibleDataForStats.filter(i => i.isOverdue).length}
             </div>
             <AlertCircle size={14} className="text-[var(--color-danger)]" />
           </div>
@@ -380,13 +400,13 @@ export function DebtList({ initialData }: DebtListProps) {
         </div>
         <div className="premium-card rounded-2xl p-4 md:p-5">
           <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Yopilgan nasiyalar</div>
-          <div className="text-xl md:text-2xl font-bold">{initialData.filter(i => i.status === 'paid').length}</div>
+          <div className="text-xl md:text-2xl font-bold">{visibleDataForStats.filter(i => i.status === 'paid').length}</div>
         </div>
       </div>
 
       {/* Table Section */}
       <div className="premium-card overflow-hidden rounded-2xl">
-        <div className="p-4 border-b border-[var(--color-border)]">
+        <div className="p-4 border-b border-[var(--color-border)] flex flex-col md:flex-row md:items-center gap-4">
           <div className="relative w-full md:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={18} />
             <input 
@@ -397,6 +417,7 @@ export function DebtList({ initialData }: DebtListProps) {
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-all"
             />
           </div>
+          <DateFilter onRangeChange={setDateRange} className="flex-none" />
         </div>
 
         {/* Desktop Table View */}

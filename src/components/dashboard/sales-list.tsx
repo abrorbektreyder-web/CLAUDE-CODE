@@ -19,6 +19,8 @@ import { cn, formatSum } from '@/lib/utils';
 import Link from 'next/link';
 import { Edit2, Trash2, X, FileText, Table } from 'lucide-react';
 import { exportToPDF, exportToCSV } from '@/lib/export-utils';
+import { DateFilter } from './date-filter';
+import { startOfMonth, endOfDay, isWithinInterval } from 'date-fns';
 
 interface SaleItem {
   id: string;
@@ -49,11 +51,23 @@ export function SalesList({ initialData }: SalesListProps) {
   const [selectedSale, setSelectedSale] = useState<SaleItem | null>(null);
   const [modalType, setModalType] = useState<'edit' | 'delete' | null>(null);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [dateRange, setDateRange] = useState<{ start: Date; end: Date }>({
+    start: startOfMonth(new Date()),
+    end: endOfDay(new Date())
+  });
 
-  const filteredData = initialData.filter(sale =>
-    sale.customerName.toLowerCase().includes(search.toLowerCase()) ||
-    sale.receiptNumber.toString().includes(search)
-  );
+  const filteredData = initialData.filter(sale => {
+    const saleDate = new Date(sale.createdAt);
+    const isInRange = isWithinInterval(saleDate, {
+      start: dateRange.start,
+      end: dateRange.end
+    });
+
+    const matchesSearch = sale.customerName.toLowerCase().includes(search.toLowerCase()) ||
+      sale.receiptNumber.toString().includes(search);
+
+    return isInRange && matchesSearch;
+  });
 
   const formatPrice = (price: string | number) => {
     return formatSum(price, false);
@@ -128,9 +142,11 @@ export function SalesList({ initialData }: SalesListProps) {
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
         <div className="premium-card rounded-2xl p-4 md:p-5">
-          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Bugungi jami savdo</div>
+          <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
+            {activeRange === 'today' ? "Bugungi jami savdo" : activeRange === 'week' ? "Haftalik jami savdo" : activeRange === 'month' ? "Oylik jami savdo" : "Tanlangan davr savdosi"}
+          </div>
           <div className="flex items-end gap-2">
-            <div className="text-xl md:text-2xl font-bold">{formatPrice(initialData.reduce((acc, i) => acc + Number(i.total), 0).toString())}</div>
+            <div className="text-xl md:text-2xl font-bold">{formatPrice(filteredData.reduce((acc, i) => acc + Number(i.total), 0).toString())}</div>
             <div className="mb-1 text-[10px] text-[var(--color-text-tertiary)] uppercase font-bold">so'm</div>
             <div className="ml-auto flex items-center gap-1 rounded-md bg-[var(--color-success)]/10 px-1.5 py-0.5 text-[9px] md:text-[10px] font-bold text-[var(--color-success)]">
               <ArrowUpRight size={10} />
@@ -141,11 +157,11 @@ export function SalesList({ initialData }: SalesListProps) {
         <div className="premium-card rounded-2xl p-4 md:p-5">
           <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">Sotilgan tovarlar</div>
           <div className="flex items-end gap-2">
-            <div className="text-xl md:text-2xl font-bold">{initialData.length}</div>
+            <div className="text-xl md:text-2xl font-bold">{filteredData.length}</div>
             <div className="mb-1 text-[10px] text-[var(--color-text-tertiary)] uppercase font-bold">dona</div>
             <div className="ml-auto flex items-center gap-1 rounded-md bg-[var(--color-success)]/10 px-1.5 py-0.5 text-[9px] md:text-[10px] font-bold text-[var(--color-success)]">
               <ArrowUpRight size={10} />
-              8 ta
+              {filteredData.length} ta
             </div>
           </div>
         </div>
@@ -153,8 +169,8 @@ export function SalesList({ initialData }: SalesListProps) {
           <div className="mb-2 text-[10px] md:text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">O'rtacha chek</div>
           <div className="flex items-end gap-2">
             <div className="text-xl md:text-2xl font-bold">
-              {initialData.length > 0
-                ? formatPrice((initialData.reduce((acc, i) => acc + Number(i.total), 0) / initialData.length).toFixed(0))
+              {filteredData.length > 0
+                ? formatPrice((filteredData.reduce((acc, i) => acc + Number(i.total), 0) / filteredData.length).toFixed(0))
                 : 0
               }
             </div>
@@ -180,6 +196,9 @@ export function SalesList({ initialData }: SalesListProps) {
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-all"
             />
           </div>
+          
+          <DateFilter onRangeChange={setDateRange} className="flex-none" />
+
           <button
             onClick={() => setIsFilterOpen(!isFilterOpen)}
             className={cn(

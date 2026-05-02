@@ -88,8 +88,8 @@ MVP (Minimum Viable Product) bosqichida quyidagi 15 ta asosiy funksional modul i
 7	✅ Mijozlar bazasi	CRUD, sotib olish tarixi, qarz tarixi	P0
 8	✅ Nasiya/qarz	Foiz hisoblash, oylik to'lov grafigi	P0
 9	✅ Kafolat	Avtomatik hisoblanadi, alert sistemasi	P0
-10	🟡 Telegram bot	Real-time savdo xabari, qarz eslatma	P0
-11	❌ Smena boshqaruv	Smena ochish/yopish, kassa pul tekshiruvi	P0
+10	✅ Telegram bot	Real-time savdo xabari, qarz eslatma	P0
+11	✅ Smena boshqaruv	Smena ochish/yopish, kassa pul tekshiruvi	P0
 12	✅ Chek chop etish	ESC/POS thermal printer support	P0
 13	✅ Asosiy hisobotlar	Kunlik, oylik savdo, top mahsulotlar	P0
 14	✅ Audit log	Immutable jurnal, har bir muhim amal	P0
@@ -104,7 +104,7 @@ MVP (Minimum Viable Product) bosqichida quyidagi 15 ta asosiy funksional modul i
 •Bonus dastur va loyalty cards
 •Cross-sell tavsiyalari (AI-powered)
 •Multi-branch (filial qo'shish)
-•Excel import/export
+• ✅ Excel/PDF export (Sotuvlar va hisobotlar uchun)
 3.3. Uzoq muddatli vizyon (Phase 3 — 6 oy+)
 •Online do'kon ulanishi (Telegram Web App)
 •Marketplace integratsiya (Uzum, OLX)
