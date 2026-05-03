@@ -299,14 +299,10 @@ export async function getDashboardKpis(tenantId?: string) {
     .gte('created_at', today.toISOString())
     .eq('status', 'completed');
 
-  if (tenantId) salesQuery = salesQuery.eq('tenant_id', tenantId);
-
-  // Active debts
-  let debtQuery = (await getSupabase()).from('debts')
-    .select('remaining_amount, is_overdue')
-    .eq('status', 'active');
-
-  if (tenantId) debtQuery = debtQuery.eq('tenant_id', tenantId);
+  if (tenantId) {
+    salesQuery = salesQuery.eq('tenant_id', tenantId);
+    debtQuery = debtQuery.eq('tenant_id', tenantId);
+  }
 
   const [salesRes, debtRes] = await Promise.all([salesQuery, debtQuery]);
 
@@ -360,7 +356,7 @@ export async function getSales(tenantId: string, limit = 50) {
   const supabase = await getSupabase();
 
   // Fetch sales with customer info
-  const { data, error } = await supabase
+  let query = supabase
     .from('sales')
     .select(`
       *,
@@ -368,9 +364,14 @@ export async function getSales(tenantId: string, limit = 50) {
       debts (id, status, remaining_amount, total_amount, paid_amount),
       sale_items (product_name, quantity)
     `)
-    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
     .limit(limit);
+
+  if (tenantId) {
+    query = query.eq('tenant_id', tenantId);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
 

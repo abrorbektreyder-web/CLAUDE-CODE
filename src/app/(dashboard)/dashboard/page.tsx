@@ -25,11 +25,27 @@ export default async function DashboardPage() {
 
   const tenantId = session?.user.tenantId;
 
-  // Fetch real data
-  const [kpisData, recentSales] = await Promise.all([
-    getDashboardKpis(tenantId),
-    getSales(tenantId!, 8) // Get last 8 sales
-  ]);
+  // Initialize with empty/default values in case of failure
+  let kpisData: any = { 
+    today: { revenue: 0, count: 0, profit: 0, avgTicket: 0 },
+    yesterday: { revenue: 0 },
+    debts: { totalAmount: 0, overdueCount: 0 }
+  };
+  let recentSales: any[] = [];
+
+  try {
+    if (tenantId) {
+      const [kpis, sales] = await Promise.all([
+        getDashboardKpis(tenantId),
+        getSales(tenantId, 8)
+      ]);
+      kpisData = kpis;
+      recentSales = sales;
+    }
+  } catch (error) {
+    console.error('[Dashboard] Error fetching data:', error);
+    // Fallback to empty state already initialized above
+  }
 
   const formatPrice = (price: number) => formatSum(price, false);
 
