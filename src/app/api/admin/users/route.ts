@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
+import { getSupabase } from '@/db/lib/supabase';
+import { auth } from '@/lib/auth';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-);
+const supabase = getSupabase();
 
 export async function GET(req: NextRequest) {
   try {

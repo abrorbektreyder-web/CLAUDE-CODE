@@ -1,22 +1,12 @@
 import { headers } from 'next/headers';
 import { cache } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-// ════════════════════════════════════════════════════════════════════════════
-// SUPABASE HTTP CLIENT (Bypasses port 5432 block)
-// ════════════════════════════════════════════════════════════════════════════
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: { persistSession: false },
-    db: { schema: 'public' },
-  }
-);
+import { getSupabase } from '@/db/lib/supabase';
 
 // ════════════════════════════════════════════════════════════════════════════
 // TENANT RESOLUTION
+// ════════════════════════════════════════════════════════════════════════════
+// Uses lazy getSupabase() singleton — no top-level initialization,
+// so this is safe for Vercel cold starts.
 // ════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -63,7 +53,7 @@ export const getCurrentTenant = cache(async () => {
 
   if (!subdomain) return null;
 
-  const { data: tenant, error } = await supabase
+  const { data: tenant, error } = await getSupabase()
     .from('tenants')
     .select('*')
     .eq('subdomain', subdomain)
