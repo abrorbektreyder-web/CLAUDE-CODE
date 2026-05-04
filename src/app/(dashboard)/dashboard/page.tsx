@@ -19,9 +19,14 @@ import { formatSum, formatUSD, formatRelativeTime } from '@/lib/utils';
 import Link from 'next/link';
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session = null;
+  try {
+    session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch (error) {
+    console.error('[Dashboard Page] auth.api.getSession failed:', error);
+  }
 
   const tenantId = session?.user.tenantId;
 

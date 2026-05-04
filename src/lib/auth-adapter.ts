@@ -11,7 +11,9 @@ import { getSupabase } from '@/db/lib/supabase';
 // Lazy proxy — initializes only when first method is called (no top-level crash on Vercel)
 const supabase = new Proxy({} as ReturnType<typeof getSupabase>, {
   get(_target, prop) {
-    return (getSupabase() as any)[prop];
+    const client = getSupabase() as any;
+    const val = client[prop];
+    return typeof val === 'function' ? val.bind(client) : val;
   },
 });
 
