@@ -11,9 +11,15 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
+  try {
+    session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch (err: any) {
+    console.error('[Layout] auth.api.getSession failed:', err?.message ?? err);
+    redirect('/login?callback=/dashboard');
+  }
 
   if (!session?.user) {
     redirect('/login?callback=/dashboard');
@@ -23,8 +29,11 @@ export default async function DashboardLayout({
     redirect('/pos');
   }
 
-  const tenant = session.user.tenantId 
-    ? await getTenant(session.user.tenantId)
+  const tenant = session.user.tenantId
+    ? await getTenant(session.user.tenantId).catch((err) => {
+        console.error('[Layout] getTenant failed:', err?.message ?? err);
+        return null;
+      })
     : null;
 
   return (
