@@ -31,7 +31,7 @@ export async function findPhoneByImei(imei: string, tenantId: string) {
 
   const imeiHash = hashSensitive(imei)!;
 
-  const { data, error } = getSupabase().from('phone_units')
+  const { data, error } = await getSupabase().from('phone_units')
     .select(`
       id,
       product_id,
@@ -177,7 +177,7 @@ export async function getInventory(tenantId: string, branchId?: string) {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getCustomers(tenantId: string) {
-  const { data, error } = getSupabase().from('customers')
+  const { data, error } = await getSupabase().from('customers')
     .select('*')
     .eq('tenant_id', tenantId)
     .is('deleted_at', null)
@@ -202,7 +202,7 @@ export async function getCustomers(tenantId: string) {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getDebts(tenantId: string) {
-  const { data, error } = getSupabase().from('debts')
+  const { data, error } = await getSupabase().from('debts')
     .select(`
       *,
       customers (full_name, phone_last_four)
@@ -322,7 +322,7 @@ export async function getDashboardKpis(tenantId?: string) {
 }
 
 export async function getTenant(id: string) {
-  const { data, error } = getSupabase().from('tenants')
+  const { data, error } = await getSupabase().from('tenants')
     .select('*')
     .eq('id', id)
     .single();
@@ -600,7 +600,7 @@ export async function createBranch(data: {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getBranches(tenantId: string) {
-  const { data, error } = getSupabase().from('branches')
+  const { data, error } = await getSupabase().from('branches')
     .select('*')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: true });
@@ -987,7 +987,7 @@ export async function closeShift(tenantId: string, shiftId: string, closingCash:
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getExpenseCategories(tenantId: string) {
-  const { data, error } = getSupabase()
+  const { data, error } = await getSupabase()
     .from('expense_categories')
     .select('*')
     .eq('tenant_id', tenantId)
@@ -1078,7 +1078,7 @@ export async function getExpenses(params: {
 }
 
 export async function deleteExpense(expenseId: string, tenantId: string) {
-  const { error } = getSupabase()
+  const { error } = await getSupabase()
     .from('expenses')
     .delete()
     .eq('id', expenseId)
