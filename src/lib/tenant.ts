@@ -35,6 +35,9 @@ export function extractSubdomain(host: string | null): string | null {
   }
 
   // Production: {tenant}.{rootdomain}.{tld}
+  // Ignore Vercel domains
+  if (hostname.endsWith('.vercel.app')) return null;
+
   const parts = hostname.split('.');
 
   // Need at least 3 parts (sub.domain.tld)
@@ -44,7 +47,7 @@ export function extractSubdomain(host: string | null): string | null {
   const subdomain = parts[0];
 
   // Reserved subdomains
-  const reserved = ['www', 'api', 'admin', 'app', 'dashboard', 'static'];
+  const reserved = ['www', 'api', 'admin', 'app', 'dashboard', 'static', 'claude-code-six-chi'];
   if (reserved.includes(subdomain)) return null;
 
   return subdomain;

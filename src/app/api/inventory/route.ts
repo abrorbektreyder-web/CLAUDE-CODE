@@ -2,15 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/db/lib/supabase';
 
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  );
-}
 
 const createProductSchema = z.object({
   name: z.string().min(1, 'Tovar nomi kiritilishi shart'),

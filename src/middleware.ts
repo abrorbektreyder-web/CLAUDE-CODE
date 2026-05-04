@@ -48,10 +48,13 @@ export async function middleware(req: NextRequest) {
     // Dev: {tenant}.localhost
     subdomain = hostname.replace('.localhost', '') || null;
   } else if (hostname.split('.').length >= 3) {
-    // Prod: {tenant}.poshub.uz
-    const sub = hostname.split('.')[0];
-    if (!['www', 'api', 'admin', 'app'].includes(sub)) {
-      subdomain = sub;
+    // Prod: {tenant}.poshub.uz or others
+    // Ignore Vercel and common system subdomains
+    if (!hostname.endsWith('.vercel.app')) {
+      const sub = hostname.split('.')[0];
+      if (!['www', 'api', 'admin', 'app'].includes(sub)) {
+        subdomain = sub;
+      }
     }
   }
 

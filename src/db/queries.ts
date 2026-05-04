@@ -1,6 +1,5 @@
 'use server';
 
-import { createClient } from '@supabase/supabase-js';
 import {
   hashSensitive,
   prepareEncryptedField,
@@ -8,6 +7,7 @@ import {
   isValidImei,
   isValidUzPhone
 } from './lib/encryption';
+import { getSupabase } from './lib/supabase';
 import { sendTelegramAlert, formatSaleMessage } from '@/lib/telegram';
 import { formatSum } from '@/lib/utils';
 
@@ -19,25 +19,6 @@ import { formatSum } from '@/lib/utils';
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 // Supabase client instance (lazy initialized)
-let supabaseInstance: any = null;
-
-export async function getSupabase() {
-  if (supabaseInstance) return supabaseInstance;
-
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !key) {
-    throw new Error('Supabase environment variables are missing (URL or Service Role Key)');
-  }
-
-  supabaseInstance = createClient(url, key, {
-    auth: { persistSession: false },
-    db: { schema: 'public' },
-  });
-
-  return supabaseInstance;
-}
 
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 // 1. FIND PHONE BY IMEI
@@ -50,7 +31,7 @@ export async function findPhoneByImei(imei: string, tenantId: string) {
 
   const imeiHash = hashSensitive(imei)!;
 
-  const { data, error } = (await getSupabase()).from('phone_units')
+  const { data, error } = getSupabase().from('phone_units')
     .select(`
       id,
       product_id,
@@ -109,7 +90,7 @@ export async function findPhoneByImei(imei: string, tenantId: string) {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function searchProducts(query: string, tenantId: string, limit = 20) {
-  let dbQuery = (await getSupabase()).from('products')
+  let dbQuery = getSupabase().from('products')
     .select('*')
     .eq('tenant_id', tenantId)
     .is('deleted_at', null)
@@ -142,7 +123,7 @@ export async function searchProducts(query: string, tenantId: string, limit = 20
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getInventory(tenantId: string, branchId?: string) {
-  let query = (await getSupabase()).from('products')
+  let query = getSupabase().from('products')
     .select(`
       id,
       name,
@@ -196,7 +177,7 @@ export async function getInventory(tenantId: string, branchId?: string) {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getCustomers(tenantId: string) {
-  const { data, error } = (await getSupabase()).from('customers')
+  const { data, error } = getSupabase().from('customers')
     .select('*')
     .eq('tenant_id', tenantId)
     .is('deleted_at', null)
@@ -221,7 +202,7 @@ export async function getCustomers(tenantId: string) {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getDebts(tenantId: string) {
-  const { data, error } = (await getSupabase()).from('debts')
+  const { data, error } = getSupabase().from('debts')
     .select(`
       *,
       customers (full_name, phone_last_four)
@@ -249,7 +230,7 @@ export async function getDebts(tenantId: string) {
 }
 
 export async function getDebtDetails(debtId: string, tenantId: string) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
 
   const [debtRes, paymentsRes, schedulesRes] = await Promise.all([
     supabase
@@ -293,16 +274,25 @@ export async function getDashboardKpis(tenantId?: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  if (!tenantId) {
+    return {
+      today: { revenue: 0, count: 0, profit: 0, avgTicket: 0 },
+      yesterday: { revenue: 0 },
+      debts: { totalAmount: 0, overdueCount: 0 },
+    };
+  }
+
   // Today's sales
-  let salesQuery = (await getSupabase()).from('sales')
+  let salesQuery = getSupabase().from('sales')
     .select('total, status')
     .gte('created_at', today.toISOString())
-    .eq('status', 'completed');
+    .eq('status', 'completed')
+    .eq('tenant_id', tenantId);
 
-  if (tenantId) {
-    salesQuery = salesQuery.eq('tenant_id', tenantId);
-    debtQuery = debtQuery.eq('tenant_id', tenantId);
-  }
+  // Debts query
+  let debtQuery = getSupabase().from('debts')
+    .select('remaining_amount, is_overdue')
+    .eq('tenant_id', tenantId);
 
   const [salesRes, debtRes] = await Promise.all([salesQuery, debtQuery]);
 
@@ -332,7 +322,7 @@ export async function getDashboardKpis(tenantId?: string) {
 }
 
 export async function getTenant(id: string) {
-  const { data, error } = (await getSupabase()).from('tenants')
+  const { data, error } = getSupabase().from('tenants')
     .select('*')
     .eq('id', id)
     .single();
@@ -353,7 +343,11 @@ export async function getTenant(id: string) {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getSales(tenantId: string, limit = 50) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
+
+  if (!tenantId) {
+    return [];
+  }
 
   // Fetch sales with customer info
   let query = supabase
@@ -364,12 +358,9 @@ export async function getSales(tenantId: string, limit = 50) {
       debts (id, status, remaining_amount, total_amount, paid_amount),
       sale_items (product_name, quantity)
     `)
+    .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
     .limit(limit);
-
-  if (tenantId) {
-    query = query.eq('tenant_id', tenantId);
-  }
 
   const { data, error } = await query;
 
@@ -414,7 +405,7 @@ export async function createCustomer(data: {
   passport?: string;
   notes?: string;
 }) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
   const normalizedPhone = normalizePhone(data.phone);
   
   if (!normalizedPhone) {
@@ -467,7 +458,7 @@ export async function recordDebtPayment(data: {
   cashierId: string;
   notes?: string;
 }) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
 
   // 1. Get debt info
   const { data: debt, error: debtError } = await supabase
@@ -586,7 +577,7 @@ export async function createBranch(data: {
   phone: string;
   type: string;
 }) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
   const { data: branch, error } = await supabase
     .from('branches')
     .insert({
@@ -609,7 +600,7 @@ export async function createBranch(data: {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getBranches(tenantId: string) {
-  const { data, error } = (await getSupabase()).from('branches')
+  const { data, error } = getSupabase().from('branches')
     .select('*')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: true });
@@ -647,7 +638,7 @@ export async function createSale(data: {
     total: number;
   }>;
 }) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
 
   // 1. Handle Customer (Create if doesn't exist)
   let customerId = data.customerId;
@@ -893,7 +884,7 @@ export async function createSale(data: {
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function openShift(tenantId: string, cashierId: string, branchId: string, openingCash: number) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
   
   // Check if already open
   const { data: existing } = await supabase
@@ -950,7 +941,7 @@ export async function openShift(tenantId: string, cashierId: string, branchId: s
 }
 
 export async function closeShift(tenantId: string, shiftId: string, closingCash: number, expectedCash: number, closingNotes?: string) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
   
   const cashDifference = closingCash - expectedCash;
   
@@ -996,7 +987,7 @@ export async function closeShift(tenantId: string, shiftId: string, closingCash:
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
 export async function getExpenseCategories(tenantId: string) {
-  const { data, error } = await (await getSupabase())
+  const { data, error } = getSupabase()
     .from('expense_categories')
     .select('*')
     .eq('tenant_id', tenantId)
@@ -1013,7 +1004,7 @@ export async function createExpenseCategory(params: {
   icon?: string;
   color?: string;
 }) {
-  const { data, error } = await (await getSupabase())
+  const { data, error } = getSupabase()
     .from('expense_categories')
     .insert({
       tenant_id: params.tenantId,
@@ -1044,7 +1035,7 @@ export async function createExpense(params: {
   branchId?: string;
   shiftId?: string;
 }) {
-  const { data, error } = await (await getSupabase())
+  const { data, error } = getSupabase()
     .from('expenses')
     .insert({
       tenant_id: params.tenantId,
@@ -1070,7 +1061,7 @@ export async function getExpenses(params: {
   categoryId?: string;
   branchId?: string;
 }) {
-  let query = (await getSupabase())
+  let query = getSupabase()
     .from('expenses')
     .select(`*, category:expense_categories(name, type, icon, color)`)
     .eq('tenant_id', params.tenantId)
@@ -1087,7 +1078,7 @@ export async function getExpenses(params: {
 }
 
 export async function deleteExpense(expenseId: string, tenantId: string) {
-  const { error } = await (await getSupabase())
+  const { error } = getSupabase()
     .from('expenses')
     .delete()
     .eq('id', expenseId)
@@ -1104,7 +1095,7 @@ export async function getFinanceSummary(params: {
   startDate: string;
   endDate: string;
 }) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
 
   const [{ data: sales, error: sErr }, { data: expensesData, error: eErr }] = await Promise.all([
     supabase
@@ -1146,7 +1137,7 @@ export async function getFinanceSummary(params: {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function getSuppliers(tenantId: string) {
-  const { data, error } = await (await getSupabase())
+  const { data, error } = getSupabase()
     .from('suppliers')
     .select('*')
     .eq('tenant_id', tenantId)
@@ -1165,7 +1156,7 @@ export async function createSupplier(params: {
   address?: string;
   inn?: string;
 }) {
-  const { data, error } = await (await getSupabase())
+  const { data, error } = getSupabase()
     .from('suppliers')
     .insert({
       tenant_id: params.tenantId,
@@ -1183,7 +1174,7 @@ export async function createSupplier(params: {
 }
 
 export async function getSupplierById(id: string, tenantId: string) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
   
   const [supplierRes, transactionsRes] = await Promise.all([
     supabase.from('suppliers').select('*').eq('id', id).eq('tenant_id', tenantId).single(),
@@ -1208,7 +1199,7 @@ export async function createSupplierTransaction(params: {
   referenceId?: string;
   performedBy: string;
 }) {
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
 
   // 1. Get current balance
   const { data: supplier, error: sErr } = await supabase

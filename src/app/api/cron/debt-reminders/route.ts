@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabase } from '@/db/queries';
+import { getSupabase } from '@/db/lib/supabase';
 import { sendTelegramMessage } from '@/lib/telegram';
 import { formatSum } from '@/lib/utils';
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
-  const supabase = await getSupabase();
+  const supabase = getSupabase();
   const today = new Date();
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
