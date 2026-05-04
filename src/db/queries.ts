@@ -1004,7 +1004,7 @@ export async function createExpenseCategory(params: {
   icon?: string;
   color?: string;
 }) {
-  const { data, error } = getSupabase()
+  const { data, error } = await getSupabase()
     .from('expense_categories')
     .insert({
       tenant_id: params.tenantId,
@@ -1035,7 +1035,7 @@ export async function createExpense(params: {
   branchId?: string;
   shiftId?: string;
 }) {
-  const { data, error } = getSupabase()
+  const { data, error } = await getSupabase()
     .from('expenses')
     .insert({
       tenant_id: params.tenantId,
@@ -1137,7 +1137,7 @@ export async function getFinanceSummary(params: {
 // ════════════════════════════════════════════════════════════════════════════
 
 export async function getSuppliers(tenantId: string) {
-  const { data, error } = getSupabase()
+  const { data, error } = await getSupabase()
     .from('suppliers')
     .select('*')
     .eq('tenant_id', tenantId)
@@ -1156,7 +1156,7 @@ export async function createSupplier(params: {
   address?: string;
   inn?: string;
 }) {
-  const { data, error } = getSupabase()
+  const { data, error } = await getSupabase()
     .from('suppliers')
     .insert({
       tenant_id: params.tenantId,

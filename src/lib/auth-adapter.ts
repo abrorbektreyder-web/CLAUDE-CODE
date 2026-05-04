@@ -9,13 +9,7 @@ import { getSupabase } from '@/db/lib/supabase';
 // ════════════════════════════════════════════════════════════════════════════
 
 // Lazy proxy — initializes only when first method is called (no top-level crash on Vercel)
-const supabase = new Proxy({} as ReturnType<typeof getSupabase>, {
-  get(_target, prop) {
-    const client = getSupabase() as any;
-    const val = client[prop];
-    return typeof val === 'function' ? val.bind(client) : val;
-  },
-});
+
 
 // Model name → table name mapping
 const TABLE_MAP: Record<string, string> = {
@@ -150,7 +144,7 @@ type WhereClause = {
   operator?: string;
 };
 
-function buildQuery(query: ReturnType<typeof supabase.from>, where: WhereClause[], table: string) {
+function buildQuery(query: any) {
   const specialMap = CAMEL_TO_SNAKE[table] ?? {};
   for (const w of where) {
     const col = specialMap[w.field] ?? toSnake(w.field);
@@ -190,7 +184,7 @@ export const supabaseAdapter = {
     if (model === 'session') {
       // Fetch tenant_id from user
       if (snakeData.user_id) {
-        const { data: user } = await supabase.from('users').select('tenant_id').eq('id', snakeData.user_id).single();
+        const { data: user } = await getSupabase().from('users').select('tenant_id').eq('id', snakeData.user_id).single();
         if (user) {
           snakeData.tenant_id = user.tenant_id;
         }
@@ -227,7 +221,7 @@ export const supabaseAdapter = {
       const subdomainBase = slugify(storeName);
       let subdomain = subdomainBase;
       
-      const { data: existingTenant } = await supabase.from('tenants').select('id').eq('subdomain', subdomain).maybeSingle();
+      const { data: existingTenant } = await getSupabase().from('tenants').select('id').eq('subdomain', subdomain).maybeSingle();
       if (existingTenant) {
         subdomain = `${subdomainBase}-${Math.random().toString(36).substring(2, 6)}`;
       }
@@ -315,7 +309,7 @@ export const supabaseAdapter = {
   }): Promise<T | null> {
     console.log(`[Adapter] findOne model=${model}`, JSON.stringify(where), 'join=', join);
     const table = TABLE_MAP[model] ?? model + 's';
-    let query = supabase.from(table).select('*');
+    let query = getSupabase().from(table).select('*');
     query = buildQuery(query, where, table) as any;
 
     const { data, error } = await (query as any).maybeSingle();
@@ -331,7 +325,7 @@ export const supabaseAdapter = {
     const camelData = objToCamel(data as Record<string, unknown>, table) as T;
     
     if (join && join.account && model === 'user') {
-      const { data: accountsData } = await supabase.from('accounts').select('*').eq('user_id', data.id);
+      const { data: accountsData } = await getSupabase().from('accounts').select('*').eq('user_id', data.id);
       if (accountsData) {
         (camelData as any).account = accountsData.map(a => objToCamel(a as Record<string, unknown>, 'accounts'));
       } else {
@@ -358,7 +352,7 @@ export const supabaseAdapter = {
     select?: string[];
   }): Promise<T[]> {
     const table = TABLE_MAP[model] ?? model + 's';
-    let query = supabase.from(table).select('*');
+    let query = getSupabase().from(table).select('*');
 
     if (where?.length) query = buildQuery(query, where, table) as any;
 
@@ -393,7 +387,7 @@ export const supabaseAdapter = {
     where?: WhereClause[];
   }): Promise<number> {
     const table = TABLE_MAP[model] ?? model + 's';
-    let query = supabase.from(table).select('*', { count: 'exact', head: true });
+    let query = getSupabase().from(table).select('*', { count: 'exact', head: true });
     if (where?.length) query = buildQuery(query, where, table) as any;
 
     const { count, error } = await query;
@@ -419,7 +413,7 @@ export const supabaseAdapter = {
     const table = TABLE_MAP[model] ?? model + 's';
     const snakeUpdate = objToSnake(update, table);
 
-    let query = supabase.from(table).update(snakeUpdate);
+    let query = getSupabase().from(table).update(snakeUpdate);
     query = buildQuery(query, where, table) as any;
 
     const { data, error } = await (query as any).select().maybeSingle();
@@ -446,7 +440,7 @@ export const supabaseAdapter = {
     const table = TABLE_MAP[model] ?? model + 's';
     const snakeUpdate = objToSnake(update, table);
 
-    let query = supabase.from(table).update(snakeUpdate);
+    let query = getSupabase().from(table).update(snakeUpdate);
     query = buildQuery(query, where, table) as any;
 
     const { count, error } = await (query as any).select('id', {
@@ -471,7 +465,7 @@ export const supabaseAdapter = {
     where: WhereClause[];
   }): Promise<void> {
     const table = TABLE_MAP[model] ?? model + 's';
-    let query = supabase.from(table).delete();
+    let query = getSupabase().from(table).delete();
     query = buildQuery(query, where, table) as any;
 
     const { error } = await query;
@@ -491,7 +485,7 @@ export const supabaseAdapter = {
     where: WhereClause[];
   }): Promise<number> {
     const table = TABLE_MAP[model] ?? model + 's';
-    let query = supabase.from(table).delete();
+    let query = getSupabase().from(table).delete();
     query = buildQuery(query, where, table) as any;
 
     const { count, error } = await (query as any);
