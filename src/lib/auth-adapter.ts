@@ -1,4 +1,4 @@
-﻿import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/db/lib/supabase';
 
 // ════════════════════════════════════════════════════════════════════════════
 // SUPABASE HTTP ADAPTER FOR BETTER AUTH
@@ -8,14 +8,12 @@
 //      This adapter maps Better Auth's CRUD interface to Supabase REST API.
 // ════════════════════════════════════════════════════════════════════════════
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: { persistSession: false },
-    db: { schema: 'public' },
-  }
-);
+// Lazy proxy — initializes only when first method is called (no top-level crash on Vercel)
+const supabase = new Proxy({} as ReturnType<typeof getSupabase>, {
+  get(_target, prop) {
+    return (getSupabase() as any)[prop];
+  },
+});
 
 // Model name → table name mapping
 const TABLE_MAP: Record<string, string> = {
@@ -41,17 +39,17 @@ function slugify(text: string): string {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')     // Replace spaces with -
-    .replace(/[^\w-]+/g, '')  // Remove all non-word chars
-    .replace(/--+/g, '-')     // Replace multiple - with single -
-    .slice(0, 30);            // Limit length
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .slice(0, 30);
 }
 
 // Convert object keys: camelCase → snake_case
 // Special mappings for fields that don't follow standard rules
 const CAMEL_TO_SNAKE: Record<string, Record<string, string>> = {
   users: {
-    name: 'full_name',         // Better Auth uses 'name', our DB has 'full_name'
+    name: 'full_name',
     emailVerified: 'email_verified',
     password: 'password_hash',
   },
@@ -86,7 +84,7 @@ const CAMEL_TO_SNAKE: Record<string, Record<string, string>> = {
 // Convert object keys: snake_case → camelCase with special reverse mappings
 const SNAKE_TO_CAMEL: Record<string, Record<string, string>> = {
   users: {
-    full_name: 'name',          // Our DB has 'full_name', Better Auth expects 'name'
+    full_name: 'name',
     email_verified: 'emailVerified',
     password_hash: 'password',
     tenant_id: 'tenantId',
@@ -208,11 +206,9 @@ export const supabaseAdapter = {
     // Handle UUID vs String ID mismatch:
     // Our database uses UUIDs for 'users' and 'sessions', but Better Auth generates base62 strings.
     if (model === 'user' || model === 'session') {
-      delete snakeData.updated_at; // Also clean up updated_at which isn't in some tables
+      delete snakeData.updated_at;
       delete snakeData.id; // Let database generate UUID
     } else {
-      // For accounts and verifications (which use text fields), keep the ID.
-      // If it's missing for some reason, generate one.
       if (!snakeData.id) {
         snakeData.id = crypto.randomUUID();
       }
@@ -229,7 +225,6 @@ export const supabaseAdapter = {
       const subdomainBase = slugify(storeName);
       let subdomain = subdomainBase;
       
-      // Check if subdomain exists, if so append random string (simplified for now)
       const { data: existingTenant } = await supabase.from('tenants').select('id').eq('subdomain', subdomain).maybeSingle();
       if (existingTenant) {
         subdomain = `${subdomainBase}-${Math.random().toString(36).substring(2, 6)}`;
@@ -267,7 +262,6 @@ export const supabaseAdapter = {
 
       if (branchError) {
         console.error('[Adapter] Branch creation failed:', branchError);
-        // We could delete the tenant here but let's keep it simple
       }
 
       // 3. Update User Data
@@ -275,30 +269,22 @@ export const supabaseAdapter = {
       snakeData.branch_id = branch?.id;
       snakeData.role = 'tenant_owner';
       
-      // Remove temporary field
       delete snakeData.store_name;
     } else if (model === 'user') {
-      // If store_name is present but tenant_id is NOT (this shouldn't happen usually but just in case)
       delete snakeData.store_name;
-      
-      // Default role if not provided
       if (!snakeData.role) snakeData.role = 'admin';
     }
 
-    // Fix for database constraint:
-    // Better Auth stores the actual password in the 'accounts' table.
-    // Our 'users' table has a constraint requiring 'password_hash' to not be null for non-cashiers.
-    // So we provide a dummy hash to satisfy the DB.
+    // Fix for database constraint
     if (model === 'user' && !snakeData.password_hash) {
       snakeData.password_hash = '$argon2id$v=19$m=19456,t=2,p=1$managed_by_better_auth';
     }
 
     // Our DB requires phone NOT NULL — provide fallback if not given
     if (model === 'user' && !snakeData.phone) {
-      snakeData.phone = '+998000000000'; // placeholder; user can update later
+      snakeData.phone = '+998000000000';
     }
 
-    // Debug log — helps trace exactly what's going into the DB
     console.log(`[Adapter] create model=${model} table=${table} data=`, JSON.stringify(snakeData, null, 2));
 
     const { data: result, error } = await supabase
@@ -342,7 +328,6 @@ export const supabaseAdapter = {
     
     const camelData = objToCamel(data as Record<string, unknown>, table) as T;
     
-    // Handle "join" relation manually for Better Auth since Supabase HTTP needs a second request
     if (join && join.account && model === 'user') {
       const { data: accountsData } = await supabase.from('accounts').select('*').eq('user_id', data.id);
       if (accountsData) {
@@ -420,7 +405,6 @@ export const supabaseAdapter = {
   },
 
   // UPDATE: Update a single record
-
   async update<T>({
     model,
     where,
@@ -517,4 +501,3 @@ export const supabaseAdapter = {
     return count ?? 0;
   },
 };
-
