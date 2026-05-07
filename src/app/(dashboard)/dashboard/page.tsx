@@ -124,20 +124,24 @@ export default async function DashboardPage({
   ];
 
   return (
-    <div className="space-y-8 animate-fade-up">
+    <div className="space-y-6 animate-fade-up">
       {/* Welcome Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between bg-[var(--color-bg-card)]/30 p-4 md:p-6 rounded-[24px] border border-[var(--color-border)]/50 backdrop-blur-md">
         <div>
-          <h1 className="font-display text-4xl text-[var(--color-foreground)]">Xush kelibsiz!</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">
+          <h1 className="font-display text-2xl md:text-3xl text-[var(--color-foreground)] tracking-tight">
+            Xush kelibsiz!
+          </h1>
+          <p className="text-[var(--color-text-secondary)] text-sm mt-0.5 opacity-80">
             Do'koningizning {period === 'today' ? 'bugungi' : period === 'week' ? 'haftalik' : 'oylik'} holati qanday?
           </p>
         </div>
-        <DashboardFilter />
+        <div className="flex-shrink-0">
+          <DashboardFilter />
+        </div>
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpis.map((kpi, idx) => (
           <div
             key={kpi.label}
@@ -147,10 +151,10 @@ export default async function DashboardPage({
               backdropFilter: 'blur(10px)',
               border: '1px solid var(--color-border)',
               borderRadius: 24,
-              padding: '24px',
+              padding: '20px',
               display: 'flex',
               flexDirection: 'column',
-              gap: 16,
+              gap: 12,
               boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
             }}
           >
@@ -170,9 +174,9 @@ export default async function DashboardPage({
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
               <div style={{
                 background: `${kpi.color}15`,
-                borderRadius: 14,
-                width: 44,
-                height: 44,
+                borderRadius: 12,
+                width: 40,
+                height: 40,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 border: `1px solid ${kpi.color}30`,
               }} className="group-hover:scale-110 transition-transform duration-300">
