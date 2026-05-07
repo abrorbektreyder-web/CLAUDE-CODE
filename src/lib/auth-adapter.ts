@@ -144,7 +144,7 @@ type WhereClause = {
   operator?: string;
 };
 
-function buildQuery(query: any) {
+function buildQuery(query: any, where: WhereClause[], table: string) {
   const specialMap = CAMEL_TO_SNAKE[table] ?? {};
   for (const w of where) {
     const col = specialMap[w.field] ?? toSnake(w.field);
@@ -189,10 +189,10 @@ export const supabaseAdapter = {
           snakeData.tenant_id = user.tenant_id;
         }
       }
-      
+
       // Set last_active_at
       snakeData.last_active_at = new Date().toISOString();
-      
+
       // Fix empty inet string (Supabase doesn't like "" for inet)
       if (snakeData.ip_address === '') {
         delete snakeData.ip_address;
@@ -220,13 +220,13 @@ export const supabaseAdapter = {
       // 1. Create Tenant
       const subdomainBase = slugify(storeName);
       let subdomain = subdomainBase;
-      
+
       const { data: existingTenant } = await getSupabase().from('tenants').select('id').eq('subdomain', subdomain).maybeSingle();
       if (existingTenant) {
         subdomain = `${subdomainBase}-${Math.random().toString(36).substring(2, 6)}`;
       }
 
-      const { data: tenant, error: tenantError } = await supabase
+      const { data: tenant, error: tenantError } = await getSupabase()
         .from('tenants')
         .insert({
           subdomain,
@@ -245,7 +245,7 @@ export const supabaseAdapter = {
       }
 
       // 2. Create Main Branch
-      const { data: branch, error: branchError } = await supabase
+      const { data: branch, error: branchError } = await getSupabase()
         .from('branches')
         .insert({
           tenant_id: tenant.id,
@@ -264,7 +264,7 @@ export const supabaseAdapter = {
       snakeData.tenant_id = tenant.id;
       snakeData.branch_id = branch?.id;
       snakeData.role = 'tenant_owner';
-      
+
       delete snakeData.store_name;
     } else if (model === 'user') {
       delete snakeData.store_name;
@@ -283,7 +283,7 @@ export const supabaseAdapter = {
 
     console.log(`[Adapter] create model=${model} table=${table} data=`, JSON.stringify(snakeData, null, 2));
 
-    const { data: result, error } = await supabase
+    const { data: result, error } = await getSupabase()
       .from(table)
       .insert(snakeData)
       .select()
@@ -321,9 +321,9 @@ export const supabaseAdapter = {
     if (!data) {
       return null;
     }
-    
+
     const camelData = objToCamel(data as Record<string, unknown>, table) as T;
-    
+
     if (join && join.account && model === 'user') {
       const { data: accountsData } = await getSupabase().from('accounts').select('*').eq('user_id', data.id);
       if (accountsData) {
@@ -332,7 +332,7 @@ export const supabaseAdapter = {
         (camelData as any).account = [];
       }
     }
-    
+
     return camelData;
   },
 

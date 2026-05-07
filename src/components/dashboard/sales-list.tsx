@@ -131,7 +131,7 @@ export function SalesList({ initialData }: SalesListProps) {
             )}
           </div>
           <Link
-            href="/dashboard/sales/new"
+            href="/sales/new"
             className="flex flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 transition-all hover:bg-[var(--color-accent-hover)] active:scale-95"
           >
             <Plus size={18} />

@@ -3,6 +3,7 @@
 import { Bell, Download, Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/components/dashboard/sidebar-provider';
+import { Clock } from '@/components/dashboard/clock';
 
 const pageTitles: Record<string, { breadcrumb: string; title: string }> = {
   '/dashboard': { breadcrumb: 'Boshqaruv', title: 'Dashboard' },
@@ -52,6 +53,8 @@ export function Topbar({ user }: { user?: any }) {
 
       {/* Actions */}
       <div className="flex items-center gap-3">
+        <Clock />
+
         {/* Live indicator */}
         <div className="flex items-center gap-2 rounded-full border border-[var(--color-success)]/30 bg-[var(--color-success)]/10 px-2.5 sm:px-3.5 py-1.5 text-xs font-semibold text-[var(--color-success)]">
           <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-[var(--color-success)] shadow-[0_0_12px_var(--color-success)]" />

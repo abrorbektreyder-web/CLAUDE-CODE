@@ -17,8 +17,14 @@ import {
 } from 'lucide-react';
 import { formatSum, formatUSD, formatRelativeTime } from '@/lib/utils';
 import Link from 'next/link';
+import { DashboardFilter } from '@/components/dashboard/dashboard-filter';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
+  const { period = 'today' } = await searchParams;
   let session = null;
   try {
     session = await auth.api.getSession({
@@ -29,6 +35,25 @@ export default async function DashboardPage() {
   }
 
   const tenantId = session?.user.tenantId;
+
+  // Calculate dates based on period
+  let startDate: string | undefined;
+  let endDate: string | undefined;
+
+  const now = new Date();
+  if (period === 'today') {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    startDate = today.toISOString();
+  } else if (period === 'week') {
+    const weekAgo = new Date();
+    weekAgo.setDate(now.getDate() - 7);
+    startDate = weekAgo.toISOString();
+  } else if (period === 'month') {
+    const monthAgo = new Date();
+    monthAgo.setMonth(now.getMonth() - 1);
+    startDate = monthAgo.toISOString();
+  }
 
   // Initialize with empty/default values in case of failure
   let kpisData: any = { 
@@ -41,7 +66,7 @@ export default async function DashboardPage() {
   try {
     if (tenantId) {
       const [kpis, sales] = await Promise.all([
-        getDashboardKpis(tenantId),
+        getDashboardKpis(tenantId, startDate, endDate),
         getSales(tenantId, 8)
       ]);
       kpisData = kpis;
@@ -49,14 +74,15 @@ export default async function DashboardPage() {
     }
   } catch (error) {
     console.error('[Dashboard] Error fetching data:', error);
-    // Fallback to empty state already initialized above
   }
 
   const formatPrice = (price: number) => formatSum(price, false);
 
+  const periodLabel = period === 'today' ? 'Bugungi' : period === 'week' ? 'Haftalik' : 'Oylik';
+
   const kpis = [
     {
-      label: 'Bugungi savdo',
+      label: `${periodLabel} savdo`,
       value: formatPrice(kpisData.today.revenue),
       usdValue: formatUSD(kpisData.today.revenue),
       unit: "so'm",
@@ -103,13 +129,11 @@ export default async function DashboardPage() {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="font-display text-4xl text-[var(--color-foreground)]">Xush kelibsiz!</h1>
-          <p className="text-[var(--color-text-secondary)] mt-1">Do'koningizning bugungi holati qanday?</p>
+          <p className="text-[var(--color-text-secondary)] mt-1">
+            Do'koningizning {period === 'today' ? 'bugungi' : period === 'week' ? 'haftalik' : 'oylik'} holati qanday?
+          </p>
         </div>
-        <div className="flex items-center gap-2 p-1 bg-[var(--color-bg-elevated)] border border-[var(--color-border)] rounded-xl">
-          <button className="px-4 py-2 text-xs font-bold rounded-lg bg-[var(--color-accent)] text-white shadow-lg shadow-[var(--color-accent)]/20">Bugun</button>
-          <button className="px-4 py-2 text-xs font-bold text-[var(--color-text-tertiary)] hover:text-[var(--color-foreground)] transition-colors">Hafta</button>
-          <button className="px-4 py-2 text-xs font-bold text-[var(--color-text-tertiary)] hover:text-[var(--color-foreground)] transition-colors">Oy</button>
-        </div>
+        <DashboardFilter />
       </div>
 
       {/* KPI Grid */}

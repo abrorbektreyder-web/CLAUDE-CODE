@@ -270,9 +270,11 @@ export async function getDebtDetails(debtId: string, tenantId: string) {
 // 8. DASHBOARD: today's KPIs
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
 
-export async function getDashboardKpis(tenantId?: string) {
+export async function getDashboardKpis(tenantId: string, startDate?: string, endDate?: string) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const start = startDate || today.toISOString();
+  const end = endDate || new Date().toISOString();
 
   if (!tenantId) {
     return {
@@ -282,10 +284,11 @@ export async function getDashboardKpis(tenantId?: string) {
     };
   }
 
-  // Today's sales
+  // Sales within range
   let salesQuery = getSupabase().from('sales')
-    .select('total, status')
-    .gte('created_at', today.toISOString())
+    .select('total, status, cost_price') // cost_price if exists for profit calculation
+    .gte('created_at', start)
+    .lte('created_at', end)
     .eq('status', 'completed')
     .eq('tenant_id', tenantId);
 
@@ -308,11 +311,11 @@ export async function getDashboardKpis(tenantId?: string) {
     today: {
       revenue,
       count,
-      profit: revenue * 0.18,
+      profit: revenue * 0.18, // 18% margin as per user's earlier logic
       avgTicket: count > 0 ? revenue / count : 0,
     },
     yesterday: {
-      revenue: revenue * 0.95,
+      revenue: revenue * 0.95, // Sample relative data
     },
     debts: {
       totalAmount: totalDebts,

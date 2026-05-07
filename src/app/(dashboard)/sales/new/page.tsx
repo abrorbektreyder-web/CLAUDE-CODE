@@ -5,21 +5,27 @@ import { redirect } from 'next/navigation';
 import { getInventory, getCustomers, getDebts, getSales } from '@/db/queries';
 
 export const metadata = {
-  title: 'Yangi savdo | Dashboard',
+  title: 'Yangi Savdo | Admin Panel',
 };
 
-export default async function NewSalePage() {
+export default async function AdminNewSalePage() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
+  // Agar sessiya bo'lmasa, Admin login sahifasiga qaytarish (kassirga emas!)
   if (!session) {
-    redirect('/cashier-login');
+    redirect('/login?callback=/sales/new');
+  }
+
+  // Agar kassir admin paneliga kirmoqchi bo'lsa, uni o'zini POS oynasiga qaytarish
+  if (session.user.role === 'cashier') {
+    redirect('/staff/pos');
   }
 
   const tenantId = session.user.tenantId;
 
-  // Fetch all required data in parallel
+  // Fetch barcha kerakli ma'lumotlar
   const [inventoryRaw, customersRaw, debtsRaw, salesRaw] = await Promise.all([
     getInventory(tenantId),
     getCustomers(tenantId),
@@ -27,7 +33,7 @@ export default async function NewSalePage() {
     getSales(tenantId),
   ]);
 
-  // Serialize exactly as the components expect
+  // Ma'lumotlarni komponentga moslashtirish
   const inventoryData = inventoryRaw.map(item => ({
     ...item,
     retailPrice: (item.retailPrice ?? 0).toString(),
@@ -68,7 +74,7 @@ export default async function NewSalePage() {
         customersData={customersData}
         debtsData={debtsData}
         salesData={salesData}
-        hideSidebar={true}
+        hideSidebar={true} 
       />
     </div>
   );
