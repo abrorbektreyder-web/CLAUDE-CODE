@@ -1,5 +1,5 @@
 
-import { getDashboardKpis, getSales } from '@/db/queries';
+import { getDashboardKpis, getSales, getChartData } from '@/db/queries';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { 
@@ -36,23 +36,34 @@ export default async function DashboardPage({
 
   const tenantId = session?.user.tenantId;
 
-  // Calculate dates based on period
+  // Calculate dates based on period in Uzbekistan Time (UTC+5)
+  const uzbTime = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Tashkent' }));
   let startDate: string | undefined;
   let endDate: string | undefined;
 
-  const now = new Date();
   if (period === 'today') {
-    const today = new Date();
+    const today = new Date(uzbTime);
     today.setHours(0, 0, 0, 0);
-    startDate = today.toISOString();
+    // Convert local 00:00 back to UTC for database comparison
+    // Tashkent is UTC+5, so 00:00 Tashkent is 19:00 UTC previous day
+    startDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString();
+    // Actually, a simpler way to get the exact start of today in Uzb as a UTC string:
+    const d = new Date(uzbTime);
+    d.setHours(0, 0, 0, 0);
+    // We need to offset the UTC date to match the beginning of Uzb day
+    // Uzb is 5 hours ahead, so 00:00 Uzb = 19:00 UTC (prev day)
+    const startOfTodayUzb = new Date(d.getTime() - (5 * 60 * 60 * 1000));
+    startDate = startOfTodayUzb.toISOString();
   } else if (period === 'week') {
-    const weekAgo = new Date();
-    weekAgo.setDate(now.getDate() - 7);
-    startDate = weekAgo.toISOString();
+    const weekAgo = new Date(uzbTime);
+    weekAgo.setDate(uzbTime.getDate() - 7);
+    weekAgo.setHours(0, 0, 0, 0);
+    startDate = new Date(weekAgo.getTime() - (5 * 60 * 60 * 1000)).toISOString();
   } else if (period === 'month') {
-    const monthAgo = new Date();
-    monthAgo.setMonth(now.getMonth() - 1);
-    startDate = monthAgo.toISOString();
+    const monthAgo = new Date(uzbTime);
+    monthAgo.setMonth(uzbTime.getMonth() - 1);
+    monthAgo.setHours(0, 0, 0, 0);
+    startDate = new Date(monthAgo.getTime() - (5 * 60 * 60 * 1000)).toISOString();
   }
 
   // Initialize with empty/default values in case of failure
@@ -62,15 +73,19 @@ export default async function DashboardPage({
     debts: { totalAmount: 0, overdueCount: 0 }
   };
   let recentSales: any[] = [];
+  let chartData: any[] = [];
 
   try {
     if (tenantId) {
-      const [kpis, sales] = await Promise.all([
+      const days = period === 'month' ? 30 : period === 'week' ? 7 : 7;
+      const [kpis, sales, chart] = await Promise.all([
         getDashboardKpis(tenantId, startDate, endDate),
-        getSales(tenantId, 8)
+        getSales(tenantId, 8),
+        getChartData(tenantId, days)
       ]);
       kpisData = kpis;
       recentSales = sales;
+      chartData = chart;
     }
   } catch (error) {
     console.error('[Dashboard] Error fetching data:', error);
@@ -122,6 +137,8 @@ export default async function DashboardPage({
       trendType: 'down',
     },
   ];
+
+  const maxRevenue = Math.max(...chartData.map(d => d.revenue), 1000000);
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -240,33 +257,62 @@ export default async function DashboardPage({
             </div>
           </div>
 
-          <div className="h-64 w-full flex items-end justify-between gap-3 px-2">
-            {[35, 60, 45, 85, 70, 95, 55].map((h, i) => (
-              <div key={i} className="group/bar relative flex-1 flex flex-col items-center gap-4">
-                {/* Value Label */}
-                <div className="opacity-0 group-hover/bar:opacity-100 transition-opacity absolute -top-8 px-2 py-1 rounded bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-black text-white whitespace-nowrap z-10 shadow-xl">
-                  {formatSum(h * 1000000, true)}
+          <div className="h-64 w-full flex items-end justify-between gap-1.5 sm:gap-3 px-2">
+            {chartData.map((d, i) => {
+              const h = (d.revenue / maxRevenue) * 100;
+              const ph = (d.profit / maxRevenue) * 100;
+              return (
+                <div key={i} className="group/bar relative flex-1 flex flex-col items-center gap-4 h-full justify-end">
+                  {/* Tooltip */}
+                  <div className="opacity-0 group-hover/bar:opacity-100 transition-all duration-300 absolute -top-12 px-3 py-2 rounded-xl bg-black/80 backdrop-blur-md border border-white/10 text-[10px] font-bold text-white whitespace-nowrap z-20 shadow-2xl scale-90 group-hover/bar:scale-100">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-gray-400">Savdo:</span>
+                        <span className="text-[var(--color-accent)]">{formatSum(d.revenue, false)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-gray-400">Foyda:</span>
+                        <span className="text-[var(--color-success)]">{formatSum(d.profit, false)}</span>
+                      </div>
+                      <div className="mt-1 pt-1 border-t border-white/10 text-center opacity-60">
+                        {d.date}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Bars Container */}
+                  <div className="w-full flex items-end justify-center gap-0.5 h-full relative">
+                    {/* Revenue Bar */}
+                    <div 
+                      className="w-full max-w-[12px] sm:max-w-[20px] rounded-t-lg transition-all duration-700 ease-spring relative overflow-hidden"
+                      style={{ 
+                        height: `${Math.max(h, 2)}%`,
+                        background: i === chartData.length - 1 ? 'var(--color-accent)' : 'var(--color-bg-elevated)',
+                        border: i === chartData.length - 1 ? 'none' : '1px solid var(--color-border)',
+                        boxShadow: i === chartData.length - 1 ? '0 0 30px rgba(255, 107, 53, 0.3)' : 'none'
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                      {i === chartData.length - 1 && <div className="absolute inset-0 bg-white/20 animate-pulse" />}
+                    </div>
+
+                    {/* Profit Bar (Layered) */}
+                    <div 
+                      className="w-full max-w-[8px] sm:max-w-[14px] rounded-t-lg transition-all duration-1000 ease-spring absolute bottom-0 opacity-40 group-hover/bar:opacity-100"
+                      style={{ 
+                        height: `${Math.max(ph, 1)}%`,
+                        background: 'var(--color-info)',
+                        mixBlendMode: 'plus-lighter'
+                      }}
+                    />
+                  </div>
+                  
+                  <span className="text-[9px] font-black text-[var(--color-text-tertiary)] uppercase tracking-tighter sm:tracking-widest opacity-60 group-hover/bar:opacity-100 transition-opacity">
+                    {d.day}
+                  </span>
                 </div>
-                
-                {/* Bar */}
-                <div 
-                  className="w-full rounded-t-xl transition-all duration-500 ease-spring relative overflow-hidden"
-                  style={{ 
-                    height: `${h}%`,
-                    background: i === 5 ? 'var(--color-accent)' : 'var(--color-bg-elevated)',
-                    border: i === 5 ? 'none' : '1px solid var(--color-border)',
-                    boxShadow: i === 5 ? '0 0 30px rgba(255, 107, 53, 0.3)' : 'none'
-                  }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-                  {i === 5 && <div className="absolute inset-0 bg-white/10 animate-pulse-dot" />}
-                </div>
-                
-                <span className="text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-widest">
-                  {['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'][i]}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

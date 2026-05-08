@@ -53,9 +53,32 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     retailCurrency: 'USD' as 'UZS' | 'USD',
     wholesaleCurrency: 'USD' as 'UZS' | 'USD',
     minStock: '5', warrantyMonths: '12', description: '',
+    imageUrl: '',
   });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // USD_RATE import is needed, let's assume it's available or we use the constant
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    console.log('[Upload] File selected:', file.name);
+    setUploading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Rasm yuklashda xato');
+      setForm(prev => ({ ...prev, imageUrl: json.url }));
+    } catch (err: any) {
+      console.error('[Upload] Error:', err);
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const USD_RATE = 12850;
 
   const handlePriceChange = (field: string, value: string) => {
@@ -108,6 +131,7 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
           minStock: Number(form.minStock),
           warrantyMonths: Number(form.warrantyMonths),
           description: form.description || undefined,
+          imageUrl: form.imageUrl || undefined,
         }),
       });
       const json = await res.json();
@@ -313,6 +337,50 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
               </div>
             </div>
 
+            {/* Image Upload */}
+            <div>
+              <label className={labelCls}>Mahsulot rasmi</label>
+              <div className="mt-2 flex items-center gap-4">
+                <div className="h-24 w-24 rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-bg-elevated)] flex items-center justify-center overflow-hidden group relative">
+                  {form.imageUrl ? (
+                    <>
+                      <img src={form.imageUrl} alt="Preview" className="h-full w-full object-cover" />
+                      <button 
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, imageUrl: '' }))}
+                        className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white"
+                      >
+                        <X size={20} />
+                      </button>
+                    </>
+                  ) : (
+                    <Package size={24} className="text-[var(--color-text-tertiary)]" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/*"
+                  />
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-4 py-2 text-sm font-medium hover:bg-[var(--color-bg-hover)] transition-all disabled:opacity-50"
+                  >
+                    {uploading ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
+                    {uploading ? 'Yuklanmoqda...' : 'Kompyuterdan tanlash'}
+                  </button>
+                  <p className="mt-2 text-[10px] text-[var(--color-text-tertiary)]">
+                    PNG, JPG yoki WEBP. Maksimal 5MB.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Description */}
             <div>
               <label className={labelCls}>Izoh</label>
@@ -405,7 +473,31 @@ function EditProductModal({
     minStock: String(item.minStock),
     warrantyMonths: String(item.warrantyMonths),
     description: item.description || '',
+    imageUrl: item.imageUrl || '',
   });
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    console.log('[Upload] File selected:', file.name);
+    setUploading(true);
+    setError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Rasm yuklashda xato');
+      setForm(prev => ({ ...prev, imageUrl: json.url }));
+    } catch (err: any) {
+      console.error('[Upload] Error:', err);
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const USD_RATE = 12850;
 
@@ -459,6 +551,7 @@ function EditProductModal({
           minStock: Number(form.minStock),
           warrantyMonths: Number(form.warrantyMonths),
           description: form.description || undefined,
+          imageUrl: form.imageUrl || undefined,
         }),
       });
       const json = await res.json();

@@ -67,6 +67,32 @@ export function PosInterface({
   const { data: session, isPending } = useSession();
   const router = useRouter();
 
+  // Product Thumbnail Helper
+  const ProductThumbnail = ({ name, imageUrl, className, textClassName }: any) => {
+    if (imageUrl) {
+      return <img src={imageUrl} alt={name} className={cn("w-full h-full object-cover", className)} />;
+    }
+    
+    const firstLetter = name ? name.trim().charAt(0).toUpperCase() : '?';
+    const gradients = [
+      'from-blue-500 to-indigo-600',
+      'from-purple-500 to-pink-600',
+      'from-orange-500 to-red-600',
+      'from-emerald-500 to-teal-600',
+      'from-slate-700 to-slate-900',
+      'from-amber-500 to-orange-600',
+      'from-cyan-500 to-blue-600'
+    ];
+    const charCode = firstLetter.charCodeAt(0);
+    const gradient = gradients[charCode % gradients.length];
+
+    return (
+      <div className={cn(`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-display font-black shadow-inner`, className)}>
+        <span className={cn("text-2xl md:text-4xl drop-shadow-md", textClassName)}>{firstLetter}</span>
+      </div>
+    );
+  };
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('pos');
   const [mobileView, setMobileView] = useState<'catalog' | 'cart'>('catalog');
   const [search, setSearch] = useState('');
@@ -565,8 +591,8 @@ export function PosInterface({
                         onClick={() => addToCart(p)}
                         className="premium-card group rounded-2xl p-3 md:p-4 text-left hover:border-[var(--color-accent)] transition-all active:scale-95"
                       >
-                        <div className="mb-2 md:mb-3 aspect-square rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center group-hover:bg-[var(--color-accent)]/5 transition-colors overflow-hidden">
-                          {p.productType === 'phone' ? <Smartphone size={24} className="md:size-32 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" /> : <Headphones size={24} className="md:size-32 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-accent)]" />}
+                        <div className="mb-2 md:mb-3 aspect-square rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] flex items-center justify-center group-hover:opacity-90 transition-all overflow-hidden shadow-sm">
+                          <ProductThumbnail name={pName(p)} imageUrl={p.imageUrl} />
                         </div>
                         <div className="font-bold text-xs md:text-sm line-clamp-2 h-8 md:h-10 mb-1">{pName(p)}</div>
                         <div className="text-[9px] md:text-[10px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider mb-2 md:mb-3">{p.brand}</div>
@@ -618,33 +644,33 @@ export function PosInterface({
                 <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar min-h-0">
                   {cart.length > 0 ? (
                     cart.map((item) => (
-                      <div key={item.id} className="group relative flex items-center gap-3 md:gap-4 p-3 rounded-2xl bg-[var(--color-bg-base)] border border-[var(--color-border)] hover:border-[var(--color-accent)]/50 transition-all">
-                        <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-[var(--color-bg-elevated)] flex items-center justify-center shrink-0">
-                          {item.type === 'phone' ? <Smartphone size={18} className="md:size-20 text-[var(--color-text-tertiary)]" /> : <Headphones size={18} className="md:size-20 text-[var(--color-text-tertiary)]" />}
+                      <div key={item.id} className="group relative flex items-center gap-3 md:gap-4 p-4 rounded-2xl bg-[var(--color-bg-base)] border border-[var(--color-border)] hover:border-[var(--color-accent)]/50 transition-all shadow-sm">
+                        <div className="h-12 w-12 md:h-14 md:w-14 rounded-xl bg-[var(--color-bg-elevated)] flex items-center justify-center shrink-0 overflow-hidden border border-[var(--color-border)]">
+                          <ProductThumbnail name={item.name} textClassName="text-xl md:text-2xl" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold text-xs md:text-sm truncate pr-6">{item.name}</div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="flex items-center bg-[var(--color-bg-elevated)] rounded-lg border border-[var(--color-border)]">
+                          <div className="font-bold text-xs md:text-sm truncate pr-8 leading-tight mb-2">{item.name}</div>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center bg-[var(--color-bg-elevated)] rounded-xl border border-[var(--color-border)] p-0.5">
                               <button
                                 onClick={() => updateQuantity(item.id, -1)}
-                                className="px-2 py-1 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors"
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-bg-hover)] rounded-lg transition-all"
                               >
-                                -
+                                <Minus size={14} />
                               </button>
-                              <span className="px-2 text-xs font-mono font-bold">{item.quantity}</span>
+                              <span className="w-8 text-center text-xs font-mono font-bold">{item.quantity}</span>
                               <button
                                 onClick={() => updateQuantity(item.id, 1)}
-                                className="px-2 py-1 text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] transition-colors"
+                                className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-accent)] hover:bg-[var(--color-bg-hover)] rounded-lg transition-all"
                               >
-                                +
+                                <Plus size={14} />
                               </button>
                             </div>
-                            <div className="flex flex-col items-end">
-                              <div className="text-[11px] font-bold text-[var(--color-accent)]">
+                            <div className="flex flex-col items-end shrink-0">
+                              <div className="text-[12px] md:text-[13px] font-bold text-[var(--color-accent)]">
                                 {formatUSD(item.price * item.quantity)}
                               </div>
-                              <div className="text-[10px] font-medium text-[var(--color-text-tertiary)]">
+                              <div className="text-[9px] md:text-[10px] font-medium text-[var(--color-text-tertiary)]">
                                 {formatSum(item.price * item.quantity)}
                               </div>
                             </div>

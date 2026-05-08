@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { deleteExpense } from '@/db/queries';
 import { headers } from 'next/headers';
 
-async function getTenantId(): Promise<string | null> {
-  const h = await headers();
-  return h.get('x-tenant-id') || h.get('x-subdomain') || null;
-}
+import { auth } from '@/lib/auth';
 
+// We extract tenantId directly from the session in the routes
 export async function DELETE(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const tenantId = await getTenantId();
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    
+    const tenantId = session.user.tenantId;
     if (!tenantId) return NextResponse.json({ error: 'Tenant not found' }, { status: 400 });
     const { id } = await params;
     await deleteExpense(id, tenantId);

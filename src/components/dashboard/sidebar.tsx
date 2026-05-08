@@ -185,12 +185,12 @@ export function Sidebar({ user, tenant }: SidebarProps) {
             className="group flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 transition-all duration-300 hover:bg-red-500/5 hover:border-red-500/20"
           >
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-accent)] to-orange-400 text-xs font-bold text-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
-              {initials}
+              A
             </div>
             <div className="flex-1 overflow-hidden text-left">
-              <div className="truncate text-sm font-semibold group-hover:text-red-500 transition-colors">{user.name}</div>
+              <div className="truncate text-sm font-semibold group-hover:text-red-500 transition-colors">ADMIN</div>
               <div className="truncate text-[11px] text-[var(--color-text-tertiary)]">
-                {user.email}
+                OWNER PANEL
               </div>
             </div>
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-all duration-300 group-hover:bg-red-500 group-hover:text-white">

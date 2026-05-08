@@ -3,14 +3,14 @@ import { getExpenses, createExpense } from '@/db/queries';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth';
 
-async function getTenantId(): Promise<string | null> {
-  const h = await headers();
-  return h.get('x-tenant-id') || h.get('x-subdomain') || null;
-}
+// We extract tenantId directly from the session in the routes
 
 export async function GET(req: NextRequest) {
   try {
-    const tenantId = await getTenantId();
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    
+    const tenantId = session.user.tenantId;
     if (!tenantId) return NextResponse.json({ error: 'Tenant not found' }, { status: 400 });
 
     const { searchParams } = req.nextUrl;
@@ -28,12 +28,11 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const tenantId = await getTenantId();
-    if (!tenantId) return NextResponse.json({ error: 'Tenant not found' }, { status: 400 });
-
-    // Get current user session
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    
+    const tenantId = session.user.tenantId;
+    if (!tenantId) return NextResponse.json({ error: 'Tenant not found' }, { status: 400 });
 
     const body = await req.json();
     const data = await createExpense({

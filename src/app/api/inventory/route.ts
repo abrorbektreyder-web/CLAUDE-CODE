@@ -18,6 +18,7 @@ const createProductSchema = z.object({
   minStock: z.number().min(0).default(5),
   warrantyMonths: z.number().min(0).default(12),
   description: z.string().optional(),
+  imageUrl: z.string().url('Noto\'g\'ri rasm manzili').optional().or(z.literal('')),
 });
 
 export async function POST(request: NextRequest) {
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
         min_stock: data.minStock,
         warranty_months: data.warrantyMonths,
         description: data.description || null,
+        image_url: data.imageUrl || null,
         is_active: true,
         is_featured: false,
       })
@@ -183,6 +185,7 @@ export async function PATCH(request: NextRequest) {
     if (data.minStock !== undefined) dbData.min_stock = data.minStock;
     if (data.warrantyMonths !== undefined) dbData.warranty_months = data.warrantyMonths;
     if (data.description !== undefined) dbData.description = data.description;
+    if (data.imageUrl !== undefined) dbData.image_url = data.imageUrl || null;
 
     const { data: updated, error } = await supabase
       .from('products')

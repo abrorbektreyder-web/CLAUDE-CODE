@@ -68,13 +68,13 @@ export default async function AdminNewSalePage() {
   }));
 
   return (
-    <div className="h-[calc(100vh-140px)] -m-4 md:-m-6 lg:-m-8">
+    <div className="h-full">
       <PosInterface 
         inventoryData={inventoryData}
         customersData={customersData}
         debtsData={debtsData}
         salesData={salesData}
-        hideSidebar={true} 
+        hideSidebar={false} 
       />
     </div>
   );

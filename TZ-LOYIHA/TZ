@@ -107,7 +107,13 @@ MVP (Minimum Viable Product) bosqichida quyidagi 15 ta asosiy funksional modul i
 •WhatsApp Business integratsiya
 •Franchise rejimi (sub-tenants)
 •Public API (3rd party)
-3.4. Scope'dan TASHQARI (qilmaydi)
+3.4. Phase 4 — Super Admin & SaaS Boshqaruvi (YANGI)
+• Global Dashboard: Barcha do'konlar savdosi va o'sish dinamikasi
+• Tenant Control: Do'konlarni aktivlashtirish va bloklash (Bloklanganda Admin va Kassir kirishi yopiladi)
+• Plan Manager: Tariflarni o'zgartirish va to'lov muddati nazorati
+• Global Broadcast: Barcha do'konlarga tizim xabarlarini yuborish
+• Audit Explorer: Barcha ijarachilarning audit loglarini ko'rish (xavfsizlik uchun)
+3.5. Scope'dan TASHQARI (qilmaydi)
 Quyidagi funksiyalar bu loyiha doirasida ishlab chiqilmaydi:
 •To'liq accounting tizimi (1C kabi) — ammo eksport bor
 •HR/oylik moshi tizimi
@@ -250,7 +256,8 @@ tenants (
   business_name VARCHAR,
   plan VARCHAR,                 -- free, starter, pro, enterprise
   created_at, expires_at,
-  settings JSONB                -- bot_token, sms_config, etc.
+  settings JSONB,                -- bot_token, sms_config, etc.
+  is_blocked BOOLEAN DEFAULT FALSE -- Bloklangan do'konni o'chirish/kirish cheklovi
 )
 
 -- USERS
@@ -258,7 +265,7 @@ users (
   id UUID PRIMARY KEY,
   tenant_id UUID REFERENCES tenants(id),
   email, phone, pin_hash,
-  role VARCHAR,                 -- admin, manager, cashier, warehouse
+  role VARCHAR,                 -- admin, manager, cashier, warehouse, super_admin
   is_active BOOLEAN,
   last_login_at, last_login_ip
 )
@@ -1018,12 +1025,13 @@ Versiya 1.0  •  23 Aprel, 2026
 - [x] Sidebar: Kassir uchun alohida StaffSidebar
 - [x] Layout: Kassir uchun alohida Dashboard Layout yaratish
 - [x] Middleware Guard: Kassirni Admin paneldan cheklash
-- [ ] Staff Inventory: Omborning kassir uchun cheklangan versiyasi
+- [x] Staff Inventory: Omborning kassir uchun cheklangan versiyasi
 - [x] Staff Sales: Savdolar tarixi + Pro Date Filter + Mobile UI
 - [x] Staff Credit: Nasiya bo'limi + Pro Date Filter + Stats Sync
 - [x] Date Filter: Kun, Hafta, Oy, Custom Month/Year Picker (Pro-level)
 - [x] UX/UI: Mobile-first bottom sheet picker + Touch optimization
 - [x] Telegram Alerts: Owner-ga har bir sotuv haqida botdan xabar borishi
+- [x] Vercel Fix: Cron frequency + Database connection pooler (FIXED)
 
 ## 10.1. Arxitektura va Yo'nalishlar
 Admin paneli (/inventory, /sales) ga mutloq tegmasdan, kassir uchun alohida route group yaratiladi.
@@ -1058,4 +1066,31 @@ Loyiha xavfsizligi va ishonchliligini ta'minlash uchun quyidagi zaif nuqtalar ba
 ### 11.5. Immutable Audit Log
 *   **Muammo:** Muhim amallar (o'chirish, narx o'zgartirish) ustidan to'liq nazorat yo'qligi.
 *   **Yechim:** O'chirib bo'lmaydigan `audit_logs` jadvalini yaratish va har bir muhim amalni foydalanuvchi ID va qurilma ma'lumotlari bilan qayd etish.
+
+================================================================================
+12. SAAS BILLING & SUBSCRIPTION LOGIC
+================================================================================
+
+### 12.1. Monetizatsiya Modeli
+Tizim obuna (Subscription) asosida ishlaydi. Har bir do'kon (tenant) tanlagan tarifiga qarab oylik yoki yillik to'lov amalga oshiradi.
+
+### 12.2. Tariflar Rejasi (Tavsiya)
+*   **Starter:** 1 filial, 2 kassir, asosiy hisobotlar.
+*   **Professional:** 3 filial, 10 kassir, Telegram xabarnomalar, Finance Pro.
+*   **Enterprise:** Cheksiz imkoniyatlar, shaxsiy menejer.
+
+### 12.3. To'lov va Aktivlashtirish
+1.  **Manual (MVP):** Do'kon egasi to'lov chekini yuboradi, Super Admin panelda `expires_at` sanasini belgilaydi.
+2.  **Auto (v1.1):** Click/Payme integratsiyasi orqali to'lov qilinishi bilan `tenants.expires_at` avtomatik uzaytiriladi.
+
+### 12.4. Bloklash Logikasi
+*   **Xabarnoma:** To'lov muddati tugashiga 3 kun qolganda do'kon egasining panelida va Telegramida ogohlantirish paydo bo'ladi.
+*   **Bloklash:** Agar `expires_at < CURRENT_DATE` bo'lsa, tizim avtomatik `is_blocked = TRUE` holatiga o'tadi.
+*   **Natija:** Bloklangan holatda na Admin, na Kassir tizimga kira olmaydi. Faqat to'lov sahifasi ochiq qoladi.
+
+### 12.5. Super Admin Huquqlari
+Super Admin istalgan vaqtda do'konni "Qoidabuzarlik" yoki "To'lov qilinmagani" uchun qo'lda bloklash va blokdan ochish huquqiga ega.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Hujjat yangilandi  •  8 May, 2026
 

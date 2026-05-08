@@ -286,7 +286,7 @@ export async function getDashboardKpis(tenantId: string, startDate?: string, end
 
   // Sales within range
   let salesQuery = getSupabase().from('sales')
-    .select('total, status, cost_price') // cost_price if exists for profit calculation
+    .select('total, status') 
     .gte('created_at', start)
     .lte('created_at', end)
     .eq('status', 'completed')
@@ -298,6 +298,13 @@ export async function getDashboardKpis(tenantId: string, startDate?: string, end
     .eq('tenant_id', tenantId);
 
   const [salesRes, debtRes] = await Promise.all([salesQuery, debtQuery]);
+
+  if (salesRes.error) {
+    console.error('[Dashboard] Sales query error:', salesRes.error);
+  }
+  if (debtRes.error) {
+    console.error('[Dashboard] Debts query error:', debtRes.error);
+  }
 
   const salesData = salesRes.data || [];
   const debtData = debtRes.data || [];
@@ -1254,5 +1261,51 @@ export async function createSupplierTransaction(params: {
   if (uErr) throw uErr;
 
   return transaction;
+}
+
+export async function getChartData(tenantId: string, days = 7) {
+  const supabase = getSupabase();
+  const uzbOffset = 5 * 60 * 60 * 1000;
+  const now = new Date();
+  
+  // Get start of N days ago in Uzb time
+  const startDate = new Date(now.getTime() - (days - 1) * 24 * 60 * 60 * 1000 + uzbOffset);
+  startDate.setHours(0, 0, 0, 0);
+  const startIso = new Date(startDate.getTime() - uzbOffset).toISOString();
+
+  const { data, error } = await supabase
+    .from('sales')
+    .select('total, created_at')
+    .eq('tenant_id', tenantId)
+    .eq('status', 'completed')
+    .gte('created_at', startIso)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('[Dashboard] Chart data error:', error);
+    return [];
+  }
+
+  // Prepare result map
+  const chartMap: Record<string, { revenue: number, profit: number, day: string, date: string }> = {};
+  
+  // Initialize days
+  for (let i = 0; i < days; i++) {
+    const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+    const dateStr = d.toISOString().split('T')[0];
+    const dayName = ['Ya', 'Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh'][d.getDay()];
+    chartMap[dateStr] = { revenue: 0, profit: 0, day: dayName, date: dateStr };
+  }
+
+  // Populate data
+  (data || []).forEach(sale => {
+    const date = new Date(new Date(sale.created_at).getTime() + uzbOffset).toISOString().split('T')[0];
+    if (chartMap[date]) {
+      chartMap[date].revenue += Number(sale.total);
+      chartMap[date].profit += Number(sale.total) * 0.18; // 18% placeholder
+    }
+  });
+
+  return Object.values(chartMap);
 }
 

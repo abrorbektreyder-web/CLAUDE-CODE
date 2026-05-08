@@ -145,6 +145,10 @@ export default function FinancePage() {
   );
   const [endDate, setEndDate] = useState(today.toISOString().split('T')[0]);
 
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
   // New expense form
   const [form, setForm] = useState({
     categoryId: '', amount: '', description: '', expenseDate: today.toISOString().split('T')[0]
@@ -171,38 +175,81 @@ export default function FinancePage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const showSuccess = (msg: string) => {
+    setSuccessMsg(msg);
+    setTimeout(() => setSuccessMsg(null), 3000);
+  };
+
+  const showError = (msg: string) => {
+    setErrorMsg(msg);
+    setTimeout(() => setErrorMsg(null), 5000);
+  };
+
   const handleAddExpense = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/finance/expenses', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    if (res.ok) {
-      setShowAddModal(false);
-      setForm({ categoryId: '', amount: '', description: '', expenseDate: today.toISOString().split('T')[0] });
-      load();
+    setSubmitting(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch('/api/finance/expenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (res.ok) {
+        setShowAddModal(false);
+        setForm({ categoryId: '', amount: '', description: '', expenseDate: today.toISOString().split('T')[0] });
+        showSuccess('Xarajat muvaffaqiyatli saqlandi');
+        load();
+      } else {
+        const data = await res.json();
+        showError(data.error || 'Saqlashda xatolik yuz berdi');
+      }
+    } catch (err) {
+      showError('Tarmoq xatosi');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/finance/categories', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(catForm),
-    });
-    if (res.ok) {
-      setShowCatModal(false);
-      setCatForm({ name: '', type: 'operating', color: '#3b82f6' });
-      load();
+    setSubmitting(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch('/api/finance/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(catForm),
+      });
+      if (res.ok) {
+        setShowCatModal(false);
+        setCatForm({ name: '', type: 'operating', color: '#3b82f6' });
+        showSuccess('Toifa yaratildi');
+        load();
+      } else {
+        const data = await res.json();
+        showError(data.error || 'Toifa yaratishda xatolik');
+      }
+    } catch (err) {
+      showError('Tarmoq xatosi');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Bu xarajatni o\'chirasizmi?')) return;
-    await fetch(`/api/finance/expenses/${id}`, { method: 'DELETE' });
-    load();
+    try {
+      const res = await fetch(`/api/finance/expenses/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        showSuccess('Xarajat o\'chirildi');
+        load();
+      } else {
+        showError('O\'chirishda xatolik');
+      }
+    } catch (err) {
+      showError('Tarmoq xatosi');
+    }
   };
 
   // Group expenses by category for mini chart
@@ -235,6 +282,20 @@ export default function FinancePage() {
         pointerEvents: 'none',
         zIndex: 0
       }} />
+      {/* Notifications */}
+      {successMsg && (
+        <div className="fixed top-24 right-8 bg-green-500 text-white px-6 py-3 rounded-2xl shadow-2xl z-[2000] animate-fade-left flex items-center gap-3">
+          <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">✓</div>
+          <span className="font-bold">{successMsg}</span>
+        </div>
+      )}
+      {errorMsg && (
+        <div className="fixed top-24 right-8 bg-red-500 text-white px-6 py-3 rounded-2xl shadow-2xl z-[2000] animate-fade-left flex items-center gap-3 border border-white/20">
+          <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">!</div>
+          <span className="font-bold">{errorMsg}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
@@ -430,8 +491,10 @@ export default function FinancePage() {
                 style={inputStyle} placeholder="Masalan: Aprel oyi ijarasi" />
             </label>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
-              <button type="button" onClick={() => setShowAddModal(false)} style={btnOutline}>Bekor</button>
-              <button type="submit" style={btnPrimary}>Saqlash</button>
+              <button type="button" onClick={() => setShowAddModal(false)} style={btnOutline} disabled={submitting}>Bekor</button>
+              <button type="submit" style={btnPrimary} disabled={submitting}>
+                {submitting ? 'Saqlanmoqda...' : 'Saqlash'}
+              </button>
             </div>
           </form>
         </Modal>
@@ -461,8 +524,10 @@ export default function FinancePage() {
                 style={{ ...inputStyle, height: 44, padding: 4, cursor: 'pointer' }} />
             </label>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 4 }}>
-              <button type="button" onClick={() => setShowCatModal(false)} style={btnOutline}>Bekor</button>
-              <button type="submit" style={btnPrimary}>Yaratish</button>
+              <button type="button" onClick={() => setShowCatModal(false)} style={btnOutline} disabled={submitting}>Bekor</button>
+              <button type="submit" style={btnPrimary} disabled={submitting}>
+                {submitting ? 'Yaratilmoqda...' : 'Yaratish'}
+              </button>
             </div>
           </form>
         </Modal>
