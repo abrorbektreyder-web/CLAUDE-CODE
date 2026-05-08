@@ -119,18 +119,13 @@ export const auth = betterAuth({
   // Trusted origins — includes ALL subdomains of localhost in dev and Vercel in prod
   trustedOrigins: [
     'http://localhost:3000',
-    'http://localhost:3001',
     'http://127.0.0.1:3000',
     'http://mobicenter.localhost:3000',
-    process.env.NEXT_PUBLIC_APP_URL,
-    process.env.BETTER_AUTH_URL,
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null,
-    process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : null,
-    // Wildcard for all subdomains on the root domain if provided
-    process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `https://*.${process.env.NEXT_PUBLIC_ROOT_DOMAIN.replace(':3000', '')}` : null,
+    process.env.NEXT_PUBLIC_APP_URL || '',
+    process.env.BETTER_AUTH_URL || '',
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '',
     'https://claude-code-six-chi.vercel.app',
-    'https://*.vercel.app',
   ].filter(Boolean) as string[],
 
   // Advanced security
