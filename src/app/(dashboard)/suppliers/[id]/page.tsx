@@ -87,7 +87,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
   
   // Transaction form
   const [form, setForm] = useState({
-    type: 'payment' as const,
+    type: 'payment' as Transaction['type'],
     amount: '',
     notes: ''
   });

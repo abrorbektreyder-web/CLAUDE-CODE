@@ -17,10 +17,13 @@ import {
   MoreVertical,
   X,
   Wallet,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSidebar } from '@/components/dashboard/sidebar-provider';
 import { motion } from 'framer-motion';
+import { authClient } from '@/lib/auth-client';
+import { useRouter } from 'next/navigation';
 
 interface SidebarProps {
   user: {
@@ -66,7 +69,14 @@ const navigation = [
 
 export function Sidebar({ user, tenant }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { isOpen, setIsOpen } = useSidebar();
+
+  const handleLogout = async () => {
+    await authClient.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   const initials = user.name
     .split(' ')
@@ -169,21 +179,23 @@ export function Sidebar({ user, tenant }: SidebarProps) {
         </nav>
 
         {/* User block */}
-        <div className="border-t border-[var(--color-border)] p-4">
-          <button className="flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 transition-colors duration-180 ease-spring hover:bg-[var(--color-bg-hover)]">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-accent)] to-orange-400 text-xs font-bold text-white">
+        <div className="border-t border-[var(--color-border)] p-4 bg-[var(--color-bg-card)]/20">
+          <button 
+            onClick={handleLogout}
+            className="group flex w-full items-center gap-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-card)] p-3 transition-all duration-300 hover:bg-red-500/5 hover:border-red-500/20"
+          >
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-accent)] to-orange-400 text-xs font-bold text-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-12">
               {initials}
             </div>
             <div className="flex-1 overflow-hidden text-left">
-              <div className="truncate text-sm font-semibold">{user.name}</div>
+              <div className="truncate text-sm font-semibold group-hover:text-red-500 transition-colors">{user.name}</div>
               <div className="truncate text-[11px] text-[var(--color-text-tertiary)]">
                 {user.email}
               </div>
             </div>
-            <MoreVertical
-              size={14}
-              className="flex-shrink-0 text-[var(--color-text-tertiary)]"
-            />
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-all duration-300 group-hover:bg-red-500 group-hover:text-white">
+              <LogOut size={14} />
+            </div>
           </button>
         </div>
       </aside>

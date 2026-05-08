@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
 
-const nextConfig: NextConfig = {
+const nextConfig: any = {
   // React 19 strict mode
   reactStrictMode: true,
 

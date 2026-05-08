@@ -29,6 +29,7 @@ interface InventoryItem {
 
 interface InventoryListProps {
   initialData: InventoryItem[];
+  role?: string;
 }
 
 const PRODUCT_TYPES = [

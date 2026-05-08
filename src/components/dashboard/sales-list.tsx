@@ -42,6 +42,7 @@ interface SaleItem {
 
 interface SalesListProps {
   initialData: SaleItem[];
+  role?: string;
 }
 
 export function SalesList({ initialData }: SalesListProps) {

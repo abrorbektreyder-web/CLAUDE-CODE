@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
           id,
           tenant_id,
           reminder_count,
+          last_reminder_at,
           customers (
             id,
             full_name,
