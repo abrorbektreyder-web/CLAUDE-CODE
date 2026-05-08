@@ -20,11 +20,20 @@ if (process.env.VERCEL_PROJECT_PRODUCTION_URL)
   vercelUrls.push(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
 
 // ─── Determine the correct baseURL ──────────────────────────────────────
-// On Vercel, VERCEL_URL is the most accurate (matches the actual deployment).
-// BETTER_AUTH_URL should only be used as a manual override when NOT on Vercel.
-const resolvedBaseURL = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : (process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+// Priority:
+// 1. BETTER_AUTH_URL (manual override)
+// 2. NEXT_PUBLIC_APP_URL (standard public URL)
+// 3. VERCEL_PROJECT_PRODUCTION_URL (stable production URL)
+// 4. VERCEL_URL (current deployment URL)
+// 5. localhost (fallback)
+const resolvedBaseURL = 
+  process.env.BETTER_AUTH_URL || 
+  process.env.NEXT_PUBLIC_APP_URL || 
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null) ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+  'http://localhost:3000';
+
+console.log('[Auth] Resolved baseURL:', resolvedBaseURL);
 
 export const auth = betterAuth({
   // Custom Supabase HTTP adapter (works over port 443, never blocked)
@@ -107,21 +116,29 @@ export const auth = betterAuth({
     max: 100,
   },
 
-  // Trusted origins — includes ALL Vercel deployment URLs dynamically
+  // Trusted origins — includes ALL subdomains of localhost in dev and Vercel in prod
   trustedOrigins: [
     'http://localhost:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
+    'http://mobicenter.localhost:3000',
     process.env.NEXT_PUBLIC_APP_URL,
     process.env.BETTER_AUTH_URL,
-    ...vercelUrls,
-    // Stable production URL (won't change between deployments)
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null,
+    process.env.VERCEL_BRANCH_URL ? `https://${process.env.VERCEL_BRANCH_URL}` : null,
+    // Wildcard for all subdomains on the root domain if provided
+    process.env.NEXT_PUBLIC_ROOT_DOMAIN ? `https://*.${process.env.NEXT_PUBLIC_ROOT_DOMAIN.replace(':3000', '')}` : null,
     'https://claude-code-six-chi.vercel.app',
+    'https://*.vercel.app',
   ].filter(Boolean) as string[],
 
   // Advanced security
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
+    // Allow cookies to be shared across subdomains in production
+    // For localhost, browsers generally don't allow sharing cookies across subdomains 
+    // (e.g. from localhost to tenant.localhost) unless the domain is NOT set.
   },
 });
 

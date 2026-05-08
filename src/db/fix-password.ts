@@ -12,12 +12,12 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function fixPassword() {
-  console.log('Updating admin password hash to Bcrypt...');
-  
   const email = 'admin@mobicenter.uz';
-  const newPassword = '12345678';
-  const salt = await bcrypt.genSalt(12);
-  const hash = await bcrypt.hash(newPassword, salt);
+  const password = 'Admin1234!';
+  
+  console.log(`Updating password for ${email} to: ${password}`);
+  
+  const hash = await bcrypt.hash(password, 12);
 
   // 1. Update users table
   const { error: userError } = await supabase
@@ -28,10 +28,10 @@ async function fixPassword() {
   if (userError) {
     console.error('Error updating users table:', userError);
   } else {
-    console.log('Updated users table successfully');
+    console.log('✓ Updated users table');
   }
 
-  // 2. Update accounts table (Better Auth uses this)
+  // 2. Update accounts table (Better Auth uses this for login)
   const { data: user } = await supabase
     .from('users')
     .select('id')
@@ -47,13 +47,13 @@ async function fixPassword() {
     if (accountError) {
       console.error('Error updating accounts table:', accountError);
     } else {
-      console.log('Updated accounts table successfully');
+      console.log('✓ Updated accounts table');
     }
   }
 
-  console.log('Done! You can now login with:');
+  console.log('\nDone! Login credentials:');
   console.log('Email:', email);
-  console.log('Password:', newPassword);
+  console.log('Password:', password);
 }
 
 fixPassword();

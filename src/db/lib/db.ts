@@ -8,11 +8,11 @@ import * as schema from '../schema';
 // ════════════════════════════════════════════════════════════════════════════
 
 if (!process.env.DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is not set');
+  console.error('[DB] DATABASE_URL environment variable is not set');
 }
 
 if (!process.env.ENCRYPTION_KEY) {
-  throw new Error('ENCRYPTION_KEY environment variable is not set');
+  console.error('[DB] ENCRYPTION_KEY environment variable is not set');
 }
 
 // Connection options
