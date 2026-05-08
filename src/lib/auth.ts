@@ -1,3 +1,4 @@
+// Vercel force redeploy - 2026-05-08
 import { betterAuth } from 'better-auth';
 import { supabaseAdapter } from './auth-adapter';
 
