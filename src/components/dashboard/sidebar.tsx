@@ -104,8 +104,8 @@ export function Sidebar({ user, tenant }: SidebarProps) {
         {/* Header - Ultra Minimalist Design */}
         <div className="px-6 py-10 relative border-b border-[var(--color-border)]/40">
           <Link href="/dashboard" className="group block relative">
-            <div className="font-display text-3xl font-black tracking-tight uppercase leading-none pb-1">
-              <span className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-orange-300 transition-all duration-500">
+            <div className="font-display text-3xl font-black tracking-normal uppercase leading-none pb-1">
+              <span className="inline-block pr-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-orange-300 transition-all duration-500">
                 APPLE TTT
               </span>
             </div>

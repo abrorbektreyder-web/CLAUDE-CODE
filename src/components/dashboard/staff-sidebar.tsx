@@ -89,7 +89,7 @@ export function StaffSidebar({ user, tenantName }: StaffSidebarProps) {
               K
             </div>
             <div className="leading-tight">
-              <div className="font-display text-lg truncate max-w-[140px] tracking-tight font-bold">
+              <div className="font-display text-lg font-bold tracking-normal uppercase">
                 {tenantName || 'APPLE TTT'}
               </div>
               <div className="text-[9px] font-black uppercase tracking-[0.15em] text-emerald-500">
