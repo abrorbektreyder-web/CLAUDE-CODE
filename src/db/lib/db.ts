@@ -89,18 +89,28 @@ export async function withTenant<T>(
   ctx: TenantContext,
   fn: () => Promise<T>
 ): Promise<T> {
-  // NOTE: Direct SQL context setting is disabled because port 5432 is blocked.
-  // The application now uses Supabase HTTP SDK which handles multi-tenancy differently.
-  /*
-  await db.execute(sql`
-    SELECT set_tenant_context(
-      ${ctx.tenantId}::uuid,
-      ${ctx.userId}::uuid,
-      ${ctx.userRole}::user_role,
-      ${ctx.clientIp ?? null}::inet
-    )
-  `);
-  */
+  // Set the encryption key in the database session for SQL-level decryption
+  if (process.env.ENCRYPTION_KEY) {
+    try {
+      await db.execute(sql`
+        SELECT set_config('app.encryption_key', ${process.env.ENCRYPTION_KEY}, FALSE)
+      `);
+    } catch (e) {
+      console.error('[DB] Failed to set encryption key in session:', e);
+    }
+  }
+
+  // Set tenant context for RLS if needed (optional since we use HTTP SDK for some parts)
+  try {
+    await db.execute(sql`
+      SELECT set_config('app.tenant_id', ${ctx.tenantId}, FALSE);
+      SELECT set_config('app.user_id', ${ctx.userId}, FALSE);
+      SELECT set_config('app.user_role', ${ctx.userRole}, FALSE);
+    `);
+  } catch (e) {
+    // If this fails (e.g. read-only user), we log it but continue
+    console.warn('[DB] Could not set RLS context:', e);
+  }
 
   return await fn();
 }
