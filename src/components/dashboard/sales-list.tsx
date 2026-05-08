@@ -42,7 +42,6 @@ interface SaleItem {
 
 interface SalesListProps {
   initialData: SaleItem[];
-  role?: string;
 }
 
 export function SalesList({ initialData }: SalesListProps) {
@@ -198,7 +197,7 @@ export function SalesList({ initialData }: SalesListProps) {
               className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/50 py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-all"
             />
           </div>
-          
+
           <DateFilter onRangeChange={setDateRange} onRangeTypeChange={setActiveRange} className="flex-none" />
 
           <button
@@ -305,24 +304,24 @@ export function SalesList({ initialData }: SalesListProps) {
                       {openMenuId === sale.id && (
                         <>
                           {/* Overlay to close menu on click outside */}
-                          <div 
-                            className="fixed inset-0 z-10" 
+                          <div
+                            className="fixed inset-0 z-10"
                             onClick={() => setOpenMenuId(null)}
                           />
                           <div className="absolute right-0 top-full z-20 mt-1 w-44 origin-top-right rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] p-1.5 shadow-2xl animate-in fade-in zoom-in-95 duration-200 ring-1 ring-black/5">
-                            <button 
-                              onClick={() => { setSelectedSale(sale); setModalType('edit'); setOpenMenuId(null); }} 
+                            <button
+                              onClick={() => { setSelectedSale(sale); setModalType('edit'); setOpenMenuId(null); }}
                               className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-[var(--color-bg-hover)] transition-all active:scale-95"
                             >
-                              <Edit2 size={16} className="text-[var(--color-accent)]" /> 
+                              <Edit2 size={16} className="text-[var(--color-accent)]" />
                               Tahrirlash
                             </button>
                             <div className="my-1 h-px bg-[var(--color-border)]/50" />
-                            <button 
-                              onClick={() => { setSelectedSale(sale); setModalType('delete'); setOpenMenuId(null); }} 
+                            <button
+                              onClick={() => { setSelectedSale(sale); setModalType('delete'); setOpenMenuId(null); }}
                               className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-500/10 transition-all active:scale-95"
                             >
-                              <Trash2 size={16} /> 
+                              <Trash2 size={16} />
                               O'chirish
                             </button>
                           </div>
@@ -355,7 +354,7 @@ export function SalesList({ initialData }: SalesListProps) {
                   <MoreHorizontal size={18} />
                 </button>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-[10px] font-bold uppercase text-[var(--color-text-tertiary)] mb-0.5">Summa</div>

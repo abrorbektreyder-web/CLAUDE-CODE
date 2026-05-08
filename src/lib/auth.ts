@@ -101,6 +101,7 @@ export const auth = betterAuth({
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
     'https://claude-code-six-chi.vercel.app',
+    'https://claude-code-rngd5zekk-abrors-projects-8df039a4.vercel.app',
   ],
 
   // Advanced security

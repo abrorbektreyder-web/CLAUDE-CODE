@@ -43,7 +43,7 @@ export function RegisterForm() {
     setServerError(null);
     setIsPending(true);
 
-    const { error } = await (authClient.signUp.email as any)({
+    const { error } = await authClient.signUp.email({
       email: data.email,
       password: data.password,
       name: data.name,

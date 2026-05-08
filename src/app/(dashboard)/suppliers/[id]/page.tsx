@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, use } from 'react';
 import {
-  Users, Phone, Mail, MapPin, 
+  Users, Phone, Mail, MapPin,
   ArrowLeft, Plus, Wallet, History,
   TrendingUp, TrendingDown, Clock,
   ChevronDown, X, DollarSign, Receipt,
@@ -42,10 +42,10 @@ function TransactionRow({ tx }: { tx: Transaction }) {
   const isNegative = tx.type === 'payment' || tx.type === 'return';
 
   const typeConfig = {
-    purchase:   { label: 'Xarid',   color: 'var(--color-danger)',  bg: 'rgba(255, 69, 58, 0.1)', icon: TrendingUp },
-    payment:    { label: 'To\'lov', color: 'var(--color-success)', bg: 'rgba(48, 209, 88, 0.1)', icon: DollarSign },
-    return:     { label: 'Qaytarish', color: 'var(--color-info)',   bg: 'rgba(100, 210, 255, 0.1)', icon: History },
-    adjustment: { label: 'Tuzatish', color: 'var(--color-warning)',bg: 'rgba(255, 214, 10, 0.1)', icon: AlertCircle },
+    purchase: { label: 'Xarid', color: 'var(--color-danger)', bg: 'rgba(255, 69, 58, 0.1)', icon: TrendingUp },
+    payment: { label: 'To\'lov', color: 'var(--color-success)', bg: 'rgba(48, 209, 88, 0.1)', icon: DollarSign },
+    return: { label: 'Qaytarish', color: 'var(--color-info)', bg: 'rgba(100, 210, 255, 0.1)', icon: History },
+    adjustment: { label: 'Tuzatish', color: 'var(--color-warning)', bg: 'rgba(255, 214, 10, 0.1)', icon: AlertCircle },
   }[tx.type];
 
   const Icon = typeConfig.icon;
@@ -53,7 +53,7 @@ function TransactionRow({ tx }: { tx: Transaction }) {
   return (
     <div className="group flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 transition-all border border-transparent hover:border-[var(--color-border)]">
       <div className="flex items-center gap-4">
-        <div 
+        <div
           className="flex h-10 w-10 items-center justify-center rounded-xl border"
           style={{ backgroundColor: typeConfig.bg, borderColor: `${typeConfig.color}20`, color: typeConfig.color }}
         >
@@ -84,10 +84,10 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
   const [supplier, setSupplier] = useState<SupplierDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPayModal, setShowPayModal] = useState(false);
-  
+
   // Transaction form
   const [form, setForm] = useState({
-    type: 'payment' as Transaction['type'],
+    type: 'payment' as const,
     amount: '',
     notes: ''
   });
@@ -140,8 +140,8 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
     <div className="space-y-8 animate-fade-up max-w-5xl mx-auto">
       {/* Breadcrumb & Actions */}
       <div className="flex items-center justify-between">
-        <Link 
-          href="/suppliers" 
+        <Link
+          href="/suppliers"
           className="flex items-center gap-2 text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] transition-colors group"
         >
           <div className="h-8 w-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[var(--color-accent-soft)] group-hover:text-[var(--color-accent)] transition-all">
@@ -249,7 +249,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
                 <X size={20} />
               </button>
             </div>
-            
+
             <form onSubmit={handleTransaction} className="p-8 space-y-6">
               <div className="space-y-4">
                 <div className="flex gap-2 p-1 bg-[var(--color-bg-elevated)] rounded-xl border border-[var(--color-border)]">
@@ -257,12 +257,11 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
                     <button
                       key={t}
                       type="button"
-                      onClick={() => setForm({...form, type: t})}
-                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all capitalize ${
-                        form.type === t 
-                          ? 'bg-[var(--color-accent)] text-white shadow-lg' 
+                      onClick={() => setForm({ ...form, type: t })}
+                      className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all capitalize ${form.type === t
+                          ? 'bg-[var(--color-accent)] text-white shadow-lg'
                           : 'text-[var(--color-text-secondary)] hover:bg-white/5'
-                      }`}
+                        }`}
                     >
                       {t === 'payment' ? 'To\'lov' : t === 'purchase' ? 'Xarid' : 'Tuzatish'}
                     </button>
@@ -276,7 +275,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
                       required
                       type="number"
                       value={form.amount}
-                      onChange={e => setForm({...form, amount: e.target.value})}
+                      onChange={e => setForm({ ...form, amount: e.target.value })}
                       placeholder="0"
                       className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-xl py-4 px-5 text-lg font-bold text-[var(--color-foreground)] focus:outline-none focus:border-[var(--color-accent)] transition-colors pr-16"
                     />
@@ -288,7 +287,7 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
                   <label className="text-xs font-bold text-[var(--color-text-tertiary)] uppercase ml-1">Izoh</label>
                   <textarea
                     value={form.notes}
-                    onChange={e => setForm({...form, notes: e.target.value})}
+                    onChange={e => setForm({ ...form, notes: e.target.value })}
                     placeholder="To'lov haqida batafsil ma'lumot..."
                     rows={3}
                     className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-[var(--color-accent)] transition-colors resize-none"
@@ -306,11 +305,10 @@ export default function SupplierDetailPage({ params }: { params: Promise<{ id: s
                 </button>
                 <button
                   type="submit"
-                  className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all shadow-lg text-white ${
-                    form.type === 'payment' ? 'bg-[var(--color-success)] shadow-[var(--color-success)]/20' : 
-                    form.type === 'purchase' ? 'bg-[var(--color-danger)] shadow-[var(--color-danger)]/20' : 
-                    'bg-[var(--color-accent)] shadow-[var(--color-accent)]/20'
-                  }`}
+                  className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all shadow-lg text-white ${form.type === 'payment' ? 'bg-[var(--color-success)] shadow-[var(--color-success)]/20' :
+                      form.type === 'purchase' ? 'bg-[var(--color-danger)] shadow-[var(--color-danger)]/20' :
+                        'bg-[var(--color-accent)] shadow-[var(--color-accent)]/20'
+                    }`}
                 >
                   Tasdiqlash
                 </button>

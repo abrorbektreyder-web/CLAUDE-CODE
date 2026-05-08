@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   };
 
   const todayStr = formatDate(today);
-  
+
   const inTwoDays = new Date(today);
   inTwoDays.setDate(today.getDate() + 2);
   const inTwoDaysStr = formatDate(inTwoDays);
@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
           id,
           tenant_id,
           reminder_count,
-          last_reminder_at,
           customers (
             id,
             full_name,
@@ -68,7 +67,7 @@ export async function GET(request: NextRequest) {
       if (!debt) continue;
 
       const isToday = schedule.due_date === todayStr;
-      
+
       // Rate limit logic:
       // - If today: allow twice a day (check if last was > 4 hours ago)
       // - If 2 days before: only once a day (check if last was > 20 hours ago)
@@ -76,7 +75,7 @@ export async function GET(request: NextRequest) {
       const limitHours = isToday ? 4 : 20;
       const limitMs = limitHours * 60 * 60 * 1000;
       const timeSinceLast = lastReminder ? Date.now() - lastReminder.getTime() : Infinity;
-      
+
       // Allow bypass via query param for testing: ?test=true
       const isTest = request.nextUrl.searchParams.get('test') === 'true';
 
@@ -130,8 +129,8 @@ export async function GET(request: NextRequest) {
         .eq('id', debt.id);
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       processed: (schedules || []).length,
       stats: results
     });

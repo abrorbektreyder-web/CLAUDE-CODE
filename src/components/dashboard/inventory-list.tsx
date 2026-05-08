@@ -29,7 +29,6 @@ interface InventoryItem {
 
 interface InventoryListProps {
   initialData: InventoryItem[];
-  role?: string;
 }
 
 const PRODUCT_TYPES = [
@@ -67,12 +66,12 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
     const currencyField = `${field}Currency` as keyof typeof form;
     const currentCurrency = form[currencyField];
     const newCurrency = currentCurrency === 'UZS' ? 'USD' : 'UZS';
-    
+
     // Optional: Convert the current value to the new currency
     const currentValue = Number(form[field as keyof typeof form]);
     if (currentValue > 0) {
-      const newValue = newCurrency === 'USD' 
-        ? (currentValue / USD_RATE).toFixed(2) 
+      const newValue = newCurrency === 'USD'
+        ? (currentValue / USD_RATE).toFixed(2)
         : Math.round(currentValue * USD_RATE).toString();
       setForm(prev => ({ ...prev, [currencyField]: newCurrency, [field]: newValue }));
     } else {
@@ -219,16 +218,16 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Cost Price */}
                 <div className="relative">
-                  <input 
-                    value={form.costPrice} 
-                    onChange={(e) => handlePriceChange('costPrice', e.target.value)} 
-                    type="number" 
+                  <input
+                    value={form.costPrice}
+                    onChange={(e) => handlePriceChange('costPrice', e.target.value)}
+                    type="number"
                     step="any"
-                    placeholder="Tannarx" 
-                    className={cn(inputCls, "pr-14")} 
-                    required 
+                    placeholder="Tannarx"
+                    className={cn(inputCls, "pr-14")}
+                    required
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => toggleCurrency('costPrice')}
                     className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
@@ -247,16 +246,16 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 
                 {/* Retail Price */}
                 <div className="relative">
-                  <input 
-                    value={form.retailPrice} 
-                    onChange={(e) => handlePriceChange('retailPrice', e.target.value)} 
-                    type="number" 
+                  <input
+                    value={form.retailPrice}
+                    onChange={(e) => handlePriceChange('retailPrice', e.target.value)}
+                    type="number"
                     step="any"
-                    placeholder="Chakana" 
-                    className={cn(inputCls, "pr-14")} 
-                    required 
+                    placeholder="Chakana"
+                    className={cn(inputCls, "pr-14")}
+                    required
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => toggleCurrency('retailPrice')}
                     className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
@@ -275,15 +274,15 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 
                 {/* Wholesale Price */}
                 <div className="relative">
-                  <input 
-                    value={form.wholesalePrice} 
-                    onChange={(e) => handlePriceChange('wholesalePrice', e.target.value)} 
-                    type="number" 
+                  <input
+                    value={form.wholesalePrice}
+                    onChange={(e) => handlePriceChange('wholesalePrice', e.target.value)}
+                    type="number"
                     step="any"
-                    placeholder="Ulgurji" 
-                    className={cn(inputCls, "pr-14")} 
+                    placeholder="Ulgurji"
+                    className={cn(inputCls, "pr-14")}
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => toggleCurrency('wholesalePrice')}
                     className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
@@ -418,11 +417,11 @@ function EditProductModal({
     const currencyField = `${field}Currency` as keyof typeof form;
     const currentCurrency = form[currencyField];
     const newCurrency = currentCurrency === 'UZS' ? 'USD' : 'UZS';
-    
+
     const currentValue = Number(form[field as keyof typeof form]);
     if (currentValue > 0) {
-      const newValue = newCurrency === 'USD' 
-        ? (currentValue / USD_RATE).toFixed(2) 
+      const newValue = newCurrency === 'USD'
+        ? (currentValue / USD_RATE).toFixed(2)
         : Math.round(currentValue * USD_RATE).toString();
       setForm(prev => ({ ...prev, [currencyField]: newCurrency, [field]: newValue }));
     } else {
@@ -570,16 +569,16 @@ function EditProductModal({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Cost Price */}
                 <div className="relative">
-                  <input 
-                    value={form.costPrice} 
-                    onChange={(e) => handlePriceChange('costPrice', e.target.value)} 
-                    type="number" 
+                  <input
+                    value={form.costPrice}
+                    onChange={(e) => handlePriceChange('costPrice', e.target.value)}
+                    type="number"
                     step="any"
-                    placeholder="Tannarx" 
-                    className={cn(inputCls, "pr-14")} 
-                    required 
+                    placeholder="Tannarx"
+                    className={cn(inputCls, "pr-14")}
+                    required
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => toggleCurrency('costPrice')}
                     className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
@@ -598,16 +597,16 @@ function EditProductModal({
 
                 {/* Retail Price */}
                 <div className="relative">
-                  <input 
-                    value={form.retailPrice} 
-                    onChange={(e) => handlePriceChange('retailPrice', e.target.value)} 
-                    type="number" 
+                  <input
+                    value={form.retailPrice}
+                    onChange={(e) => handlePriceChange('retailPrice', e.target.value)}
+                    type="number"
                     step="any"
-                    placeholder="Chakana" 
-                    className={cn(inputCls, "pr-14")} 
-                    required 
+                    placeholder="Chakana"
+                    className={cn(inputCls, "pr-14")}
+                    required
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => toggleCurrency('retailPrice')}
                     className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"
@@ -626,15 +625,15 @@ function EditProductModal({
 
                 {/* Wholesale Price */}
                 <div className="relative">
-                  <input 
-                    value={form.wholesalePrice} 
-                    onChange={(e) => handlePriceChange('wholesalePrice', e.target.value)} 
-                    type="number" 
+                  <input
+                    value={form.wholesalePrice}
+                    onChange={(e) => handlePriceChange('wholesalePrice', e.target.value)}
+                    type="number"
                     step="any"
-                    placeholder="Ulgurji" 
-                    className={cn(inputCls, "pr-14")} 
+                    placeholder="Ulgurji"
+                    className={cn(inputCls, "pr-14")}
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => toggleCurrency('wholesalePrice')}
                     className="absolute right-2 top-[5px] h-[34px] px-2 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] text-[10px] font-bold text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-white transition-all shadow-sm"

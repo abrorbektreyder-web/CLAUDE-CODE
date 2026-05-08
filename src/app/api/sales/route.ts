@@ -8,8 +8,8 @@ import { createSale, getDashboardKpis } from '@/db/queries';
 
 export const GET = createApiRoute({
   roles: ['tenant_owner', 'admin', 'manager'],
-  handler: async ({ ctx }) => {
-    const kpis = await getDashboardKpis(ctx.tenantId);
+  handler: async () => {
+    const kpis = await getDashboardKpis();
     return { kpis };
   },
 });
@@ -56,33 +56,8 @@ const createSaleSchema = z.object({
 export const POST = createApiRoute({
   schema: createSaleSchema,
   roles: ['cashier', 'tenant_owner', 'admin'],
-  handler: async ({ body, ctx }) => {
-    // Calculate totals
-    const subtotal = body.items.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
-    const total = subtotal - (body.discountAmount || 0);
-    const paidAmount = (body.payment.cashAmount || 0) + (body.payment.cardAmount || 0) + (body.payment.transferAmount || 0);
-    const debtAmount = body.payment.creditAmount || (body.payment.method === 'credit' ? total - paidAmount : 0);
-
-    const sale = await createSale({
-      tenantId: ctx.tenantId,
-      branchId: body.branchId,
-      cashierId: body.cashierId,
-      customerId: body.customerId,
-      subtotal,
-      total,
-      paymentMethod: body.payment.method,
-      paidAmount,
-      debtAmount,
-      debtMonths: body.payment.creditMonths,
-      items: body.items.map(item => ({
-        productId: item.productId,
-        productName: 'Mahsulot', // Default or fetch from DB if needed
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        costPrice: item.unitPrice * 0.8, // Estimate cost price if not provided
-        total: item.unitPrice * item.quantity
-      }))
-    });
+  handler: async ({ body }) => {
+    const sale = await createSale(body);
     return { sale };
   },
 });
