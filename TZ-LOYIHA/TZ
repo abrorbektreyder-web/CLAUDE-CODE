@@ -1032,6 +1032,10 @@ Versiya 1.0  •  23 Aprel, 2026
 - [x] UX/UI: Mobile-first bottom sheet picker + Touch optimization
 - [x] Telegram Alerts: Owner-ga har bir sotuv haqida botdan xabar borishi
 - [x] Vercel Fix: Cron frequency + Database connection pooler (FIXED)
+- [x] Moliya (Finance): Xarajat va Toifa qo'shishdagi DB `tenant_id` xatoligi (UUID) to'liq tuzatildi (Single-session validation).
+- [x] UI/UX Notifications: Moliya formalariga yuklanish holatlari va xatolik/muvaffaqiyat xabarnomalari (Toasts) qo'shildi.
+- [x] Dashboard Pro: Asosiy sahifada jonli ma'lumotlarni tortuvchi, animatsiyali, premium darajadagi diagrammalar (Chart) yaratildi.
+- [x] Fayl Yuklash: Tovar rasmini bevosita fayl yuklash orqali (URL emas) saqlash integratsiyasi yakunlandi.
 
 ## 10.1. Arxitektura va Yo'nalishlar
 Admin paneli (/inventory, /sales) ga mutloq tegmasdan, kassir uchun alohida route group yaratiladi.
