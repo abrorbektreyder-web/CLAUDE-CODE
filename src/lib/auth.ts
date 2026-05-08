@@ -9,6 +9,23 @@ import { supabaseAdapter } from './auth-adapter';
 // In production (Vercel), both approaches work — HTTPS is always available.
 // ════════════════════════════════════════════════════════════════════════════
 
+// ─── Collect ALL Vercel deployment URLs ──────────────────────────────────
+// Vercel generates a unique URL for each deployment. We must trust them all.
+const vercelUrls: string[] = [];
+if (process.env.VERCEL_URL) 
+  vercelUrls.push(`https://${process.env.VERCEL_URL}`);
+if (process.env.VERCEL_BRANCH_URL) 
+  vercelUrls.push(`https://${process.env.VERCEL_BRANCH_URL}`);
+if (process.env.VERCEL_PROJECT_PRODUCTION_URL) 
+  vercelUrls.push(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+
+// ─── Determine the correct baseURL ──────────────────────────────────────
+// On Vercel, VERCEL_URL is the most accurate (matches the actual deployment).
+// BETTER_AUTH_URL should only be used as a manual override when NOT on Vercel.
+const resolvedBaseURL = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : (process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+
 export const auth = betterAuth({
   // Custom Supabase HTTP adapter (works over port 443, never blocked)
   database: () => ({
@@ -18,10 +35,7 @@ export const auth = betterAuth({
 
   // Secret for signing tokens
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || 
-           (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||
-           process.env.NEXT_PUBLIC_APP_URL || 
-           'http://localhost:3000',
+  baseURL: resolvedBaseURL,
 
   // Custom User Fields
   user: {
@@ -41,13 +55,13 @@ export const auth = betterAuth({
       phone: {
         type: 'string',
         returned: true,
-        input: true,        // ← REQUIRED: lets Better Auth pass this field to adapter
+        input: true,
         required: false,
       },
       storeName: {
         type: 'string',
         required: false,
-        input: true,        // ← REQUIRED: lets Better Auth pass this field to adapter
+        input: true,
       }
     }
   },
@@ -93,23 +107,24 @@ export const auth = betterAuth({
     max: 100,
   },
 
-  // Trusted origins
+  // Trusted origins — includes ALL Vercel deployment URLs dynamically
   trustedOrigins: [
     'http://localhost:3000',
     'http://localhost:3001',
     'http://127.0.0.1:3000',
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.BETTER_AUTH_URL,
+    ...vercelUrls,
+    // Stable production URL (won't change between deployments)
     'https://claude-code-six-chi.vercel.app',
-    'https://claude-code-rngd5zekk-abrors-projects-8df039a4.vercel.app',
-  ],
+  ].filter(Boolean) as string[],
 
   // Advanced security
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
-    crossOrigin: true, // Allow cross-subdomain auth
   },
 });
 
 // Type-safe session helper for Server Components
 export type Session = typeof auth.$Infer.Session;
+
