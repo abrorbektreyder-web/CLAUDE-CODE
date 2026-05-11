@@ -208,7 +208,7 @@ export async function getDebts(tenantId: string) {
       customers (full_name, phone_last_four)
     `)
     .eq('tenant_id', tenantId)
-    .order('is_overdue', { ascending: false });
+    .order('created_at', { ascending: false });
 
   if (error) throw error;
 

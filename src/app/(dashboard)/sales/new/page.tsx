@@ -1,4 +1,4 @@
-import { PosInterface } from '@/components/pos/pos-interface';
+import { AdminSalesInterface } from '@/components/dashboard/admin-sales-interface';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -33,18 +33,18 @@ export default async function AdminNewSalePage() {
     getSales(tenantId),
   ]);
 
-  // Ma'lumotlarni komponentga moslashtirish
+  // Ma'lumotlarni komponentga moslashtirish (Admin interface uchun optimallangan)
   const inventoryData = inventoryRaw.map(item => ({
     ...item,
-    retailPrice: (item.retailPrice ?? 0).toString(),
-    costPrice: (item.costPrice ?? 0).toString(),
-    wholesalePrice: item.wholesalePrice ? item.wholesalePrice.toString() : null,
+    retailPrice: Number(item.retailPrice ?? 0),
+    costPrice: Number(item.costPrice ?? 0),
+    wholesalePrice: item.wholesalePrice ? Number(item.wholesalePrice) : null,
   }));
 
   const customersData = customersRaw.map(c => ({
     ...c,
-    totalSpent: (c.totalSpent ?? 0).toString(),
-    totalDebts: (c.totalDebts ?? 0).toString(),
+    totalSpent: formatSum(c.totalSpent ?? 0),
+    totalDebts: formatSum(c.totalDebts ?? 0),
     lastPurchaseAt: c.lastPurchaseAt ? new Date(c.lastPurchaseAt) : null,
     createdAt: new Date(c.createdAt),
   }));
@@ -69,13 +69,17 @@ export default async function AdminNewSalePage() {
 
   return (
     <div className="h-full">
-      <PosInterface 
+      <AdminSalesInterface 
         inventoryData={inventoryData}
         customersData={customersData}
         debtsData={debtsData}
         salesData={salesData}
-        hideSidebar={false} 
       />
     </div>
   );
+}
+
+// Helper for formatting within the mapping
+function formatSum(sum: string | number) {
+  return Number(sum).toLocaleString('ru-RU');
 }
