@@ -18,7 +18,7 @@ export default async function DashboardLayout({
     });
   } catch (err: any) {
     console.error('[Layout] auth.api.getSession failed:', err?.message ?? err);
-    redirect('/login?callback=/dashboard');
+    // On transient errors (DB connection, etc.), we don't want to force logout immediately
   }
 
   if (!session?.user) {

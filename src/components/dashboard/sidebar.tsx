@@ -188,9 +188,11 @@ export function Sidebar({ user, tenant }: SidebarProps) {
               A
             </div>
             <div className="flex-1 overflow-hidden text-left">
-              <div className="truncate text-sm font-semibold group-hover:text-red-500 transition-colors">ADMIN</div>
-              <div className="truncate text-[11px] text-[var(--color-text-tertiary)]">
-                OWNER PANEL
+              <div className="truncate text-sm font-semibold group-hover:text-red-500 transition-colors">
+                {user.name.toUpperCase()}
+              </div>
+              <div className="truncate text-[11px] text-[var(--color-text-tertiary)] uppercase">
+                {user.role || 'USER'} PANEL
               </div>
             </div>
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-bg-hover)] text-[var(--color-text-tertiary)] transition-all duration-300 group-hover:bg-red-500 group-hover:text-white">

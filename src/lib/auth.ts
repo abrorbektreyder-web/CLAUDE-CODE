@@ -135,9 +135,10 @@ export const auth = betterAuth({
   // Advanced security
   advanced: {
     useSecureCookies: process.env.NODE_ENV === 'production',
-    // Allow cookies to be shared across subdomains in production
-    // For localhost, browsers generally don't allow sharing cookies across subdomains 
-    // (e.g. from localhost to tenant.localhost) unless the domain is NOT set.
+    // Allow cookies to be shared across subdomains
+    crossSubdomains: {
+      enabled: true,
+    },
   },
 });
 
