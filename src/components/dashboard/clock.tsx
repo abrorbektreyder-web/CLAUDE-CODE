@@ -26,16 +26,19 @@ export function Clock() {
   const seconds = uzTime.getSeconds().toString().padStart(2, '0');
 
   return (
-    <div className="hidden lg:flex items-center gap-1.5 font-mono text-[13px] font-bold tracking-widest text-[var(--color-text-secondary)] bg-[var(--color-bg-elevated)]/50 px-3 py-1.5 rounded-lg border border-[var(--color-border)] shadow-inner">
+    <div className="flex items-center gap-1 sm:gap-2 font-mono text-[10px] sm:text-[13px] font-bold tracking-tight sm:tracking-widest text-white/90 bg-white/5 backdrop-blur-md px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/10 shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:border-[var(--color-accent)]/30 transition-colors">
       <div className="flex items-center gap-0.5">
         <TimeUnit value={hours} />
-        <span className="text-[var(--color-accent)] animate-pulse">:</span>
+        <span className="text-[var(--color-accent)] animate-pulse opacity-80">:</span>
         <TimeUnit value={minutes} />
-        <span className="text-[var(--color-accent)] animate-pulse">:</span>
-        <TimeUnit value={seconds} />
+        <span className="hidden min-[380px]:inline text-[var(--color-accent)] animate-pulse opacity-80">:</span>
+        <div className="hidden min-[380px]:flex">
+          <TimeUnit value={seconds} />
+        </div>
       </div>
-      <div className="ml-1 text-[9px] uppercase text-[var(--color-text-tertiary)] bg-[var(--color-bg-card)] px-1.5 py-0.5 rounded border border-[var(--color-border)]">
-        UZB
+      <div className="hidden sm:flex items-center gap-1 ml-1.5 pl-1.5 border-l border-white/10">
+        <div className="h-1 w-1 rounded-full bg-[var(--color-accent)] animate-pulse" />
+        <span className="text-[9px] uppercase tracking-tighter text-white/40">UZB</span>
       </div>
     </div>
   );

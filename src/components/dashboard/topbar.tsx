@@ -98,7 +98,7 @@ export function Topbar({ user }: { user?: any }) {
           <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-text-tertiary)]">
             {meta.breadcrumb}
           </div>
-          <h1 className="font-display text-xl md:text-2xl leading-none">{meta.title}</h1>
+          <h1 className="font-display text-lg sm:text-xl md:text-2xl leading-none">{meta.title}</h1>
         </div>
       </div>
 
