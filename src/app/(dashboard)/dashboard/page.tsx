@@ -158,7 +158,7 @@ export default async function DashboardPage({
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 px-1 md:px-0">
         {kpis.map((kpi, idx) => (
           <div
             key={kpi.label}
@@ -257,7 +257,7 @@ export default async function DashboardPage({
             </div>
           </div>
 
-          <div className="h-64 w-full flex items-end justify-between gap-1.5 sm:gap-3 px-2">
+          <div className="h-64 w-full flex items-end justify-between gap-1.5 sm:gap-3 px-2 overflow-x-auto custom-scrollbar pb-2 sm:pb-0">
             {chartData.map((d, i) => {
               const h = (d.revenue / maxRevenue) * 100;
               const ph = (d.profit / maxRevenue) * 100;

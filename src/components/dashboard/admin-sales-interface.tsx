@@ -268,9 +268,10 @@ export function AdminSalesInterface({
     <div className="flex flex-col h-full space-y-6">
       {/* Top Navigation / Header */}
       <div className="flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="font-display text-2xl md:text-3xl">Yangi Savdo</h1>
-          <p className="text-sm text-[var(--color-text-secondary)]">Admin paneli orqali tezkor savdo amalga oshirish</p>
+        <div className="px-1 md:px-0">
+          <h1 className="font-display text-xl md:text-3xl font-bold tracking-tight">Yangi Savdo</h1>
+          <p className="hidden md:block text-sm text-[var(--color-text-secondary)]">Admin paneli orqali tezkor savdo amalga oshirish</p>
+          <p className="md:hidden text-[10px] uppercase font-black text-[var(--color-accent)] tracking-widest mt-0.5">Tezkor POS</p>
         </div>
         
         <div className="flex items-center gap-3">
@@ -311,23 +312,23 @@ export function AdminSalesInterface({
           activeView === 'checkout' && "hidden lg:flex"
         )}>
           {/* Search Bar */}
-          <div className="premium-card p-5 md:p-8 flex flex-col md:flex-row gap-5 items-center relative overflow-hidden group shrink-0">
+          <div className="premium-card p-4 md:p-8 flex flex-col md:flex-row gap-4 items-center relative overflow-hidden group shrink-0 mx-1 md:mx-0">
             <div className="absolute top-0 left-0 w-1 h-full bg-[var(--color-accent)] opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] group-focus-within:text-[var(--color-accent)] transition-colors" size={22} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] group-focus-within:text-[var(--color-accent)] transition-colors" size={20} />
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Mahsulot nomi, model yoki barcodeni kiriting..."
-                className="w-full h-14 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/50 pl-14 pr-6 text-base font-medium outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-all placeholder:text-[var(--color-text-tertiary)]/50"
+                placeholder="Qidirish..."
+                className="w-full h-12 md:h-14 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/50 pl-12 md:pl-14 pr-4 md:pr-6 text-sm md:text-base font-medium outline-none focus:border-[var(--color-accent)] focus:ring-4 focus:ring-[var(--color-accent)]/10 transition-all placeholder:text-[var(--color-text-tertiary)]/50"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-[var(--color-bg-base)] border border-[var(--color-border)] text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-widest shadow-sm">
+            <div className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[var(--color-bg-base)] border border-[var(--color-border)] text-[9px] md:text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-widest shadow-sm shrink-0">
               <div className="h-2 w-2 rounded-full bg-[var(--color-success)] animate-pulse" />
-              <ScanBarcode size={18} className="text-[var(--color-accent)]" />
-              Skaner Faol
+              <ScanBarcode size={16} className="text-[var(--color-accent)]" />
+              Skaner
             </div>
           </div>
 
@@ -454,8 +455,8 @@ export function AdminSalesInterface({
             </div>
 
             {/* Checkout Area - Ultra Compact Redesign */}
-            <div className="shrink-0 bg-[var(--color-bg-card)] border-t border-[var(--color-border)] shadow-[0_-10px_40px_rgba(0,0,0,0.4)] z-[40]">
-              <div className="p-3 space-y-3">
+            <div className="shrink-0 bg-[var(--color-bg-card)] border-t border-[var(--color-border)] shadow-[0_-10px_40px_rgba(0,0,0,0.4)] z-[40] sticky bottom-0 lg:static">
+              <div className="p-3 md:p-4 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   {/* Customer Selector Block */}
                   <div className="space-y-1.5">
