@@ -1036,6 +1036,11 @@ Versiya 1.0  •  23 Aprel, 2026
 - [x] UI/UX Notifications: Moliya formalariga yuklanish holatlari va xatolik/muvaffaqiyat xabarnomalari (Toasts) qo'shildi.
 - [x] Dashboard Pro: Asosiy sahifada jonli ma'lumotlarni tortuvchi, animatsiyali, premium darajadagi diagrammalar (Chart) yaratildi.
 - [x] Fayl Yuklash: Tovar rasmini bevosita fayl yuklash orqali (URL emas) saqlash integratsiyasi yakunlandi.
+- [x] Mobile UI Stabilization: "New Sale" va "Inventory" modullari mobil qurilmalar uchun to'liq optimallashtirildi (Sticky footer, compact search, touch targets).
+- [x] Dashboard Mobile Optimization: Dashboard KPI gridi (2 ustun) va grafiklar (Horizontal scrolling) mobil telefonlar uchun moslashtirildi.
+- [x] Digital Clock Pro: Mobil va desktop interfeyslariga "Pro" darajadagi, glassmorphism effektli elektron soat qo'shildi.
+- [x] Production Stability: Build va type-check xatoliklari (deprecated config, type mismatches) to'liq bartaraf etildi.
+- [x] Multi-tenant Auth Guard: Subdomain sessiyalari va login redirect logic-dagi zaifliklar tahlil qilindi va barqarorlashtirildi.
 
 ## 10.1. Arxitektura va Yo'nalishlar
 Admin paneli (/inventory, /sales) ga mutloq tegmasdan, kassir uchun alohida route group yaratiladi.
@@ -1096,5 +1101,5 @@ Tizim obuna (Subscription) asosida ishlaydi. Har bir do'kon (tenant) tanlagan ta
 Super Admin istalgan vaqtda do'konni "Qoidabuzarlik" yoki "To'lov qilinmagani" uchun qo'lda bloklash va blokdan ochish huquqiga ega.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Hujjat yangilandi  •  8 May, 2026
+Hujjat yangilandi  •  11 May, 2026
 
