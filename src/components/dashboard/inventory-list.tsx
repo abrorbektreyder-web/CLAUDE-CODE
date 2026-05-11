@@ -29,6 +29,7 @@ interface InventoryItem {
 
 interface InventoryListProps {
   initialData: InventoryItem[];
+  role?: 'admin' | 'cashier';
 }
 
 const PRODUCT_TYPES = [
@@ -837,7 +838,7 @@ function ActionMenu({
 
 // ── Main Component ─────────────────────────────────────────────────────────
 
-export function InventoryList({ initialData }: InventoryListProps) {
+export function InventoryList({ initialData, role = 'admin' }: InventoryListProps) {
   const [items, setItems] = useState<InventoryItem[]>(initialData);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('all');

@@ -40,7 +40,7 @@ const connectionOptions = {
 };
 
 // Single client instance (singleton pattern)
-const client = postgres(process.env.DATABASE_URL, connectionOptions);
+const client = postgres(process.env.DATABASE_URL!, connectionOptions);
 
 // Drizzle instance with full schema
 export const db = drizzle(client, {

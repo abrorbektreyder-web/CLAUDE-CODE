@@ -42,9 +42,10 @@ interface SaleItem {
 
 interface SalesListProps {
   initialData: SaleItem[];
+  role?: 'admin' | 'cashier';
 }
 
-export function SalesList({ initialData }: SalesListProps) {
+export function SalesList({ initialData, role = 'admin' }: SalesListProps) {
   const [search, setSearch] = useState('');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);

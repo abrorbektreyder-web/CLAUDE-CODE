@@ -163,8 +163,8 @@ export function AdminSalesInterface({
         paidAmount: paymentMethod === 'credit' ? (Number(downPayment) || 0) : total,
         debtAmount: paymentMethod === 'credit' ? (total - (Number(downPayment) || 0)) : 0,
         debtMonths: paymentMethod === 'credit' ? debtMonths : undefined,
+        customerId: selectedCustomer?.id,
         customerData: selectedCustomer ? {
-          id: selectedCustomer.id,
           fullName: selectedCustomer.fullName,
           phone: selectedCustomer.phone,
           imei: saleImei
