@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import {
   Search, Filter, Plus, MoreHorizontal, Package,
   Smartphone, Headphones, Watch, AlertTriangle,
@@ -345,7 +346,9 @@ function AddProductModal({ onClose, onSuccess }: { onClose: () => void; onSucces
                 <div className="h-24 w-24 rounded-2xl border-2 border-dashed border-[var(--color-border)] bg-[var(--color-bg-elevated)] flex items-center justify-center overflow-hidden group relative">
                   {form.imageUrl ? (
                     <>
-                      <img src={form.imageUrl} alt="Preview" className="h-full w-full object-cover" />
+                      <div className="relative h-full w-full">
+                        <Image src={form.imageUrl} alt="Preview" fill className="object-cover" sizes="96px" />
+                      </div>
                       <button 
                         type="button"
                         onClick={() => setForm(prev => ({ ...prev, imageUrl: '' }))}

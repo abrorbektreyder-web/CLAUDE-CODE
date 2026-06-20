@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Search,
   ShoppingCart,
@@ -23,7 +24,7 @@ import {
 } from 'lucide-react';
 import { cn, formatSum, formatUSD } from '@/lib/utils';
 import { useSession } from '@/lib/auth-client';
-import { createSale, searchProducts, createCustomer } from '@/db/queries';
+import { createSale, createCustomer } from '@/db/queries';
 import { useRouter } from 'next/navigation';
 
 interface CartItem {
@@ -83,30 +84,21 @@ export function AdminSalesInterface({
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Search products
+  // Search products — client-side filter (server so'rovi kerak emas)
   useEffect(() => {
-    if (!session?.user) return;
-
     if (!search.trim()) {
       setProducts(inventoryData);
-      setIsSearching(false);
       return;
     }
 
-    setIsSearching(true);
-    const timer = setTimeout(async () => {
-      try {
-        const results = await searchProducts(search, (session.user as any).tenantId);
-        setProducts(results);
-      } catch (err) {
-        console.error('Search failed:', err);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [search, session?.user, inventoryData]);
+    const q = search.toLowerCase();
+    const results = inventoryData.filter((p: any) => {
+      const name = (p.name || `${p.brand || ''} ${p.model || ''}`).toLowerCase();
+      const barcode = (p.barcode || '').toLowerCase();
+      return name.includes(q) || barcode.includes(q);
+    });
+    setProducts(results);
+  }, [search, inventoryData]);
 
   const pName = (p: any) => p.name || `${p.brand} ${p.model}`;
 
@@ -249,7 +241,11 @@ export function AdminSalesInterface({
 
   const ProductThumbnail = ({ name, imageUrl }: any) => {
     if (imageUrl) {
-      return <img src={imageUrl} alt={name} className="w-full h-full object-cover" />;
+      return (
+        <div className="relative w-full h-full">
+          <Image src={imageUrl} alt={name} fill className="object-cover" sizes="96px" />
+        </div>
+      );
     }
     const firstLetter = name ? name.trim().charAt(0).toUpperCase() : '?';
     return (
