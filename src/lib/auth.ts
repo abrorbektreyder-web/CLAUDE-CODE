@@ -42,12 +42,10 @@ import { customDrizzleAdapter } from './drizzle-auth-adapter';
 const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
 
 export const auth = betterAuth({
-  database: isProduction
-    ? customDrizzleAdapter
-    : () => ({
-        id: 'supabase',
-        ...supabaseAdapter,
-      }),
+  database: () => ({
+    id: 'supabase',
+    ...supabaseAdapter,
+  }),
 
 
   // Secret for signing tokens
