@@ -1,4 +1,5 @@
-
+import { getCachedSession } from '@/lib/get-session';
+import { unstable_cache } from 'next/cache';
 import { getDashboardKpis, getSales, getChartData } from '@/db/queries';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -27,9 +28,7 @@ export default async function DashboardPage({
   const { period = 'today' } = await searchParams;
   let session = null;
   try {
-    session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    session = await getCachedSession();
   } catch (error) {
     console.error('[Dashboard Page] auth.api.getSession failed:', error);
   }
@@ -78,11 +77,22 @@ export default async function DashboardPage({
   try {
     if (tenantId) {
       const days = period === 'month' ? 30 : period === 'week' ? 7 : 7;
-      const [kpis, sales, chart] = await Promise.all([
-        getDashboardKpis(tenantId, startDate, endDate),
-        getSales(tenantId, 8),
-        getChartData(tenantId, days)
-      ]);
+
+      // unstable_cache: 30 soniya server-side cache (tenant + period ga qarab)
+      const getCachedDashboard = unstable_cache(
+        async () => {
+          const [kpis, sales, chart] = await Promise.all([
+            getDashboardKpis(tenantId!, startDate, endDate),
+            getSales(tenantId!, 8),
+            getChartData(tenantId!, days)
+          ]);
+          return { kpis, sales, chart };
+        },
+        [`dashboard-${tenantId}-${period}-${startDate}`],
+        { revalidate: 30, tags: [`dashboard-${tenantId}`] }
+      );
+
+      const { kpis, sales, chart } = await getCachedDashboard();
       kpisData = kpis;
       recentSales = sales;
       chartData = chart;
