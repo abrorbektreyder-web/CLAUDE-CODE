@@ -1,11 +1,31 @@
 'use client';
-import { useState } from 'react';
-import { BarChart3, Download, Calendar, ChevronDown, FileSpreadsheet, FileText, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BarChart3, Download, Calendar, ChevronDown, FileSpreadsheet, FileText, Check, Loader2 } from 'lucide-react';
+import { formatSum } from '@/lib/utils';
 
 export default function ReportsPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('Oxirgi 30 kun');
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/reports');
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data.stats);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchStats();
+  }, [selectedFilter]);
 
   const filterOptions = [
     'Bugun',
@@ -134,21 +154,27 @@ export default function ReportsPage() {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Umumiy tushum', value: '145,500,000 UZS', trend: '+15%' },
-          { label: 'Sof foyda', value: '32,400,000 UZS', trend: '+8%' },
-          { label: 'Sotilgan tovarlar', value: '450 ta', trend: '+24%' },
-          { label: 'Yangi mijozlar', value: '124 kishi', trend: '+12%' }
-        ].map((stat, i) => (
-          <div key={i} className="premium-card rounded-2xl p-5 relative overflow-hidden group">
-            <div className="absolute -right-4 -top-4 w-16 h-16 bg-gradient-to-br from-[var(--color-accent)]/20 to-transparent rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] mb-2 relative">{stat.label}</div>
-            <div className="flex items-end gap-2 relative">
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="text-xs font-bold text-[var(--color-success)] ml-auto bg-[var(--color-success)]/10 px-1.5 py-0.5 rounded-md">{stat.trend}</div>
-            </div>
+        {loading ? (
+          <div className="col-span-full flex justify-center p-8">
+            <Loader2 className="animate-spin text-[var(--color-accent)]" size={32} />
           </div>
-        ))}
+        ) : (
+          [
+            { label: 'Umumiy tushum', value: `${formatSum(stats?.totalRevenue || 0)} UZS`, trend: '+0%' },
+            { label: 'Sof foyda', value: `${formatSum(stats?.totalProfit || 0)} UZS`, trend: '+0%' },
+            { label: 'Sotilgan tovarlar', value: `${stats?.totalItemsSold || 0} ta`, trend: '+0%' },
+            { label: 'Yangi mijozlar', value: `${stats?.newCustomers || 0} kishi`, trend: '+0%' }
+          ].map((stat, i) => (
+            <div key={i} className="premium-card rounded-2xl p-5 relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 w-16 h-16 bg-gradient-to-br from-[var(--color-accent)]/20 to-transparent rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] mb-2 relative">{stat.label}</div>
+              <div className="flex items-end gap-2 relative">
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-xs font-bold text-[var(--color-text-secondary)] ml-auto bg-[var(--color-bg-elevated)] px-1.5 py-0.5 rounded-md">{stat.trend}</div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
       
       <div className="premium-card rounded-2xl p-8 min-h-[400px] flex flex-col items-center justify-center text-[var(--color-text-tertiary)] relative overflow-hidden group">

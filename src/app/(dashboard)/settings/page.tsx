@@ -1,9 +1,61 @@
 'use client';
-import { useState } from 'react';
-import { Settings, Save, Smartphone, Printer, ShieldCheck, MessageSquare } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings, Save, Smartphone, Printer, ShieldCheck, MessageSquare, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [businessName, setBusinessName] = useState('');
+  const [currency, setCurrency] = useState('UZS');
+
+  useEffect(() => {
+    async function fetchSettings() {
+      try {
+        const res = await fetch('/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.settings) {
+            setBusinessName(data.settings.business_name || '');
+            setCurrency(data.settings.currency || 'UZS');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch settings:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSettings();
+  }, []);
+
+  const handleSave = async () => {
+    if (activeTab !== 'general') {
+      toast.info('Hozircha faqat Umumiy sozlamalar saqlanadi');
+      return;
+    }
+    
+    setSaving(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessName, currency })
+      });
+      
+      if (res.ok) {
+        toast.success('Sozlamalar saqlandi');
+      } else {
+        const error = await res.json();
+        toast.error(error.message || 'Xatolik yuz berdi');
+      }
+    } catch (error) {
+      toast.error('Server xatosi');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const tabs = [
     { id: 'general', icon: Settings, label: 'Umumiy sozlamalar' },
@@ -20,8 +72,13 @@ export default function SettingsPage() {
           <h1 className="font-display text-3xl">Sozlamalar</h1>
           <p className="text-sm text-[var(--color-text-secondary)]">Tizim va do'kon sozlamalarini boshqarish</p>
         </div>
-        <button className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] active:scale-95 transition-all">
-          <Save size={18} /> Saqlash
+        <button 
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[var(--color-accent)]/20 hover:bg-[var(--color-accent-hover)] active:scale-95 transition-all disabled:opacity-70"
+        >
+          {saving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />} 
+          Saqlash
         </button>
       </div>
 
@@ -48,17 +105,34 @@ export default function SettingsPage() {
               <>
                 <h2 className="text-xl font-bold border-b border-[var(--color-border)] pb-4 mb-6">Umumiy ma'lumotlar</h2>
                 <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] block mb-2">Do'kon nomi</label>
-                    <input type="text" defaultValue="Mobicenter Demo" className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] block mb-2">Asosiy valyuta</label>
-                    <select className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all appearance-none">
-                      <option>UZS (O'zbek so'mi)</option>
-                      <option>USD (AQSh dollari)</option>
-                    </select>
-                  </div>
+                  {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="animate-spin text-[var(--color-text-secondary)]" size={24} />
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] block mb-2">Do'kon nomi</label>
+                        <input 
+                          type="text" 
+                          value={businessName} 
+                          onChange={e => setBusinessName(e.target.value)}
+                          className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all" 
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] block mb-2">Asosiy valyuta</label>
+                        <select 
+                          value={currency}
+                          onChange={e => setCurrency(e.target.value)}
+                          className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all appearance-none"
+                        >
+                          <option value="UZS">UZS (O'zbek so'mi)</option>
+                          <option value="USD">USD (AQSh dollari)</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
                   <div>
                     <label className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-tertiary)] block mb-2">Standart kafolat muddati (oy)</label>
                     <input type="number" defaultValue="12" className="w-full h-12 rounded-xl bg-[var(--color-bg-elevated)] border border-[var(--color-border)] px-4 text-sm outline-none focus:border-[var(--color-accent)] transition-all" />

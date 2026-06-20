@@ -1,13 +1,26 @@
-'use client';
-import { Activity, Search, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Activity, Search, Filter, Loader2 } from 'lucide-react';
 
 export default function AuditPage() {
-  const logs = [
-    { id: 1, action: 'Tizimga kirdi', user: 'Super Admin', ip: '192.168.1.10', time: '10:45 - 25.04.2026', type: 'login' },
-    { id: 2, action: 'Yangi savdo qo\'shildi (#1024)', user: 'Kassir #1', ip: '10.0.0.15', time: '09:30 - 25.04.2026', type: 'create' },
-    { id: 3, action: 'Nasiya to\'lovi qabul qilindi', user: 'Kassir #1', ip: '10.0.0.15', time: '18:15 - 24.04.2026', type: 'update' },
-    { id: 4, action: 'Filial sozlamalari o\'zgartirildi', user: 'Super Admin', ip: '192.168.1.10', time: '14:20 - 24.04.2026', type: 'system' },
-  ];
+  const [logs, setLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchLogs() {
+      try {
+        const res = await fetch('/api/audit');
+        if (res.ok) {
+          const data = await res.json();
+          setLogs(data.logs || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch audit logs:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLogs();
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -41,37 +54,59 @@ export default function AuditPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border)]">
-              {logs.map(log => (
-                <tr key={log.id} className="hover:bg-[var(--color-bg-hover)] transition-colors">
-                  <td className="px-6 py-4 font-medium">{log.action}</td>
-                  <td className="px-6 py-4">{log.user}</td>
-                  <td className="px-6 py-4 font-mono text-xs text-[var(--color-text-tertiary)]">{log.ip}</td>
-                  <td className="px-6 py-4 text-[var(--color-text-secondary)] whitespace-nowrap">{log.time}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">
+                    <Loader2 className="animate-spin inline-block mr-2" size={18} />
+                    Yuklanmoqda...
+                  </td>
                 </tr>
-              ))}
+              ) : logs.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-6 py-8 text-center text-[var(--color-text-secondary)]">Ma'lumot topilmadi</td>
+                </tr>
+              ) : (
+                logs.map(log => (
+                  <tr key={log.id} className="hover:bg-[var(--color-bg-hover)] transition-colors">
+                    <td className="px-6 py-4 font-medium">{log.action}</td>
+                    <td className="px-6 py-4">{log.user}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-[var(--color-text-tertiary)]">{log.ip}</td>
+                    <td className="px-6 py-4 text-[var(--color-text-secondary)] whitespace-nowrap">{log.time}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Mobile View */}
         <div className="md:hidden divide-y divide-[var(--color-border)]">
-          {logs.map(log => (
-            <div key={log.id} className="p-4 space-y-3 active:bg-[var(--color-bg-hover)] transition-colors">
-              <div className="flex justify-between items-start gap-4">
-                <div className="font-bold text-sm leading-tight">{log.action}</div>
-                <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] whitespace-nowrap uppercase">{log.time.split(' - ')[0]}</div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-6 w-6 rounded-full bg-[var(--color-bg-elevated)] flex items-center justify-center text-[var(--color-text-tertiary)] text-[10px] font-bold">
-                    {log.user.charAt(0)}
-                  </div>
-                  <div className="text-xs font-medium">{log.user}</div>
-                </div>
-                <div className="text-[10px] font-mono text-[var(--color-text-tertiary)]">{log.ip}</div>
-              </div>
+          {loading ? (
+            <div className="p-8 text-center text-[var(--color-text-secondary)]">
+              <Loader2 className="animate-spin inline-block mr-2" size={18} />
+              Yuklanmoqda...
             </div>
-          ))}
+          ) : logs.length === 0 ? (
+            <div className="p-8 text-center text-[var(--color-text-secondary)]">Ma'lumot topilmadi</div>
+          ) : (
+            logs.map(log => (
+              <div key={log.id} className="p-4 space-y-3 active:bg-[var(--color-bg-hover)] transition-colors">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="font-bold text-sm leading-tight">{log.action}</div>
+                  <div className="text-[10px] font-bold text-[var(--color-text-tertiary)] whitespace-nowrap uppercase">{log.time.split(' - ')[0]}</div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-full bg-[var(--color-bg-elevated)] flex items-center justify-center text-[var(--color-text-tertiary)] text-[10px] font-bold">
+                      {log.user.charAt(0)}
+                    </div>
+                    <div className="text-xs font-medium">{log.user}</div>
+                  </div>
+                  <div className="text-[10px] font-mono text-[var(--color-text-tertiary)]">{log.ip}</div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

@@ -19,6 +19,6 @@ Har bir bandni bajargach belgilab boramiz:
 - `[x]` **`api/sales` POST (Sotuv):** Sotuv yaratishda `productName: 'Product'` va `costPrice: item.unitPrice * 0.7` soxta ma'lumotlarini olib tashlab, bazadan haqiqiy mahsulot (name va cost_price) ni olib kelib yozish.
 
 ## 🟢 O'rta Muammolar (UI va Fake Datani o'zgartirish)
-- `[ ]` Hisobotlar (`reports/page.tsx`) statistikasini real API dan olish.
-- `[ ]` Audit log (`audit/page.tsx`) ma'lumotlarini qotib qolgan json o'rniga haqiqiy audit bazasidan olish.
-- `[ ]` Sozlamalar (`settings/page.tsx`) da saqlash tugmasini API ga ulash.
+- `[x]` Hisobotlar (`reports/page.tsx`) statistikasini real API dan olish.
+- `[x]` Audit log (`audit/page.tsx`) ma'lumotlarini qotib qolgan json o'rniga haqiqiy audit bazasidan olish.
+- `[x]` Sozlamalar (`settings/page.tsx`) da saqlash tugmasini API ga ulash.
