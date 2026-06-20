@@ -6,6 +6,8 @@ import { Topbar } from '@/components/dashboard/topbar';
 import { SidebarProvider } from '@/components/dashboard/sidebar-provider';
 import { getTenant } from '@/db/queries';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardLayout({
   children,
 }: {
