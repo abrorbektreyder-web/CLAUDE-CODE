@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import {
   ScanBarcode,
   ShoppingCart,
@@ -33,7 +34,7 @@ import {
 } from 'lucide-react';
 import { cn, formatSum, formatUSD } from '@/lib/utils';
 import { useSession } from '@/lib/auth-client';
-import { createSale, searchProducts, openShift, closeShift } from '@/db/queries';
+import { createSale, openShift, closeShift } from '@/db/queries';
 import { useRouter } from 'next/navigation';
 import { InventoryList } from '@/components/dashboard/inventory-list';
 import { CustomerList } from '@/components/dashboard/customer-list';
@@ -70,7 +71,11 @@ export function PosInterface({
   // Product Thumbnail Helper
   const ProductThumbnail = ({ name, imageUrl, className, textClassName }: any) => {
     if (imageUrl) {
-      return <img src={imageUrl} alt={name} className={cn("w-full h-full object-cover", className)} />;
+      return (
+        <div className={cn("relative w-full h-full", className)}>
+          <Image src={imageUrl} alt={name} fill className="object-cover" sizes="96px" />
+        </div>
+      );
     }
     
     const firstLetter = name ? name.trim().charAt(0).toUpperCase() : '?';
@@ -143,30 +148,21 @@ export function PosInterface({
     }
   }, [session?.user]);
 
-  // Search products when query changes
+  // Search products — client-side filter (server so'rovi kerak emas)
   useEffect(() => {
-    if (!session?.user) return;
-
     if (!search.trim()) {
       setProducts(inventoryData);
-      setIsSearching(false);
       return;
     }
 
-    setIsSearching(true);
-    const timer = setTimeout(async () => {
-      try {
-        const results = await searchProducts(search, (session.user as any).tenantId);
-        setProducts(results);
-      } catch (err) {
-        console.error('Search failed:', err);
-      } finally {
-        setIsSearching(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [search, session?.user, inventoryData]);
+    const q = search.toLowerCase();
+    const results = inventoryData.filter((p: any) => {
+      const name = (p.name || `${p.brand || ''} ${p.model || ''}`).toLowerCase();
+      const barcode = (p.barcode || '').toLowerCase();
+      return name.includes(q) || barcode.includes(q);
+    });
+    setProducts(results);
+  }, [search, inventoryData]);
 
   // Keyboard shortcuts
   useEffect(() => {
