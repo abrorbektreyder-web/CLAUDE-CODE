@@ -139,7 +139,12 @@ export async function getInventory(tenantId: string, branchId?: string) {
       warranty_months,
       description,
       image_url,
-      created_at
+      created_at,
+      phone_units!left(id, status),
+      product_variants!left(
+        id,
+        stock_levels!left(quantity, branch_id)
+      )
     `)
     .eq('tenant_id', tenantId)
     .is('deleted_at', null);
@@ -152,24 +157,40 @@ export async function getInventory(tenantId: string, branchId?: string) {
 
   if (error) throw error;
 
-  return (data || []).map(p => ({
-    id: p.id,
-    name: p.name,
-    sku: p.sku,
-    barcode: p.barcode,
-    brand: p.brand,
-    model: p.model,
-    productType: p.product_type,
-    costPrice: p.cost_price,
-    retailPrice: p.retail_price,
-    wholesalePrice: p.wholesale_price,
-    minStock: p.min_stock,
-    warrantyMonths: p.warranty_months,
-    description: p.description,
-    imageUrl: p.image_url,
-    totalQuantity: 0,
-    phoneCount: 0,
-  }));
+  return (data || []).map((p: any) => {
+    // Phone units: count only in_stock units
+    const phoneUnits: any[] = p.phone_units || [];
+    const phoneCount = phoneUnits.filter((u: any) => u.status === 'in_stock').length;
+
+    // Accessories: sum quantity from stock_levels (optionally filter by branch)
+    const variants: any[] = p.product_variants || [];
+    const totalQuantity = variants.reduce((sum: number, v: any) => {
+      const levels: any[] = v.stock_levels || [];
+      const filtered = branchId
+        ? levels.filter((sl: any) => sl.branch_id === branchId)
+        : levels;
+      return sum + filtered.reduce((s: number, sl: any) => s + (Number(sl.quantity) || 0), 0);
+    }, 0);
+
+    return {
+      id: p.id,
+      name: p.name,
+      sku: p.sku,
+      barcode: p.barcode,
+      brand: p.brand,
+      model: p.model,
+      productType: p.product_type,
+      costPrice: p.cost_price,
+      retailPrice: p.retail_price,
+      wholesalePrice: p.wholesale_price,
+      minStock: p.min_stock,
+      warrantyMonths: p.warranty_months,
+      description: p.description,
+      imageUrl: p.image_url,
+      totalQuantity: p.product_type === 'phone' ? phoneCount : totalQuantity,
+      phoneCount,
+    };
+  });
 }
 
 // в•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђв•ђ
@@ -286,7 +307,7 @@ export async function getDashboardKpis(tenantId: string, startDate?: string, end
 
   // Sales within range
   let salesQuery = getSupabase().from('sales')
-    .select('total, status') 
+    .select('total, status')
     .gte('created_at', start)
     .lte('created_at', end)
     .eq('status', 'completed')
@@ -395,7 +416,7 @@ export async function getSales(tenantId: string, limit = 50) {
       debtRemaining: debt?.remaining_amount ?? null,
       debtTotal: debt?.total_amount ?? null,
       debtPaid: debt?.paid_amount ?? null,
-      saleItems: (s.sale_items || []).map((si: any) => 
+      saleItems: (s.sale_items || []).map((si: any) =>
         `${si.product_name} x${si.quantity}`
       ).join(', '),
       notes: s.notes,
@@ -417,7 +438,7 @@ export async function createCustomer(data: {
 }) {
   const supabase = getSupabase();
   const normalizedPhone = normalizePhone(data.phone);
-  
+
   if (!normalizedPhone) {
     throw new Error('Noto\'g\'ri telefon raqami');
   }
@@ -487,11 +508,11 @@ export async function recordDebtPayment(data: {
   // 2. Create payment record
   const prevRemaining = Number(debt.remaining_amount);
   const currentRemaining = Math.max(0, prevRemaining - data.amount);
-  
+
   const historyNote = `[TIZIM] To'lovgacha qarz: ${formatSum(prevRemaining, false)} so'm. ` +
-                     `To'landi: ${formatSum(data.amount, false)} so'm. ` +
-                     `Qoldi: ${formatSum(currentRemaining, false)} so'm. ` +
-                     (data.notes ? `\nIzoh: ${data.notes}` : '');
+    `To'landi: ${formatSum(data.amount, false)} so'm. ` +
+    `Qoldi: ${formatSum(currentRemaining, false)} so'm. ` +
+    (data.notes ? `\nIzoh: ${data.notes}` : '');
 
   const { data: payment, error: payError } = await supabase
     .from('payments')
@@ -545,31 +566,39 @@ export async function recordDebtPayment(data: {
   // 5. Update debt schedules (mark as paid)
   const { data: schedules } = await supabase
     .from('debt_schedules')
-    .select('id, expected_amount, paid_amount')
+    .select('*')
     .eq('debt_id', data.debtId)
     .order('due_date', { ascending: true });
 
   if (schedules) {
     let remainingToApply = data.amount;
+    const scheduleUpdates = [];
+
     for (const schedule of schedules) {
       if (remainingToApply <= 0) break;
-      
+
       const unpaidInSchedule = Number(schedule.expected_amount) - Number(schedule.paid_amount || 0);
       if (unpaidInSchedule > 0) {
         const applyToThis = Math.min(remainingToApply, unpaidInSchedule);
         const totalPaidInSchedule = Number(schedule.paid_amount || 0) + applyToThis;
         const isFullyPaid = totalPaidInSchedule >= Number(schedule.expected_amount);
-        
-        await supabase
-          .from('debt_schedules')
-          .update({
-            paid_amount: totalPaidInSchedule,
-            paid_at: isFullyPaid ? new Date().toISOString() : null
-          })
-          .eq('id', schedule.id);
-        
+
+        scheduleUpdates.push({
+          ...schedule,
+          paid_amount: totalPaidInSchedule,
+          paid_at: isFullyPaid ? new Date().toISOString() : null
+        });
+
         remainingToApply -= applyToThis;
       }
+    }
+
+    if (scheduleUpdates.length > 0) {
+      const { error: upsertError } = await supabase
+        .from('debt_schedules')
+        .upsert(scheduleUpdates, { onConflict: 'id' });
+
+      if (upsertError) throw upsertError;
     }
   }
 
@@ -764,71 +793,71 @@ export async function createSale(data: {
 
   if (itemsError) throw itemsError;
 
-    // 4. Handle Debt (Nasiya)
-    if (data.paymentMethod === 'credit' && customerId) {
-      const months = Math.max(1, Number(data.debtMonths || 1));
-      const debtAmount = Number(data.debtAmount);
-      const monthlyPayment = Math.ceil(debtAmount / months);
-      
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setMonth(endDate.getMonth() + months);
+  // 4. Handle Debt (Nasiya)
+  if (data.paymentMethod === 'credit' && customerId) {
+    const months = Math.max(1, Number(data.debtMonths || 1));
+    const debtAmount = Number(data.debtAmount);
+    const monthlyPayment = Math.ceil(debtAmount / months);
 
-      console.log(`[TIZIM] Qarz yaratilmoqda: Summa=${debtAmount}, Muddat=${months}, Oylik=${monthlyPayment}`);
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + months);
 
-      const { data: debt, error: debtError } = await supabase
-        .from('debts')
-        .insert({
-          tenant_id: data.tenantId,
-          customer_id: customerId,
-          sale_id: sale.id,
-          principal_amount: debtAmount,
-          total_amount: debtAmount,
-          total_months: months,
-          monthly_payment: monthlyPayment,
-          start_date: startDate.toISOString().split('T')[0],
-          end_date: endDate.toISOString().split('T')[0],
-          remaining_amount: debtAmount,
-          paid_amount: 0,
-          notes: data.customerData?.imei ? `IMEI: ${data.customerData.imei}` : undefined,
-          status: 'active',
-        })
-        .select()
-        .single();
+    console.log(`[TIZIM] Qarz yaratilmoqda: Summa=${debtAmount}, Muddat=${months}, Oylik=${monthlyPayment}`);
 
-      if (debtError) {
-        console.error('[TIZIM] Debts insert error:', debtError);
-        throw debtError;
-      }
+    const { data: debt, error: debtError } = await supabase
+      .from('debts')
+      .insert({
+        tenant_id: data.tenantId,
+        customer_id: customerId,
+        sale_id: sale.id,
+        principal_amount: debtAmount,
+        total_amount: debtAmount,
+        total_months: months,
+        monthly_payment: monthlyPayment,
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+        remaining_amount: debtAmount,
+        paid_amount: 0,
+        notes: data.customerData?.imei ? `IMEI: ${data.customerData.imei}` : undefined,
+        status: 'active',
+      })
+      .select()
+      .single();
 
-      // Create debt schedule
-      const schedules = Array.from({ length: months }, (_, i) => {
-        const dueDate = new Date(startDate);
-        dueDate.setMonth(dueDate.getMonth() + i + 1);
-        
-        return {
-          tenant_id: data.tenantId,
-          debt_id: debt.id,
-          installment_number: i + 1,
-          due_date: dueDate.toISOString().split('T')[0],
-          expected_amount: i === months - 1
-            ? debtAmount - (monthlyPayment * (months - 1))
-            : monthlyPayment,
-          paid_amount: 0,
-          is_overdue: false
-        };
-      });
+    if (debtError) {
+      console.error('[TIZIM] Debts insert error:', debtError);
+      throw debtError;
+    }
 
-      console.log(`[TIZIM] Grafik yaratilmoqda: ${schedules.length} ta oylik`);
+    // Create debt schedule
+    const schedules = Array.from({ length: months }, (_, i) => {
+      const dueDate = new Date(startDate);
+      dueDate.setMonth(dueDate.getMonth() + i + 1);
 
-      const { error: scheduleError } = await supabase
-        .from('debt_schedules')
-        .insert(schedules);
+      return {
+        tenant_id: data.tenantId,
+        debt_id: debt.id,
+        installment_number: i + 1,
+        due_date: dueDate.toISOString().split('T')[0],
+        expected_amount: i === months - 1
+          ? debtAmount - (monthlyPayment * (months - 1))
+          : monthlyPayment,
+        paid_amount: 0,
+        is_overdue: false
+      };
+    });
 
-      if (scheduleError) {
-        console.error('[TIZIM] Schedules insert error:', scheduleError);
-        throw scheduleError;
-      }
+    console.log(`[TIZIM] Grafik yaratilmoqda: ${schedules.length} ta oylik`);
+
+    const { error: scheduleError } = await supabase
+      .from('debt_schedules')
+      .insert(schedules);
+
+    if (scheduleError) {
+      console.error('[TIZIM] Schedules insert error:', scheduleError);
+      throw scheduleError;
+    }
 
     // Update customer debt total
     const { data: customer } = await supabase
@@ -848,39 +877,30 @@ export async function createSale(data: {
     }
   }
 
-  // 5. Send Telegram Notification
-  try {
-    const { data: cashierData } = await supabase
-      .from('users')
-      .select('name')
-      .eq('id', cashierId)
-      .single();
-      
-    const { data: branchData } = await supabase
-      .from('branches')
-      .select('name')
-      .eq('id', branchId)
-      .single();
-
+  // 5. Send Telegram Notification (fire-and-forget — kassir kutmasin)
+  Promise.all([
+    supabase.from('users').select('name').eq('id', cashierId).single(),
+    supabase.from('branches').select('name').eq('id', branchId).single(),
+  ]).then(([{ data: cashierData }, { data: branchData }]) => {
     const cashierName = cashierData?.name || 'Kassir';
     const branchNameStr = branchData?.name || 'Do\'kon';
-    
+
     const message = formatSaleMessage(
-      sale, 
-      data.items, 
-      cashierName, 
-      branchNameStr, 
-      data.customerData, 
+      sale,
+      data.items,
+      cashierName,
+      branchNameStr,
+      data.customerData,
       {
         debtMonths: data.debtMonths,
         paidAmount: data.paidAmount,
         debtAmount: data.debtAmount
       }
     );
-    await sendTelegramAlert(data.tenantId, message);
-  } catch (err) {
+    return sendTelegramAlert(data.tenantId, message);
+  }).catch((err) => {
     console.error('[TIZIM] Telegram alert yuborishda xatolik:', err);
-  }
+  });
 
   return {
     ...sale,
@@ -895,7 +915,7 @@ export async function createSale(data: {
 
 export async function openShift(tenantId: string, cashierId: string, branchId: string, openingCash: number) {
   const supabase = getSupabase();
-  
+
   // Check if already open
   const { data: existing } = await supabase
     .from('shifts')
@@ -903,7 +923,7 @@ export async function openShift(tenantId: string, cashierId: string, branchId: s
     .eq('cashier_id', cashierId)
     .eq('status', 'open')
     .maybeSingle();
-    
+
   if (existing) {
     return existing; // Smena allaqachon ochiq bo'lsa, o'zini qaytaradi
   }
@@ -933,7 +953,7 @@ export async function openShift(tenantId: string, cashierId: string, branchId: s
     .single();
 
   if (error) throw error;
-  
+
   // Telegram notification
   try {
     const { data: cashier } = await supabase.from('users').select('name').eq('id', cashierId).single();
@@ -952,9 +972,9 @@ export async function openShift(tenantId: string, cashierId: string, branchId: s
 
 export async function closeShift(tenantId: string, shiftId: string, closingCash: number, expectedCash: number, closingNotes?: string) {
   const supabase = getSupabase();
-  
+
   const cashDifference = closingCash - expectedCash;
-  
+
   const { data: shift, error } = await supabase
     .from('shifts')
     .update({
@@ -971,7 +991,7 @@ export async function closeShift(tenantId: string, shiftId: string, closingCash:
     .single();
 
   if (error) throw error;
-  
+
   // Telegram notification
   try {
     const cashierName = Array.isArray(shift.users) ? shift.users[0]?.name : shift.users?.name;
@@ -1078,9 +1098,9 @@ export async function getExpenses(params: {
     .order('expense_date', { ascending: false });
 
   if (params.startDate) query = query.gte('expense_date', params.startDate);
-  if (params.endDate)   query = query.lte('expense_date', params.endDate);
+  if (params.endDate) query = query.lte('expense_date', params.endDate);
   if (params.categoryId) query = query.eq('category_id', params.categoryId);
-  if (params.branchId)   query = query.eq('branch_id', params.branchId);
+  if (params.branchId) query = query.eq('branch_id', params.branchId);
 
   const { data, error } = await query;
   if (error) throw error;
@@ -1107,10 +1127,17 @@ export async function getFinanceSummary(params: {
 }) {
   const supabase = getSupabase();
 
+  // sales.total — to'g'ri ustun nomi (total_amount emas)
+  // sale_items.cost_price * quantity — mahsulot tannarxi (sales jadvalida total_cost yo'q)
+  // expenses.expense_date — sana ustuni (DATE type, shuning uchun lte endDate+1 day)
+  const endDatePlusOne = new Date(params.endDate);
+  endDatePlusOne.setDate(endDatePlusOne.getDate() + 1);
+  const endDateStr = endDatePlusOne.toISOString().split('T')[0];
+
   const [{ data: sales, error: sErr }, { data: expensesData, error: eErr }] = await Promise.all([
     supabase
       .from('sales')
-      .select('total_amount, total_cost')
+      .select('total, sale_items(cost_price, quantity)')
       .eq('tenant_id', params.tenantId)
       .gte('created_at', params.startDate)
       .lte('created_at', params.endDate)
@@ -1119,18 +1146,26 @@ export async function getFinanceSummary(params: {
       .from('expenses')
       .select('amount')
       .eq('tenant_id', params.tenantId)
-      .gte('expense_date', params.startDate)
-      .lte('expense_date', params.endDate),
+      .gte('expense_date', params.startDate.split('T')[0])
+      .lt('expense_date', endDateStr),
   ]);
 
   if (sErr) throw sErr;
   if (eErr) throw eErr;
 
-  const totalRevenue  = (sales || []).reduce((s, r) => s + Number(r.total_amount), 0);
-  const totalCost     = (sales || []).reduce((s, r) => s + Number(r.total_cost || 0), 0);
-  const grossProfit   = totalRevenue - totalCost;
+  const totalRevenue = (sales || []).reduce((s, r) => s + Number(r.total), 0);
+  // Tannarx: har bir sotuv ichidagi sale_items dan hisoblash
+  const totalCost = (sales || []).reduce((s, r) => {
+    const items = (r as any).sale_items || [];
+    const saleItemsCost = items.reduce(
+      (acc: number, item: any) => acc + Number(item.cost_price || 0) * Number(item.quantity || 1),
+      0
+    );
+    return s + saleItemsCost;
+  }, 0);
+  const grossProfit = totalRevenue - totalCost;
   const totalExpenses = (expensesData || []).reduce((s, e) => s + Number(e.amount), 0);
-  const netProfit     = grossProfit - totalExpenses;
+  const netProfit = grossProfit - totalExpenses;
 
   return {
     totalRevenue,
@@ -1185,14 +1220,14 @@ export async function createSupplier(params: {
 
 export async function getSupplierById(id: string, tenantId: string) {
   const supabase = getSupabase();
-  
+
   const [supplierRes, transactionsRes] = await Promise.all([
     supabase.from('suppliers').select('*').eq('id', id).eq('tenant_id', tenantId).single(),
     supabase.from('supplier_transactions').select('*').eq('supplier_id', id).eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(50)
   ]);
 
   if (supplierRes.error) throw supplierRes.error;
-  
+
   return {
     ...supplierRes.data,
     transactions: transactionsRes.data || []
@@ -1218,7 +1253,7 @@ export async function createSupplierTransaction(params: {
     .eq('id', params.supplierId)
     .eq('tenant_id', params.tenantId)
     .single();
-  
+
   if (sErr) throw sErr;
 
   const currentBalance = Number(supplier.current_balance || 0);
@@ -1248,7 +1283,7 @@ export async function createSupplierTransaction(params: {
     })
     .select()
     .single();
-  
+
   if (tErr) throw tErr;
 
   // 3. Update supplier balance
@@ -1257,7 +1292,7 @@ export async function createSupplierTransaction(params: {
     .update({ current_balance: newBalance })
     .eq('id', params.supplierId)
     .eq('tenant_id', params.tenantId);
-  
+
   if (uErr) throw uErr;
 
   return transaction;
@@ -1267,7 +1302,7 @@ export async function getChartData(tenantId: string, days = 7) {
   const supabase = getSupabase();
   const uzbOffset = 5 * 60 * 60 * 1000;
   const now = new Date();
-  
+
   // Get start of N days ago in Uzb time
   const startDate = new Date(now.getTime() - (days - 1) * 24 * 60 * 60 * 1000 + uzbOffset);
   startDate.setHours(0, 0, 0, 0);
@@ -1288,7 +1323,7 @@ export async function getChartData(tenantId: string, days = 7) {
 
   // Prepare result map
   const chartMap: Record<string, { revenue: number, profit: number, day: string, date: string }> = {};
-  
+
   // Initialize days
   for (let i = 0; i < days; i++) {
     const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
