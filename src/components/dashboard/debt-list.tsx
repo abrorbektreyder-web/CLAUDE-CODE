@@ -46,6 +46,7 @@ export function DebtList({ initialData }: DebtListProps) {
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
   const [selectedDebt, setSelectedDebt] = useState<string>('');
   const [paymentForm, setPaymentForm] = useState({ amount: '', method: 'cash', notes: '' });
@@ -141,11 +142,15 @@ export function DebtList({ initialData }: DebtListProps) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Xatolik yuz berdi');
       
-      setIsPaymentModalOpen(false);
-      window.location.reload();
+      setIsSuccess(true);
+      setLoading(false);
+      setTimeout(() => {
+        setIsSuccess(false);
+        setIsPaymentModalOpen(false);
+        window.location.reload();
+      }, 1500);
     } catch (err: any) {
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
@@ -365,11 +370,27 @@ export function DebtList({ initialData }: DebtListProps) {
                 </button>
                 <button 
                   type="submit"
-                  disabled={loading || !selectedDebt}
-                  className="flex-[2] h-12 rounded-xl bg-[var(--color-success)] text-white font-bold text-sm shadow-xl shadow-[var(--color-success)]/20 hover:bg-[var(--color-success-hover)] transition-all flex items-center justify-center gap-2"
+                  disabled={loading || !selectedDebt || isSuccess}
+                  className={cn(
+                    "flex-[2] h-12 rounded-xl text-white font-bold text-sm shadow-xl transition-all flex items-center justify-center gap-2",
+                    isSuccess 
+                      ? "bg-[var(--color-success)] shadow-[var(--color-success)]/40 scale-[1.02]" 
+                      : "bg-[var(--color-success)] shadow-[var(--color-success)]/20 hover:bg-[var(--color-success-hover)]"
+                  )}
                 >
-                  {loading ? <Loader2 className="animate-spin" size={18} /> : <CheckCircle2 size={18} />}
-                  To'lovni tasdiqlash
+                  {loading ? (
+                    <Loader2 className="animate-spin" size={18} />
+                  ) : isSuccess ? (
+                    <>
+                      <CheckCircle2 size={20} className="animate-in zoom-in duration-300" />
+                      To'lov tasdiqlandi
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={18} />
+                      To'lovni tasdiqlash
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -405,7 +426,7 @@ export function DebtList({ initialData }: DebtListProps) {
       </div>
 
       {/* Table Section */}
-      <div className="premium-card overflow-hidden rounded-2xl">
+      <div className="premium-card overflow-visible rounded-2xl">
         <div className="p-4 border-b border-[var(--color-border)] flex flex-col md:flex-row md:items-center gap-4">
           <div className="relative w-full md:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={18} />
@@ -421,7 +442,7 @@ export function DebtList({ initialData }: DebtListProps) {
         </div>
 
         {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-visible pb-32">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]/30 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">

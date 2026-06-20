@@ -186,7 +186,7 @@ export function SalesList({ initialData, role = 'admin' }: SalesListProps) {
       </div>
 
       {/* Table Section */}
-      <div className="premium-card overflow-hidden rounded-2xl">
+      <div className="premium-card overflow-visible rounded-2xl flex flex-col min-h-[500px]">
         <div className="flex flex-col md:flex-row md:items-center gap-4 border-b border-[var(--color-border)] p-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" size={18} />
@@ -236,7 +236,7 @@ export function SalesList({ initialData, role = 'admin' }: SalesListProps) {
           </div>
         )}
         {/* Desktop Table View */}
-        <div className="hidden md:block overflow-x-auto">
+        <div className="hidden md:block overflow-visible pb-32">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]/30 text-[11px] font-bold uppercase tracking-wider text-[var(--color-text-tertiary)]">
