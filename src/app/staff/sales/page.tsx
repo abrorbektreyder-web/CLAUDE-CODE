@@ -1,3 +1,4 @@
+import { getCachedSession } from '@/lib/get-session';
 import { getSales } from '@/db/queries';
 import { SalesList } from '@/components/dashboard/sales-list';
 import { auth } from '@/lib/auth';
@@ -5,9 +6,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function StaffSalesPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCachedSession();
 
   if (!session) {
     redirect('/cashier-login');

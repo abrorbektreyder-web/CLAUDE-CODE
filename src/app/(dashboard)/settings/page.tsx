@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Settings, Save, Smartphone, Printer, ShieldCheck, MessageSquare, Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
@@ -32,7 +31,7 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     if (activeTab !== 'general') {
-      toast.info('Hozircha faqat Umumiy sozlamalar saqlanadi');
+      alert('Hozircha faqat Umumiy sozlamalar saqlanadi');
       return;
     }
     
@@ -45,13 +44,13 @@ export default function SettingsPage() {
       });
       
       if (res.ok) {
-        toast.success('Sozlamalar saqlandi');
+        alert('Sozlamalar saqlandi');
       } else {
         const error = await res.json();
-        toast.error(error.message || 'Xatolik yuz berdi');
+        alert(error.message || 'Xatolik yuz berdi');
       }
     } catch (error) {
-      toast.error('Server xatosi');
+      alert('Server xatosi');
     } finally {
       setSaving(false);
     }

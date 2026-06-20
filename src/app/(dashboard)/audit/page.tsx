@@ -1,3 +1,4 @@
+'use client';
 import { useState, useEffect } from 'react';
 import { Activity, Search, Filter, Loader2 } from 'lucide-react';
 

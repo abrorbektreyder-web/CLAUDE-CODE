@@ -1,3 +1,4 @@
+import { getCachedSession } from '@/lib/get-session';
 import { StaffSidebar } from '@/components/dashboard/staff-sidebar';
 import { Topbar } from '@/components/dashboard/topbar';
 import { SidebarProvider } from '@/components/dashboard/sidebar-provider';
@@ -10,9 +11,7 @@ export default async function StaffLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCachedSession();
 
   if (!session) {
     redirect('/cashier-login');

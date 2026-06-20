@@ -466,10 +466,22 @@ export default function FinancePage() {
           <form onSubmit={handleAddExpense} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <label style={labelStyle}>
               Toifa *
-              <select value={form.categoryId} onChange={e => setForm(p => ({ ...p, categoryId: e.target.value }))}
-                required style={inputStyle}>
+              <select 
+                value={form.categoryId} 
+                onChange={e => {
+                  if (e.target.value === 'NEW') {
+                    setShowAddModal(false);
+                    setShowCatModal(true);
+                  } else {
+                    setForm(p => ({ ...p, categoryId: e.target.value }));
+                  }
+                }}
+                required 
+                style={inputStyle}
+              >
                 <option value="">Tanlang...</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                <option value="NEW" style={{ fontWeight: 'bold', color: 'var(--color-accent)' }}>+ Yangi toifa qo'shish...</option>
               </select>
             </label>
             <label style={labelStyle}>

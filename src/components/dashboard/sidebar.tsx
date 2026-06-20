@@ -103,7 +103,7 @@ export function Sidebar({ user, tenant }: SidebarProps) {
       >
         {/* Header - Ultra Minimalist Design */}
         <div className="px-6 py-10 relative border-b border-[var(--color-border)]/40">
-          <Link href="/dashboard" className="group block relative">
+          <Link href="/dashboard" className="group block relative" prefetch={false}>
             <div className="font-display text-3xl font-black tracking-normal uppercase leading-none pb-1">
               <span className="inline-block pr-2 bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-orange-300 transition-all duration-500">
                 APPLE TTT
@@ -151,6 +151,7 @@ export function Sidebar({ user, tenant }: SidebarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={false}
                     className={cn(
                       'relative mb-0.5 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-180 ease-spring',
                       isActive

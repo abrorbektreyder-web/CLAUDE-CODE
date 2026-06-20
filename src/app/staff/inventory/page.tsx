@@ -1,3 +1,4 @@
+import { getCachedSession } from '@/lib/get-session';
 import { getInventory } from '@/db/queries';
 import { InventoryList } from '@/components/dashboard/inventory-list';
 import { auth } from '@/lib/auth';
@@ -5,9 +6,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 export default async function StaffInventoryPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCachedSession();
 
   if (!session) {
     redirect('/cashier-login');

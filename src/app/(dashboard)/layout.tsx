@@ -18,7 +18,7 @@ export default async function DashboardLayout({
     });
   } catch (err: any) {
     console.error('[Layout] auth.api.getSession failed:', err?.message ?? err);
-    // On transient errors (DB connection, etc.), we don't want to force logout immediately
+    throw new Error('Sessiyani tekshirishda xatolik yuz berdi. Sahifani yangilang.');
   }
 
   if (!session?.user) {

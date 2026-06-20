@@ -84,7 +84,7 @@ export function StaffSidebar({ user, tenantName }: StaffSidebarProps) {
       >
         {/* Header */}
         <div className="border-b border-[var(--color-border)] p-5 relative">
-          <Link href="/staff/pos" className="flex items-center gap-3">
+          <Link href="/staff/pos" className="flex items-center gap-3" prefetch={false}>
             <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-gradient-to-br from-emerald-500 to-teal-600 font-bold text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]">
               K
             </div>
@@ -120,6 +120,7 @@ export function StaffSidebar({ user, tenantName }: StaffSidebarProps) {
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={false}
                       className={cn(
                         'relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-200 group',
                         isActive
@@ -152,6 +153,7 @@ export function StaffSidebar({ user, tenantName }: StaffSidebarProps) {
         <div className="p-4 space-y-2 border-t border-[var(--color-border)] bg-[var(--color-bg-card)]/30">
           <Link 
             href="/help"
+            prefetch={false}
             className="flex items-center gap-3 px-3 py-2 text-sm font-semibold text-[var(--color-text-tertiary)] hover:text-emerald-500 transition-colors"
           >
             <HelpCircle size={18} />

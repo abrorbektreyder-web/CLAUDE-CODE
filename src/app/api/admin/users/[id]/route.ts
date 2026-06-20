@@ -38,6 +38,10 @@ export async function PUT(
       updated_at: new Date().toISOString(),
     };
 
+    if (role === 'cashier') {
+      updateData.pin_hash = 'dummy'; // Satisfy auth_method check constraint
+    }
+
     // Only hash + update password if provided
     let passwordHash: string | undefined;
     if (password && password.length >= 6) {

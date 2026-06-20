@@ -1,3 +1,4 @@
+import { getCachedSession } from '@/lib/get-session';
 import { getBranches } from '@/db/queries';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -5,9 +6,7 @@ import { redirect } from 'next/navigation';
 import BranchesList from '@/components/dashboard/branches-list';
 
 export default async function BranchesPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCachedSession();
 
   if (!session) {
     redirect('/login');

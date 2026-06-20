@@ -1,3 +1,4 @@
+import { getCachedSession } from '@/lib/get-session';
 import { PosInterface } from '@/components/pos/pos-interface';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -9,9 +10,7 @@ export const metadata = {
 };
 
 export default async function CashierPOSPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCachedSession();
 
   if (!session) {
     redirect('/cashier-login');

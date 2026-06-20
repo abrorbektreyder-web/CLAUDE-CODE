@@ -1,3 +1,4 @@
+import { getCachedSession } from '@/lib/get-session';
 import { AdminSalesInterface } from '@/components/dashboard/admin-sales-interface';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
@@ -9,9 +10,7 @@ export const metadata = {
 };
 
 export default async function AdminNewSalePage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getCachedSession();
 
   // Agar sessiya bo'lmasa, Admin login sahifasiga qaytarish (kassirga emas!)
   if (!session) {
