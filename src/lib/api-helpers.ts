@@ -69,9 +69,8 @@ export function createApiRoute<TBody = unknown, TResponse = unknown>(
         );
       }
 
-      // TODO: Get user's role from your custom users table
-      // For now, hardcoded — replace with actual lookup
-      const userRole: TenantContext['userRole'] = 'tenant_owner';
+      // Get user's role from session
+      const userRole = (session.user as any).role as TenantContext['userRole'] || 'cashier';
 
       // ─── 3. Check role permissions ────────────────────────────────────
       if (options.roles && !options.roles.includes(userRole)) {

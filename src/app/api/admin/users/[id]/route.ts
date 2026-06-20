@@ -17,6 +17,10 @@ export async function PUT(
       return NextResponse.json({ error: 'Ruxsat yo\'q' }, { status: 403 });
     }
 
+    if (session.user.role !== 'admin' && session.user.role !== 'tenant_owner') {
+      return NextResponse.json({ error: 'Ruxsat etilmagan' }, { status: 403 });
+    }
+
     const { id } = await params;
     const body = await req.json();
     const { name, email, password, role, branchId } = body;
@@ -35,8 +39,9 @@ export async function PUT(
     };
 
     // Only hash + update password if provided
+    let passwordHash: string | undefined;
     if (password && password.length >= 6) {
-      const passwordHash = await bcrypt.hash(password, 12);
+      passwordHash = await bcrypt.hash(password, 10);
       updateData.password_hash = passwordHash;
     }
 
@@ -54,8 +59,7 @@ export async function PUT(
     }
 
     // Update account password if provided
-    if (password && password.length >= 6) {
-      const passwordHash = await bcrypt.hash(password, 12);
+    if (passwordHash) {
       const { error: accError } = await supabase
         .from('accounts')
         .update({

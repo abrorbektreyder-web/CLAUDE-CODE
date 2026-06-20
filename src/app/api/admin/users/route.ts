@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     // Hash password
     const bcrypt = await import('bcryptjs');
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     // Better Auth might require users to be inserted directly into the 'user' table (which we map to 'users' in adapter)
     // To ensure proper creation with our custom fields, we insert directly using Supabase.
@@ -107,8 +107,9 @@ export async function POST(req: NextRequest) {
 
     if (accountError) {
       console.error('Create account error:', accountError);
-      // We should probably delete the user if account creation fails, 
-      // but for now we just log it.
+      // Rollback the user creation if account creation fails
+      await supabase.from('users').delete().eq('id', newUser.id);
+      return NextResponse.json({ error: "Foydalanuvchi hisobini yaratishda xatolik yuz berdi" }, { status: 500 });
     }
 
     return NextResponse.json(newUser, { status: 201 });

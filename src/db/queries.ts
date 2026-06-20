@@ -321,10 +321,10 @@ export async function getDashboardKpis(tenantId: string, startDate?: string, end
   const [salesRes, debtRes] = await Promise.all([salesQuery, debtQuery]);
 
   if (salesRes.error) {
-    console.error('[Dashboard] Sales query error:', salesRes.error);
+    throw salesRes.error;
   }
   if (debtRes.error) {
-    console.error('[Dashboard] Debts query error:', debtRes.error);
+    throw debtRes.error;
   }
 
   const salesData = salesRes.data || [];
@@ -543,7 +543,8 @@ export async function recordDebtPayment(data: {
       status: newStatus,
       updated_at: new Date().toISOString(),
     })
-    .eq('id', data.debtId);
+    .eq('id', data.debtId)
+    .eq('tenant_id', data.tenantId);
 
   if (updateDebtError) throw updateDebtError;
 
@@ -560,7 +561,8 @@ export async function recordDebtPayment(data: {
       .update({
         total_debt: Math.max(0, Number(customer.total_debt) - data.amount),
       })
-      .eq('id', debt.customer_id);
+      .eq('id', debt.customer_id)
+      .eq('tenant_id', data.tenantId);
   }
 
   // 5. Update debt schedules (mark as paid)
@@ -920,6 +922,7 @@ export async function openShift(tenantId: string, cashierId: string, branchId: s
   const { data: existing } = await supabase
     .from('shifts')
     .select('*')
+    .eq('tenant_id', tenantId)
     .eq('cashier_id', cashierId)
     .eq('status', 'open')
     .maybeSingle();
@@ -1317,8 +1320,7 @@ export async function getChartData(tenantId: string, days = 7) {
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('[Dashboard] Chart data error:', error);
-    return [];
+    throw error;
   }
 
   // Prepare result map

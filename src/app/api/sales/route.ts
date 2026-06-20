@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createApiRoute } from '@/lib/api-helpers';
 import { createSale, getDashboardKpis } from '@/db/queries';
+import { getSupabase } from '@/db/lib/supabase';
 
 // ════════════════════════════════════════════════════════════════════════════
 // GET /api/sales — Returns dashboard KPIs (today's stats)
@@ -57,7 +58,27 @@ export const POST = createApiRoute({
   schema: createSaleSchema,
   roles: ['cashier', 'tenant_owner', 'admin'],
   handler: async ({ body, ctx }) => {
-    // Map API body to createSale expected structure
+    const supabase = getSupabase();
+    
+    // 1. Fetch real product names and cost prices from DB
+    const productIds = body.items.map(i => i.productId).filter(Boolean) as string[];
+    const productsMap: Record<string, { name: string; cost_price: number }> = {};
+    
+    if (productIds.length > 0) {
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, name, cost_price')
+        .in('id', productIds)
+        .eq('tenant_id', ctx.tenantId);
+        
+      if (products) {
+        products.forEach(p => {
+          productsMap[p.id] = { name: p.name, cost_price: Number(p.cost_price || 0) };
+        });
+      }
+    }
+
+    // 2. Map API body to createSale expected structure
     const sale = await createSale({
       tenantId: ctx.tenantId,
       branchId: body.branchId,
@@ -71,14 +92,17 @@ export const POST = createApiRoute({
                   body.payment.method === 'transfer' ? (body.payment.transferAmount || 0) : 0,
       debtAmount: body.payment.method === 'credit' ? (body.payment.creditAmount || 0) : 0,
       debtMonths: body.payment.creditMonths,
-      items: body.items.map(item => ({
-        productId: item.productId,
-        productName: 'Product', // Placeholder as API body doesn't have name
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        costPrice: item.unitPrice * 0.7, // Mock
-        total: item.unitPrice * item.quantity
-      }))
+      items: body.items.map(item => {
+        const prod = item.productId ? productsMap[item.productId] : null;
+        return {
+          productId: item.productId,
+          productName: prod ? prod.name : 'Noma\'lum mahsulot',
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          costPrice: prod ? prod.cost_price : (item.unitPrice * 0.7), // Fallback if no real cost
+          total: item.unitPrice * item.quantity
+        };
+      })
     });
     return { sale };
   },
