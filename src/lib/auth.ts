@@ -37,12 +37,18 @@ const resolvedBaseURL =
 console.log('[Auth] Detected VERCEL_URL:', process.env.VERCEL_URL);
 console.log('[Auth] Resolved baseURL:', resolvedBaseURL);
 
+import { customDrizzleAdapter } from './drizzle-auth-adapter';
+
+const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+
 export const auth = betterAuth({
-  // Custom Supabase HTTP adapter (works over port 443, never blocked)
-  database: () => ({
-    id: 'supabase',
-    ...supabaseAdapter,
-  }),
+  database: isProduction
+    ? customDrizzleAdapter
+    : () => ({
+        id: 'supabase',
+        ...supabaseAdapter,
+      }),
+
 
   // Secret for signing tokens
   secret: process.env.BETTER_AUTH_SECRET,
@@ -85,10 +91,11 @@ export const auth = betterAuth({
     requireEmailVerification: false,
 
     // Custom password hashing (bcryptjs — pure JS, works on Vercel serverless)
+    // Cost factor 10 — industry standard (OWASP minimum: 10), ~4x faster than 12
     password: {
       hash: async (password: string) => {
         const bcrypt = await import('bcryptjs');
-        return bcrypt.hash(password, 12);
+        return bcrypt.hash(password, 10);
       },
       verify: async ({ hash, password }: { hash: string; password: string }) => {
         const bcrypt = await import('bcryptjs');

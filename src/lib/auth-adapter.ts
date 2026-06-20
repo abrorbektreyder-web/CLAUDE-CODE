@@ -281,7 +281,7 @@ export const supabaseAdapter = {
       snakeData.phone = '+998000000000';
     }
 
-    console.log(`[Adapter] create model=${model} table=${table} data=`, JSON.stringify(snakeData, null, 2));
+    // (debug logging removed — was firing on every auth call)
 
     const { data: result, error } = await getSupabase()
       .from(table)
@@ -307,7 +307,6 @@ export const supabaseAdapter = {
     select?: string[];
     join?: Record<string, boolean>;
   }): Promise<T | null> {
-    console.log(`[Adapter] findOne model=${model}`, JSON.stringify(where), 'join=', join);
     const table = TABLE_MAP[model] ?? model + 's';
     let query = getSupabase().from(table).select('*');
     query = buildQuery(query, where, table) as any;
